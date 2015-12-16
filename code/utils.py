@@ -39,19 +39,32 @@ class Image:
 
 
 class DataSet:
-    def __init__(self, images, labels, batch=128):
+    def __init__(self, images, labels, batch_size=128):
         if len(images) != len(labels):
             raise ValueError('Images and labels should have the same size')
         
         self.images = images
         self.labels = labels
-        self.batch = batch
+        self.batch_size = batch_size
         self.length = len(images)
         self.epochs_completed = 0
+        self.current_index = 0
+
+    def batch(self):
+        result = (self.images[self.current_index:(self.current_index + self.batch_size)],
+                  self.labels[self.current_index:(self.current_index + self.batch_size)])
+
+        self.current_index += self.batch_size
+
+        if self.current_index >= self.length:
+            self.current_index = 0
+            self.epochs_completed += 1
+
+        return result
         
 
 class DataSets:
-    def __init__(self, images, labels, batch=128, split=[0.7, 0.0, 0.3]):
+    def __init__(self, images, labels, batch_size=128, split=[0.7, 0.0, 0.3]):
         if sum(split) != 1.0:
             raise ValueError('Values of split should sum up to 1.0')
 
@@ -77,12 +90,12 @@ class DataSets:
         test_images = np.array(images)[test_idxs]
         test_labels = np.array(labels)[test_idxs]
 
-        self.train = DataSet(train_images, train_labels, batch)
-        self.valid = DataSet(valid_images, valid_labels, batch)
-        self.test = DataSet(test_images, test_labels, batch)
+        self.train = DataSet(train_images, train_labels, batch_size)
+        self.valid = DataSet(valid_images, valid_labels, batch_size)
+        self.test = DataSet(test_images, test_labels, batch_size)
 
 
-def load_face_image(rootdir, batch=128, split=[0.7, 0.0, 0.3], keep_in_memory=False):
+def load_face_image(rootdir, batch_size=128, split=[0.7, 0.0, 0.3], keep_in_memory=False):
     genders = ['m', 'f']
     ages = ['(0, 2)', '(4, 6)', '(8, 13)', '(15, 20)', '(25, 32)', '(38, 43)', '(48, 53)', '(60, 100)']
     dictionary = []
@@ -115,4 +128,4 @@ def load_face_image(rootdir, batch=128, split=[0.7, 0.0, 0.3], keep_in_memory=Fa
         images.append(Image(path, keep_in_memory=keep_in_memory))
         labels.append(one_hot)
 
-    return DataSets(images, labels, batch, split)
+    return DataSets(images, labels, batch_size, split)
