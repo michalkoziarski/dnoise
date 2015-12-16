@@ -1,0 +1,112 @@
+import os
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from scipy import misc
+
+
+class Image:
+    def __init__(self, path, keep_in_memory=False):
+        self.path = path
+        self.keep_in_memory = keep_in_memory
+
+        image = misc.imread(path)
+        self.width, self.height, self.channels = image.shape
+
+        if keep_in_memory:
+            self.image = image
+
+    def get(self):
+        if self.keep_in_memory:
+            return self.image
+        else:
+            return misc.imread(self.path)
+
+    def display(self):
+        plt.imshow(self.get())
+        plt.axis('off')
+        plt.show()
+
+    def shape(self):
+        return self.width, self.height, self.channels
+
+
+class DataSet:
+    def __init__(self, images, labels, batch=128):
+        if len(images) != len(labels):
+            raise ValueError('Images and labels should have the same size')
+        
+        self.images = images
+        self.labels = labels
+        self.batch = batch
+        self.length = len(images)
+        self.epochs_completed = 0
+        
+
+class DataSets:
+    def __init__(self, images, labels, batch=128, split=[0.7, 0.0, 0.3]):
+        if sum(split) != 1.0:
+            raise ValueError('Values of split should sum up to 1.0')
+
+        if len(images) != len(labels):
+            raise ValueError('Images and labels should have the same size')
+
+        self.length = len(images)
+        
+        train_len = int(self.length * split[0])
+        valid_len = int(self.length * split[1])
+
+        idxs = range(self.length)
+
+        train_idxs = np.random.choice(idxs, train_len)
+        idxs = [idx for idx in idxs if idx not in train_idxs]
+        valid_idxs = np.random.choice(idxs, valid_len)
+        test_idxs = [idx for idx in idxs if idx not in valid_idxs]
+
+        train_images = np.array(images)[train_idxs]
+        train_labels = np.array(labels)[train_idxs]
+        valid_images = np.array(images)[valid_idxs]
+        valid_labels = np.array(labels)[valid_idxs]
+        test_images = np.array(images)[test_idxs]
+        test_labels = np.array(labels)[test_idxs]
+
+        self.train = DataSet(train_images, train_labels, batch)
+        self.valid = DataSet(valid_images, valid_labels, batch)
+        self.test = DataSet(test_images, test_labels, batch)
+
+
+def load_face_image(rootdir, batch=128, split=[0.7, 0.0, 0.3], keep_in_memory=False):
+    genders = ['m', 'f']
+    ages = ['(0, 2)', '(4, 6)', '(8, 13)', '(15, 20)', '(25, 32)', '(38, 43)', '(48, 53)', '(60, 100)']
+    dictionary = []
+
+    for g in genders:
+        for a in ages:
+            dictionary.append('%s_%s' % (g, a))
+
+    dfs = []
+
+    for i in range(5):
+        path = os.path.join(rootdir, 'fold_%d_data.txt' % i)
+        dfs.append(pd.read_csv(path, sep='\t'))
+
+    df = pd.concat(dfs, ignore_index=True)
+    df['path'] = df['user_id'] + '/landmark_aligned_face.' + df['face_id'].astype(str) + '.' + df['original_image']
+    df['path'] = df['path'].apply(lambda x: os.path.join(rootdir, 'aligned', x))
+    df['age'] = df['age'].map(lambda x: x if x in ages else None)
+    df['gender'] = df['gender'].map(lambda x: x if x in genders else None)
+    df = df[['path', 'age', 'gender']].dropna()
+    df['label'] = df['gender'].astype(str) + '_' + df['age'].astype(str)
+
+    images = []
+    labels = []
+
+    for _, row in df.iterrows():
+        path, _, _, label = row
+        one_hot = np.zeros(len(dictionary))
+        one_hot[dictionary.index(label)] = 1
+        images.append(Image(path, keep_in_memory=keep_in_memory))
+        labels.append(one_hot)
+
+    return DataSets(images, labels, batch, split)
