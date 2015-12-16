@@ -10,11 +10,13 @@ class Image:
     def __init__(self, path, keep_in_memory=False):
         self.path = path
         self.keep_in_memory = keep_in_memory
-
-        image = misc.imread(path)
-        self.width, self.height, self.channels = image.shape
+        self.width = None
+        self.height = None
+        self.channels = None
 
         if keep_in_memory:
+            image = misc.imread(self.path)
+            self.width, self.height, self.channels = image.shape
             self.image = image
 
     def get(self):
@@ -29,6 +31,10 @@ class Image:
         plt.show()
 
     def shape(self):
+        if self.width is None or self.height is None or self.channels is None:
+            image = misc.imread(self.path)
+            self.width, self.height, self.channels = image.shape
+
         return self.width, self.height, self.channels
 
 
