@@ -1,4 +1,6 @@
 import os
+import urllib
+import tarfile
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -115,7 +117,20 @@ class DataSets:
         self.test = DataSet(test_images, test_labels, batch_size)
 
 
-def load_face_image(rootdir, batch_size=128, split=[0.7, 0.0, 0.3], keep_in_memory=True, preload=False):
+def load_face_image(batch_size=128, split=[0.7, 0.0, 0.3], keep_in_memory=True, preload=False):
+    rootdir = '../data/FaceImage'
+    tarpath = '%s.tar.gz' % rootdir
+
+    if not os.path.exists('../data'):
+        os.makedirs('../data')
+
+    if not os.path.exists(rootdir):
+        if not os.path.exists(tarpath):
+            urllib.urlretrieve('https://s3.amazonaws.com/michalkoziarski/FaceImage.tar.gz', tarpath)
+
+        with tarfile.open(tarpath) as tar:
+            tar.extractall(rootdir)
+
     genders = ['m', 'f']
     ages = ['(0, 2)', '(4, 6)', '(8, 13)', '(15, 20)', '(25, 32)', '(38, 43)', '(48, 53)', '(60, 100)']
     dictionary = []
