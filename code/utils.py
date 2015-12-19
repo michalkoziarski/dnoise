@@ -23,7 +23,7 @@ class Image:
             self.width, self.height, self.channels = self._image.shape
 
     def get(self):
-        if self._image:
+        if self._image is not None:
             return self._image
         else:
             image = misc.imread(self.path)
