@@ -60,17 +60,17 @@ class Batch:
         return self._tensor
 
 
-class DataSet:
+class DataSet(Batch):
     def __init__(self, images, labels, batch_size=128):
         if len(images) != len(labels):
             raise ValueError('Images and labels should have the same size')
-        
-        self.images = images
-        self.labels = labels
+
         self.batch_size = batch_size
         self.length = len(images)
         self.epochs_completed = 0
         self.current_index = 0
+
+        Batch.__init__(self, images, labels)
 
     def batch(self):
         batch_images = self.images[self.current_index:(self.current_index + self.batch_size)]
