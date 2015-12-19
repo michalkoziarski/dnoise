@@ -129,7 +129,7 @@ def load_face_image(batch_size=128, split=[0.7, 0.0, 0.3], keep_in_memory=True, 
             urllib.urlretrieve('https://s3.amazonaws.com/michalkoziarski/FaceImage.tar.gz', tarpath)
 
         with tarfile.open(tarpath) as tar:
-            tar.extractall(rootdir)
+            tar.extractall('../data')
 
     genders = ['m', 'f']
     ages = ['(0, 2)', '(4, 6)', '(8, 13)', '(15, 20)', '(25, 32)', '(38, 43)', '(48, 53)', '(60, 100)']
