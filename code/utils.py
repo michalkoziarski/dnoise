@@ -7,23 +7,31 @@ from scipy import misc
 
 
 class Image:
-    def __init__(self, path, keep_in_memory=False):
+    def __init__(self, path, keep_in_memory=True, preload=False):
+        if preload and not keep_in_memory:
+            raise ValueError('Can\'t preload without keeping in memory')
+
         self.path = path
         self.keep_in_memory = keep_in_memory
         self.width = None
         self.height = None
         self.channels = None
+        self._image = None
 
-        if keep_in_memory:
-            image = misc.imread(self.path)
-            self.width, self.height, self.channels = image.shape
-            self.image = image
+        if preload:
+            self._image = misc.imread(self.path)
+            self.width, self.height, self.channels = self._image.shape
 
     def get(self):
-        if self.keep_in_memory:
-            return self.image
+        if self._image:
+            return self._image
         else:
-            return misc.imread(self.path)
+            image = misc.imread(self.path)
+
+            if self.keep_in_memory:
+                self._image = image
+
+            return image
 
     def display(self):
         plt.imshow(self.get())
@@ -32,10 +40,22 @@ class Image:
 
     def shape(self):
         if self.width is None or self.height is None or self.channels is None:
-            image = misc.imread(self.path)
-            self.width, self.height, self.channels = image.shape
+            self.width, self.height, self.channels = self.get().shape
 
         return self.width, self.height, self.channels
+
+
+class Batch:
+    def __init__(self, images, labels):
+        self.images = images
+        self.labels = labels
+        self._tensor = None
+
+    def tensor(self):
+        if self._tensor is None:
+            self._tensor = np.array([image.get() for image in self.images])
+
+        return self._tensor
 
 
 class DataSet:
@@ -51,8 +71,8 @@ class DataSet:
         self.current_index = 0
 
     def batch(self):
-        result = (self.images[self.current_index:(self.current_index + self.batch_size)],
-                  self.labels[self.current_index:(self.current_index + self.batch_size)])
+        batch_images = self.images[self.current_index:(self.current_index + self.batch_size)]
+        batch_labels = self.labels[self.current_index:(self.current_index + self.batch_size)]
 
         self.current_index += self.batch_size
 
@@ -60,7 +80,7 @@ class DataSet:
             self.current_index = 0
             self.epochs_completed += 1
 
-        return result
+        return Batch(batch_images, batch_labels)
         
 
 class DataSets:
@@ -95,7 +115,7 @@ class DataSets:
         self.test = DataSet(test_images, test_labels, batch_size)
 
 
-def load_face_image(rootdir, batch_size=128, split=[0.7, 0.0, 0.3], keep_in_memory=False):
+def load_face_image(rootdir, batch_size=128, split=[0.7, 0.0, 0.3], keep_in_memory=True, preload=False):
     genders = ['m', 'f']
     ages = ['(0, 2)', '(4, 6)', '(8, 13)', '(15, 20)', '(25, 32)', '(38, 43)', '(48, 53)', '(60, 100)']
     dictionary = []
@@ -125,7 +145,7 @@ def load_face_image(rootdir, batch_size=128, split=[0.7, 0.0, 0.3], keep_in_memo
         path, _, _, label = row
         one_hot = np.zeros(len(dictionary))
         one_hot[dictionary.index(label)] = 1
-        images.append(Image(path, keep_in_memory=keep_in_memory))
+        images.append(Image(path, keep_in_memory=keep_in_memory, preload=preload))
         labels.append(one_hot)
 
     return DataSets(images, labels, batch_size, split)
