@@ -13,11 +13,9 @@ class CNN:
         self.train_op = self.train()
 
     def inference(self):
-        x = tf.image.resize_images(self.x, 256, 256)
-
         W = tf.Variable(tf.truncated_normal([5, 5, 3, 32], stddev=0.1))
         b = tf.Variable(tf.constant(0.1, shape=[32]))
-        conv = tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
+        conv = tf.nn.conv2d(self.x, W, strides=[1, 1, 1, 1], padding='SAME')
         h = tf.nn.relu(conv + b)
         pool = tf.nn.max_pool(h, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
@@ -64,36 +62,3 @@ class CNN:
     def accuracy(self):
         correct_prediction = tf.equal(tf.argmax(self.y, 1), tf.argmax(self.y_, 1))
         return tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
-
-if __name__ == "__main__":
-    import utils
-    import numpy as np
-
-    EPOCHS = 50
-    BATCH_SIZE = 16
-    SPLIT = [0.8, 0.05, 0.15]
-
-    ds = utils.load_face_image(batch_size=BATCH_SIZE, split=SPLIT)
-
-    cnn = CNN(input_shape=[None, 816, 816, 3], output_shape=[None, 16])
-    epochs_completed = 0
-
-    with tf.Session() as sess:
-        sess.run(tf.initialize_all_variables())
-
-        accuracy = lambda x: np.mean([cnn.accuracy().eval(feed_dict={
-                             cnn.x: [x.images[i].get()],
-                             cnn.y_: [x.labels[i]]}) for i in range(x.length)]) * 100
-
-        while ds.train.epochs_completed < EPOCHS:
-            batch = ds.train.batch()
-            cnn.train_op.run(feed_dict={cnn.x: batch.tensor(), cnn.y_: batch.labels})
-
-            if ds.train.epochs_completed > epochs_completed:
-                epochs_completed += 1
-                validation_accuracy = accuracy(ds.valid)
-
-                print 'epoch #%d, validation accuracy = %f%%' % (epochs_completed, validation_accuracy)
-
-        print 'test accuracy = %f%%' % accuracy(ds.test)
