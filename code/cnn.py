@@ -13,7 +13,7 @@ class CNN:
         self.train_op = self.train()
 
     def inference(self):
-        x = tf.image.resize_images(self.x)
+        x = tf.image.resize_images(self.x, 408, 408)
 
         W = tf.Variable(tf.truncated_normal([5, 5, 3, 32], stddev=0.1))
         b = tf.Variable(tf.constant(0.1, shape=[32]))
