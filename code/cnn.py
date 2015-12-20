@@ -25,14 +25,14 @@ class CNN:
         h = tf.nn.relu(conv + b)
         pool = tf.nn.max_pool(h, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
-        W = tf.Variable(tf.truncated_normal([102 * 102 * 64, 512], stddev=0.1))
-        b = tf.Variable(tf.constant(0.1, shape=[512]))
+        W = tf.Variable(tf.truncated_normal([102 * 102 * 64, 128], stddev=0.1))
+        b = tf.Variable(tf.constant(0.1, shape=[128]))
         flat = tf.reshape(pool, [-1, 102 * 102 * 64])
         dense = tf.nn.relu(tf.matmul(flat, W) + b)
 
         dropout = tf.nn.dropout(dense, 0.5)
 
-        W = tf.Variable(tf.truncated_normal([512, 16], stddev=0.1))
+        W = tf.Variable(tf.truncated_normal([128, 16], stddev=0.1))
         b = tf.Variable(tf.constant(0.1, shape=[16]))
         y = tf.nn.softmax(tf.matmul(dropout, W) + b)
 
@@ -57,17 +57,17 @@ if __name__ == "__main__":
 
     ds = utils.load_face_image(batch_size=10)
 
-    cnn = CNN(input_shape=[-1, 816, 816, 3], output_shape=[-1, 16])
+    cnn = CNN(input_shape=[None, 816, 816, 3], output_shape=[None, 16])
 
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
 
-    for epoch in range(3000):
-        batch = ds.train.batch()
-        cnn.train_op.run(feed_dict={cnn.x: batch.tensor(), cnn.y_: batch.labels})
-        if epoch % 100 == 0:
-            validation_accuracy = cnn.accuracy.eval(feed_dict={
-                                  cnn.x: ds.valid.tensor(),
-                                  cnn.y_: ds.valid.labels})
+        for epoch in range(3000):
+            batch = ds.train.batch()
+            cnn.train_op.run(feed_dict={cnn.x: batch.tensor(), cnn.y_: batch.labels})
+            if epoch % 100 == 0:
+                validation_accuracy = cnn.accuracy.eval(feed_dict={
+                                      cnn.x: ds.valid.tensor(),
+                                      cnn.y_: ds.valid.labels})
 
-            print 'epoch #%d, validation accuracy = %f%%' % (epoch, validation_accuracy)
+                print 'epoch #%d, validation accuracy = %f%%' % (epoch, validation_accuracy)
