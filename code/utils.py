@@ -9,26 +9,26 @@ from scipy import misc
 
 
 class Image:
-    def __init__(self, path, keep_in_memory=True, preload=False):
+    def __init__(self, path, shape=(256, 256), keep_in_memory=True, preload=False):
         if preload and not keep_in_memory:
             raise ValueError('Can\'t preload without keeping in memory')
 
         self.path = path
+        self.shape = shape
         self.keep_in_memory = keep_in_memory
-        self.width = None
-        self.height = None
-        self.channels = None
         self._image = None
 
         if preload:
-            self._image = misc.imread(self.path)
-            self.width, self.height, self.channels = self._image.shape
+            self.get()
 
     def get(self):
         if self._image is not None:
             return self._image
         else:
             image = misc.imread(self.path)
+
+            if self.shape is not None:
+                image = misc.imresize(image, self.shape)
 
             if self.keep_in_memory:
                 self._image = image
@@ -39,12 +39,6 @@ class Image:
         plt.imshow(self.get())
         plt.axis('off')
         plt.show()
-
-    def shape(self):
-        if self.width is None or self.height is None or self.channels is None:
-            self.width, self.height, self.channels = self.get().shape
-
-        return self.width, self.height, self.channels
 
 
 class Batch:

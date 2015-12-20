@@ -71,7 +71,7 @@ if __name__ == "__main__":
     import numpy as np
 
     EPOCHS = 50
-    BATCH_SIZE = 10
+    BATCH_SIZE = 16
     SPLIT = [0.8, 0.05, 0.15]
 
     ds = utils.load_face_image(batch_size=BATCH_SIZE, split=SPLIT)
