@@ -26,7 +26,7 @@ class CNN:
         pool = tf.nn.max_pool(h, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
         W = tf.Variable(tf.truncated_normal([5, 5, 64, 64], stddev=0.1))
-        b = tf.Variable(tf.constant(0.1, shape=[128]))
+        b = tf.Variable(tf.constant(0.1, shape=[64]))
         conv = tf.nn.conv2d(pool, W, strides=[1, 1, 1, 1], padding='SAME')
         h = tf.nn.relu(conv + b)
         pool = tf.nn.max_pool(h, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
