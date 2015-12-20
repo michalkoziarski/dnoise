@@ -82,6 +82,11 @@ class DataSet(Batch):
             self.current_index = 0
             self.epochs_completed += 1
 
+            perm = np.random.permutation(self.length)
+
+            self.images = self.images[perm]
+            self.labels = self.labels[perm]
+
         return Batch(batch_images, batch_labels)
         
 
