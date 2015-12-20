@@ -13,11 +13,17 @@ class CNN:
         self.train_op = self.train()
 
     def inference(self):
-        x = tf.image.resize_images(self.x, 408, 408)
+        x = tf.image.resize_images(self.x, 256, 256)
 
         W = tf.Variable(tf.truncated_normal([5, 5, 3, 32], stddev=0.1))
         b = tf.Variable(tf.constant(0.1, shape=[32]))
         conv = tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
+        h = tf.nn.relu(conv + b)
+        pool = tf.nn.max_pool(h, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+
+        W = tf.Variable(tf.truncated_normal([5, 5, 32, 32], stddev=0.1))
+        b = tf.Variable(tf.constant(0.1, shape=[32]))
+        conv = tf.nn.conv2d(pool, W, strides=[1, 1, 1, 1], padding='SAME')
         h = tf.nn.relu(conv + b)
         pool = tf.nn.max_pool(h, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
@@ -27,14 +33,20 @@ class CNN:
         h = tf.nn.relu(conv + b)
         pool = tf.nn.max_pool(h, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
-        W = tf.Variable(tf.truncated_normal([102 * 102 * 64, 128], stddev=0.1))
-        b = tf.Variable(tf.constant(0.1, shape=[128]))
-        flat = tf.reshape(pool, [-1, 102 * 102 * 64])
+        W = tf.Variable(tf.truncated_normal([5, 5, 64, 64], stddev=0.1))
+        b = tf.Variable(tf.constant(0.1, shape=[64]))
+        conv = tf.nn.conv2d(pool, W, strides=[1, 1, 1, 1], padding='SAME')
+        h = tf.nn.relu(conv + b)
+        pool = tf.nn.max_pool(h, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+
+        W = tf.Variable(tf.truncated_normal([16 * 16 * 64, 512], stddev=0.1))
+        b = tf.Variable(tf.constant(0.1, shape=[512]))
+        flat = tf.reshape(pool, [-1, 16 * 16 * 64])
         dense = tf.nn.relu(tf.matmul(flat, W) + b)
 
         dropout = tf.nn.dropout(dense, 0.5)
 
-        W = tf.Variable(tf.truncated_normal([128, 16], stddev=0.1))
+        W = tf.Variable(tf.truncated_normal([512, 16], stddev=0.1))
         b = tf.Variable(tf.constant(0.1, shape=[16]))
         y = tf.nn.softmax(tf.matmul(dropout, W) + b)
 
@@ -58,7 +70,7 @@ if __name__ == "__main__":
     import utils
     import numpy as np
 
-    EPOCHS = 1000
+    EPOCHS = 50
     BATCH_SIZE = 10
     SPLIT = [0.8, 0.05, 0.15]
 
@@ -70,15 +82,18 @@ if __name__ == "__main__":
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
 
+        accuracy = lambda x: np.mean([cnn.accuracy().eval(feed_dict={
+                             cnn.x: [x.images[i].get()],
+                             cnn.y_: [x.labels[i]]}) for i in range(x.length)]) * 100
+
         while ds.train.epochs_completed < EPOCHS:
             batch = ds.train.batch()
             cnn.train_op.run(feed_dict={cnn.x: batch.tensor(), cnn.y_: batch.labels})
 
             if ds.train.epochs_completed > epochs_completed:
                 epochs_completed += 1
-
-                validation_accuracy = np.mean([cnn.accuracy().eval(feed_dict={
-                                      cnn.x: ds.valid.images[i].get(),
-                                      cnn.y_: ds.valid.labels[i]}) for i in range(ds.valid.length)])
+                validation_accuracy = accuracy(ds.valid)
 
                 print 'epoch #%d, validation accuracy = %f%%' % (epochs_completed, validation_accuracy)
+
+        print 'test accuracy = %f%%' % accuracy(ds.test)
