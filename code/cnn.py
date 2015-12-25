@@ -73,16 +73,16 @@ class CifarCNN(CNN):
         pool = tf.nn.max_pool(h, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
         norm = tf.nn.lrn(pool, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75)
 
-        W = tf.Variable(tf.truncated_normal([5, 5, 64, 64], stddev=0.001))
-        b = tf.Variable(tf.constant(0.1, shape=[64]))
+        W = tf.Variable(tf.truncated_normal([5, 5, 32, 32], stddev=0.001))
+        b = tf.Variable(tf.constant(0.1, shape=[32]))
         conv = tf.nn.conv2d(norm, W, strides=[1, 1, 1, 1], padding='SAME')
         h = tf.nn.relu(conv + b)
         norm = tf.nn.lrn(h, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75)
         pool = tf.nn.max_pool(norm, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
-        W = tf.Variable(tf.truncated_normal([5 * 5 * 64, 384], stddev=0.04))
+        W = tf.Variable(tf.truncated_normal([5 * 5 * 32, 384], stddev=0.04))
         b = tf.Variable(tf.constant(0.1, shape=[384]))
-        flat = tf.reshape(pool, [-1, 5 * 5 * 64])
+        flat = tf.reshape(pool, [-1, 5 * 5 * 32])
         dense = tf.nn.relu(tf.matmul(flat, W) + b)
 
         W = tf.Variable(tf.truncated_normal([384, 192], stddev=0.04))
