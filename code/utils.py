@@ -9,7 +9,7 @@ from scipy import misc
 
 
 class Image:
-    def __init__(self, path, shape=(256, 256), keep_in_memory=True, preload=False):
+    def __init__(self, path, shape=(28, 28), keep_in_memory=True, preload=False):
         if preload and not keep_in_memory:
             raise ValueError('Can\'t preload without keeping in memory')
 

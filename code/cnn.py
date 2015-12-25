@@ -2,7 +2,7 @@ import tensorflow as tf
 
 
 class CNN:
-    def __init__(self, input_shape, output_shape, learning_rate=0.01, momentum=0.9):
+    def __init__(self, input_shape, output_shape, learning_rate=0.1, momentum=0.9):
         self.input_shape = input_shape
         self.output_shape = output_shape
         self.learning_rate = learning_rate
@@ -62,3 +62,35 @@ class CNN:
     def accuracy(self):
         correct_prediction = tf.equal(tf.argmax(self.y, 1), tf.argmax(self.y_, 1))
         return tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+
+class CifarCNN(CNN):
+    def inference(self):
+        W = tf.Variable(tf.truncated_normal([5, 5, 3, 64], stddev=0.001))
+        b = tf.Variable(tf.constant(0.0, shape=[64]))
+        conv = tf.nn.conv2d(self.x, W, strides=[1, 1, 1, 1], padding='SAME')
+        h = tf.nn.relu(conv + b)
+        pool = tf.nn.max_pool(h, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+        norm = tf.nn.lrn(pool, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75)
+
+        W = tf.Variable(tf.truncated_normal([5, 5, 64, 64], stddev=0.001))
+        b = tf.Variable(tf.constant(0.1, shape=[64]))
+        conv = tf.nn.conv2d(norm, W, strides=[1, 1, 1, 1], padding='SAME')
+        h = tf.nn.relu(conv + b)
+        norm = tf.nn.lrn(h, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75)
+        pool = tf.nn.max_pool(norm, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+
+        W = tf.Variable(tf.truncated_normal([8 * 8 * 64, 384], stddev=0.04))
+        b = tf.Variable(tf.constant(0.1, shape=[384]))
+        flat = tf.reshape(pool, [-1, 8 * 8 * 64])
+        dense = tf.nn.relu(tf.matmul(flat, W) + b)
+
+        W = tf.Variable(tf.truncated_normal([384, 192], stddev=0.04))
+        b = tf.Variable(tf.constant(0.1, shape=[192]))
+        dense = tf.nn.relu(tf.matmul(dense, W) + b)
+
+        W = tf.Variable(tf.truncated_normal([192, 16], stddev=1 / 192.0))
+        b = tf.Variable(tf.constant(0.1, shape=[16]))
+        y = tf.nn.softmax(tf.matmul(dense, W) + b)
+
+        return y
