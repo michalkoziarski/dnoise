@@ -82,7 +82,7 @@ class CifarCNN(CNN):
 
         W = tf.Variable(tf.truncated_normal([5 * 5 * 64, 384], stddev=0.04))
         b = tf.Variable(tf.constant(0.1, shape=[384]))
-        flat = tf.reshape(pool, [-1, 8 * 8 * 64])
+        flat = tf.reshape(pool, [-1, 5 * 5 * 64])
         dense = tf.nn.relu(tf.matmul(flat, W) + b)
 
         W = tf.Variable(tf.truncated_normal([384, 192], stddev=0.04))
