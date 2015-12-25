@@ -15,7 +15,7 @@ if not os.path.exists('../models'):
     os.makedirs('../models')
 
 ds = utils.load_face_image(batch_size=BATCH_SIZE, split=SPLIT)
-cnn = CNN(input_shape=[None, 28, 28, 3], output_shape=[None, 16])
+cnn = CNN(input_shape=[None, 20, 20, 3], output_shape=[None, 16])
 saver = tf.train.Saver()
 epochs_completed = 0
 
