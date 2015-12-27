@@ -14,7 +14,7 @@ class CNN:
         self.train_op = self.train()
 
     def inference(self):
-        W = tf.Variable(tf.truncated_normal([5, 5, 3, 32], stddev=0.1))
+        W = tf.Variable(tf.truncated_normal([5, 5, self.input_shape[2], 32], stddev=0.1))
         b = tf.Variable(tf.constant(0.1, shape=[32]))
         conv = tf.nn.conv2d(self.x, W, strides=[1, 1, 1, 1], padding='SAME')
         h = tf.nn.relu(conv + b)
