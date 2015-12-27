@@ -7,8 +7,9 @@ class CNN:
         self.output_shape = output_shape
         self.learning_rate = learning_rate
         self.momentum = momentum
-        self.x = tf.placeholder(tf.float32, shape=input_shape)
-        self.y_ = tf.placeholder(tf.float32, shape=output_shape)
+        self.x = tf.placeholder(tf.float32, shape=[None] + input_shape)
+        self.y_ = tf.placeholder(tf.float32, shape=[None] + output_shape)
+        self.keep_prob = tf.placeholder(tf.float32)
         self.y = self.inference()
         self.train_op = self.train()
 
@@ -37,15 +38,19 @@ class CNN:
         h = tf.nn.relu(conv + b)
         pool = tf.nn.max_pool(h, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
-        W = tf.Variable(tf.truncated_normal([16 * 16 * 64, 512], stddev=0.1))
+        dim = 1
+        for d in pool.get_shape()[1:].as_list():
+            dim *= d
+
+        W = tf.Variable(tf.truncated_normal([dim, 512], stddev=0.1))
         b = tf.Variable(tf.constant(0.1, shape=[512]))
-        flat = tf.reshape(pool, [-1, 16 * 16 * 64])
+        flat = tf.reshape(pool, [-1, dim])
         dense = tf.nn.relu(tf.matmul(flat, W) + b)
 
-        dropout = tf.nn.dropout(dense, 0.5)
+        dropout = tf.nn.dropout(dense, self.keep_prob)
 
-        W = tf.Variable(tf.truncated_normal([512, 16], stddev=0.1))
-        b = tf.Variable(tf.constant(0.1, shape=[16]))
+        W = tf.Variable(tf.truncated_normal([512] + self.output_shape, stddev=0.1))
+        b = tf.Variable(tf.constant(0.1, shape=self.output_shape))
         y = tf.nn.softmax(tf.matmul(dropout, W) + b)
 
         return y
@@ -62,35 +67,3 @@ class CNN:
     def accuracy(self):
         correct_prediction = tf.equal(tf.argmax(self.y, 1), tf.argmax(self.y_, 1))
         return tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
-
-class CifarCNN(CNN):
-    def inference(self):
-        W = tf.Variable(tf.truncated_normal([5, 5, 3, 64], stddev=0.001))
-        b = tf.Variable(tf.constant(0.0, shape=[64]))
-        conv = tf.nn.conv2d(self.x, W, strides=[1, 1, 1, 1], padding='SAME')
-        h = tf.nn.relu(conv + b)
-        pool = tf.nn.max_pool(h, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
-        norm = tf.nn.lrn(pool, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75)
-
-        W = tf.Variable(tf.truncated_normal([5, 5, 64, 32], stddev=0.001))
-        b = tf.Variable(tf.constant(0.1, shape=[32]))
-        conv = tf.nn.conv2d(norm, W, strides=[1, 1, 1, 1], padding='SAME')
-        h = tf.nn.relu(conv + b)
-        norm = tf.nn.lrn(h, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75)
-        pool = tf.nn.max_pool(norm, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
-
-        W = tf.Variable(tf.truncated_normal([5 * 5 * 32, 384], stddev=0.04))
-        b = tf.Variable(tf.constant(0.1, shape=[384]))
-        flat = tf.reshape(pool, [-1, 5 * 5 * 32])
-        dense = tf.nn.relu(tf.matmul(flat, W) + b)
-
-        W = tf.Variable(tf.truncated_normal([384, 192], stddev=0.04))
-        b = tf.Variable(tf.constant(0.1, shape=[192]))
-        dense = tf.nn.relu(tf.matmul(dense, W) + b)
-
-        W = tf.Variable(tf.truncated_normal([192, 16], stddev=1 / 192.0))
-        b = tf.Variable(tf.constant(0.1, shape=[16]))
-        y = tf.nn.softmax(tf.matmul(dense, W) + b)
-
-        return y

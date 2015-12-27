@@ -9,7 +9,7 @@ from scipy import misc
 
 
 class Image:
-    def __init__(self, path, shape=(20, 20), keep_in_memory=True, preload=False):
+    def __init__(self, path, shape=(256, 256), keep_in_memory=True, preload=False):
         if preload and not keep_in_memory:
             raise ValueError('Can\'t preload without keeping in memory')
 
@@ -85,7 +85,7 @@ class DataSet(Batch):
         
 
 class DataSets:
-    def __init__(self, images, labels, batch_size=128, split=[0.7, 0.0, 0.3]):
+    def __init__(self, images, labels, batch_size=128, split=(0.6, 0.2, 0.2)):
         if sum(split) != 1.0:
             raise ValueError('Values of split should sum up to 1.0')
 
@@ -116,7 +116,7 @@ class DataSets:
         self.test = DataSet(test_images, test_labels, batch_size)
 
 
-def load_face_image(batch_size=128, split=[0.7, 0.0, 0.3], keep_in_memory=True, preload=False):
+def load_face_image(batch_size=128, split=(0.6, 0.2, 0.2), shape=(256, 256), keep_in_memory=True, preload=False):
     rootdir = '../data/FaceImage'
     tarpath = '%s.tar.gz' % rootdir
 
@@ -159,7 +159,7 @@ def load_face_image(batch_size=128, split=[0.7, 0.0, 0.3], keep_in_memory=True, 
         path, _, _, label = row
         one_hot = np.zeros(len(dictionary))
         one_hot[dictionary.index(label)] = 1
-        images.append(Image(path, keep_in_memory=keep_in_memory, preload=preload))
+        images.append(Image(path, shape=shape, keep_in_memory=keep_in_memory, preload=preload))
         labels.append(one_hot)
 
     return DataSets(images, labels, batch_size, split)
