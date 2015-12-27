@@ -9,21 +9,24 @@ from scipy import misc
 
 
 class Image:
-    def __init__(self, path, shape=(256, 256), keep_in_memory=True, preload=False):
+    def __init__(self, image=None, path=None, shape=None, keep_in_memory=True, preload=False):
         if preload and not keep_in_memory:
             raise ValueError('Can\'t preload without keeping in memory')
+
+        if image is None and path is None:
+            raise ValueError('Needs either image or path')
 
         self.path = path
         self.shape = shape
         self.keep_in_memory = keep_in_memory
-        self._image = None
+        self.image = image
 
-        if preload:
+        if preload and image is None:
             self.get()
 
     def get(self):
-        if self._image is not None:
-            return self._image
+        if self.image is not None:
+            return self.image
         else:
             image = misc.imread(self.path)
 
@@ -31,7 +34,7 @@ class Image:
                 image = misc.imresize(image, self.shape)
 
             if self.keep_in_memory:
-                self._image = image
+                self.image = image
 
             return image
 
@@ -159,7 +162,33 @@ def load_face_image(batch_size=128, split=(0.6, 0.2, 0.2), shape=(256, 256), kee
         path, _, _, label = row
         one_hot = np.zeros(len(dictionary))
         one_hot[dictionary.index(label)] = 1
-        images.append(Image(path, shape=shape, keep_in_memory=keep_in_memory, preload=preload))
+        images.append(Image(path=path, shape=shape, keep_in_memory=keep_in_memory, preload=preload))
+        labels.append(one_hot)
+
+    return DataSets(images, labels, batch_size, split)
+
+
+def load_mnist(batch_size=128, split=(0.6, 0.2, 0.2)):
+    rootdir = '../data'
+    csvpath = os.path.join(rootdir, 'mnist.csv')
+    url = 'https://s3.amazonaws.com/michalkoziarski/mnist.csv'
+
+    if not os.path.exists(rootdir):
+        os.makedirs(rootdir)
+
+    if not os.path.exists(csvpath):
+        urllib.urlretrieve(url, csvpath)
+
+    images = []
+    labels = []
+
+    matrix = pd.read_csv(csvpath).as_matrix()
+
+    for row in matrix:
+        one_hot = np.zeros(10)
+        one_hot[row[0]] = 1
+        image = np.reshape(row[1:], (28, 28))
+        images.append(Image(image=image))
         labels.append(one_hot)
 
     return DataSets(images, labels, batch_size, split)
