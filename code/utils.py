@@ -28,10 +28,12 @@ class Image:
         if self.image is not None:
             return self.image
         else:
-            image = (misc.imread(self.path) / 255.) - 0.5
+            image = misc.imread(self.path)
 
             if self.shape is not None:
                 image = misc.imresize(image, self.shape)
+
+            image = (image / 255.) - 0.5
 
             if self.keep_in_memory:
                 self.image = image
