@@ -28,7 +28,7 @@ class Image:
         if self.image is not None:
             return self.image
         else:
-            image = misc.imread(self.path)
+            image = (misc.imread(self.path) / 255.) - 0.5
 
             if self.shape is not None:
                 image = misc.imresize(image, self.shape)
@@ -187,7 +187,7 @@ def load_mnist(batch_size=128, split=(0.6, 0.2, 0.2)):
     for row in matrix:
         one_hot = np.zeros(10)
         one_hot[row[0]] = 1
-        image = np.reshape(row[1:], (28, 28))
+        image = (np.reshape(row[1:], (28, 28)) / 255.) - 0.5
         images.append(Image(image=image))
         labels.append(one_hot)
 
