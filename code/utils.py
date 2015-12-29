@@ -25,7 +25,7 @@ class Image:
         self.image = image
 
         if image is not None and normalize:
-            self.image /= 255.
+            self.image =  self.image / 255.
 
         if preload and image is None:
             self.get()
@@ -40,7 +40,7 @@ class Image:
                 image = misc.imresize(image, self.shape)
 
             if self.normalize:
-                image /= 255.
+                image = image / 255.
 
             if self.keep_in_memory:
                 self.image = image
