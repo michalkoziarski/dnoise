@@ -1,6 +1,7 @@
 import os
 import urllib
 import tarfile
+import cPickle
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -9,7 +10,7 @@ from scipy import misc
 
 
 class Image:
-    def __init__(self, image=None, path=None, shape=None, keep_in_memory=True, preload=False):
+    def __init__(self, image=None, path=None, shape=None, keep_in_memory=True, preload=False, normalize=True):
         if preload and not keep_in_memory:
             raise ValueError('Can\'t preload without keeping in memory')
 
@@ -19,7 +20,12 @@ class Image:
         self.path = path
         self.shape = shape
         self.keep_in_memory = keep_in_memory
+        self.preload = preload
+        self.normalize = normalize
         self.image = image
+
+        if image is not None and normalize:
+            self.image /= 255.
 
         if preload and image is None:
             self.get()
@@ -33,7 +39,8 @@ class Image:
             if self.shape is not None:
                 image = misc.imresize(image, self.shape)
 
-            image = (image / 255.) - 0.5
+            if self.normalize:
+                image /= 255.
 
             if self.keep_in_memory:
                 self.image = image
@@ -121,19 +128,21 @@ class DataSets:
         self.test = DataSet(test_images, test_labels, batch_size)
 
 
-def load_face_image(batch_size=128, split=(0.6, 0.2, 0.2), shape=(256, 256), keep_in_memory=True, preload=False):
-    rootdir = '../data/FaceImage'
-    tarpath = '%s.tar.gz' % rootdir
-
-    if not os.path.exists('../data'):
-        os.makedirs('../data')
+def load_face_image(batch_size=128, split=(0.6, 0.2, 0.2), shape=(64, 64), keep_in_memory=True, preload=False):
+    rootdir = '../data'
+    datadir = os.path.join(rootdir, 'FaceImage')
+    tarpath = '%s.tar.gz' % datadir
+    url = 'https://s3.amazonaws.com/michalkoziarski/FaceImage.tar.gz'
 
     if not os.path.exists(rootdir):
+        os.makedirs(rootdir)
+
+    if not os.path.exists(datadir):
         if not os.path.exists(tarpath):
-            urllib.urlretrieve('https://s3.amazonaws.com/michalkoziarski/FaceImage.tar.gz', tarpath)
+            urllib.urlretrieve(url, tarpath)
 
         with tarfile.open(tarpath) as tar:
-            tar.extractall('../data')
+            tar.extractall(rootdir)
 
     genders = ['m', 'f']
     ages = ['(0, 2)', '(4, 6)', '(8, 13)', '(15, 20)', '(25, 32)', '(38, 43)', '(48, 53)', '(60, 100)']
@@ -146,12 +155,12 @@ def load_face_image(batch_size=128, split=(0.6, 0.2, 0.2), shape=(256, 256), kee
     dfs = []
 
     for i in range(5):
-        path = os.path.join(rootdir, 'fold_%d_data.txt' % i)
+        path = os.path.join(datadir, 'fold_%d_data.txt' % i)
         dfs.append(pd.read_csv(path, sep='\t'))
 
     df = pd.concat(dfs, ignore_index=True)
     df['path'] = df['user_id'] + '/landmark_aligned_face.' + df['face_id'].astype(str) + '.' + df['original_image']
-    df['path'] = df['path'].apply(lambda x: os.path.join(rootdir, 'aligned', x))
+    df['path'] = df['path'].apply(lambda x: os.path.join(datadir, 'aligned', x))
     df['age'] = df['age'].map(lambda x: x if x in ages else None)
     df['gender'] = df['gender'].map(lambda x: x if x in genders else None)
     df = df[['path', 'age', 'gender']].dropna()
@@ -189,8 +198,44 @@ def load_mnist(batch_size=128, split=(0.6, 0.2, 0.2)):
     for row in matrix:
         one_hot = np.zeros(10)
         one_hot[row[0]] = 1
-        image = (np.reshape(row[1:], (28, 28)) / 255.) - 0.5
+        image = np.reshape(row[1:], (28, 28))
         images.append(Image(image=image))
         labels.append(one_hot)
+
+    return DataSets(images, labels, batch_size, split)
+
+
+def load_cifar(batch_size=128, split=(0.6, 0.2, 0.2)):
+    rootdir = '../data'
+    datadir = os.path.join(rootdir, 'cifar-10-batches-py')
+    tarpath = os.path.join(rootdir, 'cifar-10-python.tar.gz')
+    url = 'https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
+
+    if not os.path.exists(rootdir):
+        os.makedirs(rootdir)
+
+    if not os.path.exists(datadir):
+        if not os.path.exists(tarpath):
+            urllib.urlretrieve(url, tarpath)
+
+        with tarfile.open(tarpath) as tar:
+            tar.extractall(rootdir)
+
+    images = []
+    labels = []
+
+    files = ['data_batch_%d' % i for i in range(1, 6)] + ['test_batch']
+    paths = map(lambda x: os.path.join(datadir, x), files)
+
+    for path in paths:
+        with open(path, 'rb') as f:
+            dict = cPickle.load(f)
+
+        for i in range(len(dict['labels'])):
+            one_hot = np.zeros(10)
+            one_hot[dict['labels'][i]] = 1
+            image = np.reshape(dict['data'][i], (3, 32, 32)).transpose(1, 2, 0)
+            images.append(Image(image=image))
+            labels.append(one_hot)
 
     return DataSets(images, labels, batch_size, split)
