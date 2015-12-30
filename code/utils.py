@@ -246,7 +246,6 @@ def load_gtsrb(batch_size=128, split=(0.6, 0.2, 0.2), shape=(32, 32), keep_in_me
     root_path = '../data'
     data_path = os.path.join(root_path, 'GTSRB')
     img_path = os.path.join(data_path, 'Final_Training', 'Images')
-    class_dirs = [o for o in os.listdir(img_path) if os.path.isdir(os.path.join(img_path, o))]
     zip_path = os.path.join(root_path, 'GTSRB_Final_Training_Images.zip')
     url = 'http://benchmark.ini.rub.de/Dataset/GTSRB_Final_Training_Images.zip'
 
@@ -262,6 +261,8 @@ def load_gtsrb(batch_size=128, split=(0.6, 0.2, 0.2), shape=(32, 32), keep_in_me
 
     images = []
     labels = []
+
+    class_dirs = [o for o in os.listdir(img_path) if os.path.isdir(os.path.join(img_path, o))]
 
     for class_dir in class_dirs:
         label = int(class_dir)
