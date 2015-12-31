@@ -23,30 +23,31 @@ class Image:
         self.keep_in_memory = keep_in_memory
         self.preload = preload
         self.normalize = normalize
-        self.image = image
+        self.image = None
 
-        if image is not None and normalize:
-            self.image =  self.image / 255.
-
-        if preload and image is None:
-            self.get()
+        if preload or image is not None:
+            self.load_and_process(image)
 
     def get(self):
         if self.image is not None:
             return self.image
         else:
+            return self.load_and_process()
+
+    def load_and_process(self, image=None):
+        if image is None:
             image = misc.imread(self.path)
 
-            if self.shape is not None:
-                image = misc.imresize(image, self.shape)
+        if self.shape is not None:
+            image = misc.imresize(image, self.shape)
 
-            if self.normalize:
-                image = image / 255.
+        if self.normalize:
+            image = image / 255.
 
-            if self.keep_in_memory:
-                self.image = image
+        if self.keep_in_memory:
+            self.image = image
 
-            return image
+        return image
 
     def display(self):
         plt.imshow(self.get())
