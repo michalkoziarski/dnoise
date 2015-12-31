@@ -73,7 +73,11 @@ class Image:
 
 class Batch:
     def __init__(self, images, labels, noise=False, noise_mean=0.0, noise_std=0.1):
-        self.images = images
+        if noise:
+            self.images = [image.noisy(noise_mean, noise_std) for image in images]
+        else:
+            self.images = images
+
         self.labels = labels
         self.noise = noise
         self.noise_mean = noise_mean
@@ -82,15 +86,7 @@ class Batch:
 
     def tensor(self):
         if self._tensor is None:
-            self._tensor = np.array([])
-
-            for image in self.images:
-                if self.noise:
-                    t = image.noisy(self.noise_mean, self.noise_std).get()
-                else:
-                    t = image.get()
-
-                self._tensor = np.append(self._tensor, t)
+            self._tensor = np.array([image.get() for image in self.images])
 
         return self._tensor
 
