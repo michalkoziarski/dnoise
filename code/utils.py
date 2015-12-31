@@ -11,7 +11,8 @@ from scipy import misc
 
 
 class Image:
-    def __init__(self, image=None, path=None, shape=None, keep_in_memory=True, preload=False, normalize=True):
+    def __init__(self, image=None, path=None, shape=None, keep_in_memory=True, preload=False, normalize=True,
+                 noise=False, noise_mean=0.0, noise_std=0.1):
         if preload and not keep_in_memory:
             raise ValueError('Can\'t preload without keeping in memory')
 
@@ -23,6 +24,9 @@ class Image:
         self.keep_in_memory = keep_in_memory
         self.preload = preload
         self.normalize = normalize
+        self.noise = noise
+        self.noise_mean = noise_mean
+        self.noise_std = noise_std
         self.image = None
 
         if preload or image is not None:
@@ -44,10 +48,22 @@ class Image:
         if self.normalize:
             image = image / 255.
 
+        if self.noise:
+            image += np.random.normal(self.noise_mean, self.noise_std, image.shape)
+
+            upper_bound = 1.0 if self.normalize else 255
+
+            image[image < 0] = 0
+            image[image > upper_bound] = upper_bound
+
         if self.keep_in_memory:
             self.image = image
 
         return image
+
+    def noisy(self, mean=0.0, std=0.1):
+        return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=self.keep_in_memory,
+                     preload=self.preload, normalize=self.normalize, noise=True, noise_mean=mean, noise_std=std)
 
     def display(self):
         plt.imshow(self.get())
@@ -56,16 +72,30 @@ class Image:
 
 
 class Batch:
-    def __init__(self, images, labels):
+    def __init__(self, images, labels, noise=False, noise_mean=0.0, noise_std=0.1):
         self.images = images
         self.labels = labels
+        self.noise = noise
+        self.noise_mean = noise_mean
+        self.noise_std = noise_std
         self._tensor = None
 
     def tensor(self):
         if self._tensor is None:
-            self._tensor = np.array([image.get() for image in self.images])
+            self._tensor = np.array([])
+
+            for image in self.images:
+                if self.noise:
+                    t = image.noisy(self.noise_mean, self.noise_std).get()
+                else:
+                    t = image.get()
+
+                self._tensor = np.append(self._tensor, t)
 
         return self._tensor
+
+    def noisy(self, mean=0.0, std=0.1):
+        return Batch(images=self.images, labels=self.labels, noise=True, noise_mean=mean, noise_std=std)
 
 
 class DataSet(Batch):
