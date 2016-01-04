@@ -55,10 +55,7 @@ class Network:
         return self
 
     def softmax(self):
-        softmax = self.fully(size=self.output_shape[0], activation=tf.nn.softmax)
-        self.add(softmax)
-
-        return self
+        return self.fully(size=self.output_shape[0], activation=tf.nn.softmax)
 
     def dropout(self):
         dropout = tf.nn.dropout(self.output(), self.keep_prob)
@@ -77,11 +74,8 @@ class Network:
         }) for i in range(dataset.length)]) * 100
 
     def train(self, datasets, learning_rate=0.01, momentum=0.0, epochs=10, display_step=50):
-        print self.y_
-        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(self.output(),
-                                                                self.y_)
-        cross_entropy_mean = tf.reduce_mean(cross_entropy)
-        train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(cross_entropy_mean)
+        cross_entropy = -tf.reduce_sum(self.y_ * tf.log(self.output()))
+        train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(cross_entropy)
 
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
