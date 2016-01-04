@@ -42,6 +42,7 @@ class Network:
 
     def fully(self, size=1024, activation=tf.nn.relu, W=0.1, b=0.1):
         print self.output().get_shape().as_list()[1:]
+        print type(self.output().get_shape().as_list()[1:])
         dim = 1
         for d in self.output().get_shape().as_list()[1:]:
             dim *= d
