@@ -24,7 +24,7 @@ class Network:
     def conv(self, width, height, in_depth, out_depth, stride=1, W=0.1, b=0.1):
         W = tf.Variable(tf.truncated_normal([width, height, in_depth, out_depth], stddev=W))
         b = tf.Variable(tf.constant(b, shape=[out_depth]))
-        conv = tf.nn.conv2d(self.output(), W, strides=stride * 4, padding='SAME')
+        conv = tf.nn.conv2d(self.output(), W, strides=[stride] * 4, padding='SAME')
         h = tf.nn.relu(conv + b)
 
         self.add(h)
