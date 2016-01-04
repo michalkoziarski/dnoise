@@ -41,7 +41,6 @@ class Network:
         return self
 
     def fully(self, size=1024, activation=tf.nn.relu, W=0.1, b=0.1):
-        print self.output().get_shape()
         dim = 1
         for d in self.output().get_shape()[1:].as_list():
             dim *= d
@@ -78,7 +77,8 @@ class Network:
         }) for i in range(dataset.length)]) * 100
 
     def train(self, datasets, learning_rate=0.01, momentum=0.0, epochs=10, display_step=50):
-        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(self.output(), self.y_)
+        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(self.output(),
+                                                                self.y_)
         cross_entropy_mean = tf.reduce_mean(cross_entropy)
         train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(cross_entropy_mean)
 
