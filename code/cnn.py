@@ -42,7 +42,7 @@ class Network:
 
     def fully(self, size=1024, activation=tf.nn.relu, W=0.1, b=0.1):
         dim = 1
-        for d in tf.shape(self.output())[1:].as_list():
+        for d in tf.shape(self.output())[1:]:
             dim *= d
 
         W = tf.Variable(tf.truncated_normal([dim, size], stddev=W))
