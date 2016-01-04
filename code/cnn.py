@@ -55,7 +55,10 @@ class Network:
         return self
 
     def softmax(self):
-        return self.fully(size=self.output_shape[0], activation=tf.nn.softmax)
+        softmax = self.fully(size=self.output_shape[0], activation=tf.nn.softmax)
+        self.add(softmax)
+
+        return self
 
     def dropout(self):
         dropout = tf.nn.dropout(self.output(), self.keep_prob)
