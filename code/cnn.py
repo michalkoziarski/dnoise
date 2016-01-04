@@ -109,6 +109,7 @@ class CNN(Network):
             pool(). \
             conv(5, 5, 128, 256).\
             conv(5, 5, 256, 256).\
+            pool(). \
             fully(768).\
             dropout().\
             softmax()
