@@ -101,7 +101,7 @@ class Network:
 
 class CNN(Network):
     def setup(self):
-        self.conv(3, 3, 3, 64).\
+        self.conv(3, 3, self.input_shape[2], 64).\
             conv(3, 3, 64, 64).\
             pool().\
             conv(3, 3, 64, 128).\
