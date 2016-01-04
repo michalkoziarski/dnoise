@@ -77,6 +77,7 @@ class Network:
         }) for i in range(dataset.length)]) * 100
 
     def train(self, datasets, learning_rate=0.01, momentum=0.0, epochs=10, display_step=50):
+        print self.y_
         cross_entropy = tf.nn.softmax_cross_entropy_with_logits(self.output(),
                                                                 self.y_)
         cross_entropy_mean = tf.reduce_mean(cross_entropy)
