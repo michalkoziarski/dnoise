@@ -42,7 +42,7 @@ class Network:
 
     def fully(self, size=1024, activation=tf.nn.relu, W=0.1, b=0.1):
         dim = 1
-        for d in self.output().get_shape()[1:].as_list():
+        for d in tf.shape(self.output())[1:].as_list():
             dim *= d
 
         W = tf.Variable(tf.truncated_normal([dim, size], stddev=W))
@@ -106,10 +106,10 @@ class CNN(Network):
             pool().\
             conv(3, 3, 64, 128).\
             conv(3, 3, 128, 128).\
-            pool(). \
+            pool().\
             conv(5, 5, 128, 256).\
             conv(5, 5, 256, 256).\
-            pool(). \
+            pool().\
             fully(768).\
             dropout().\
             softmax()
