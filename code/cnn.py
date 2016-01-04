@@ -73,7 +73,7 @@ class Network:
                self.keep_prob: 1.0
         }) for i in range(dataset.length)]) * 100
 
-    def train(self, datasets, learning_rate=0.01, momentum=0.0, epochs=10, display_step=50):
+    def train(self, datasets, learning_rate=0.001, momentum=0.9, epochs=10, display_step=50):
         cross_entropy = -tf.reduce_sum(self.y_ * tf.log(self.output()))
         train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(cross_entropy)
 
