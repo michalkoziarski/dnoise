@@ -73,7 +73,7 @@ class Network:
                self.keep_prob: 1.0
         }) for i in range(dataset.length)]) * 100
 
-    def train(self, datasets, learning_rate=0.01, momentum=0.9, epochs=10, display_step=50):
+    def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=10, display_step=50):
         cross_entropy = -tf.reduce_sum(self.y_ * tf.log(tf.clip_by_value(self.output(), 1e-9, 1.0)))
         train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(cross_entropy)
 
@@ -100,15 +100,15 @@ class Network:
 
 class CNN(Network):
     def setup(self):
-        self.conv(3, 3, self.input_shape[2], 64).\
+        self.conv(3, 3, self.input_shape[2], 32).\
+            conv(3, 3, 32, 32).\
+            pool().\
+            conv(3, 3, 32, 64).\
             conv(3, 3, 64, 64).\
             pool().\
-            conv(3, 3, 64, 128).\
-            conv(3, 3, 128, 128).\
+            conv(5, 5, 64, 128).\
+            conv(5, 5, 128, 128).\
             pool().\
-            conv(5, 5, 128, 256).\
-            conv(5, 5, 256, 256).\
-            pool().\
-            fully(768).\
+            fully(1024).\
             dropout().\
             softmax()
