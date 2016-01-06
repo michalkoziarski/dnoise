@@ -127,8 +127,8 @@ class DataSet(Batch):
         Batch.__init__(self, images, targets)
 
     def batch(self):
-        batch_images = self.images[self.current_index:(self.current_index + self.batch_size)]
-        batch_targets = self.targets[self.current_index:(self.current_index + self.batch_size)]
+        batch_images = self._images[self.current_index:(self.current_index + self.batch_size)]
+        batch_targets = self._targets[self.current_index:(self.current_index + self.batch_size)]
 
         self.current_index += self.batch_size
 
@@ -138,8 +138,8 @@ class DataSet(Batch):
 
             perm = np.random.permutation(self.length)
 
-            self.images = self.images[perm]
-            self.targets = self.targets[perm]
+            self._images = self._images[perm]
+            self._targets = self._targets[perm]
 
         return Batch(batch_images, batch_targets)
 
