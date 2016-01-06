@@ -130,7 +130,7 @@ class Denoising(Network):
         return np.mean([l2loss.eval(feed_dict={
                self.x: np.reshape(dataset._images[i].noisy().get(), [-1] + self.input_shape),
                self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape)
-        }) for i in range(dataset.length)]) / dataset.length
+        }) for i in range(dataset.length)])
 
     def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=10, display_step=50, std=0.1, visualize=0):
         if visualize > 0:
