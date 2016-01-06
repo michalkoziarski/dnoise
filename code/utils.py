@@ -66,13 +66,12 @@ class Image:
                      normalize=self.normalize, noise=True, noise_mean=mean, noise_std=std)
 
     def display(self, path=None):
-        plt.imshow(self.get())
-        plt.axis('off')
-
         if path is None:
+            plt.imshow(self.get())
+            plt.axis('off')
             plt.show()
         else:
-            plt.savefig(path, bbox_inches='tight')
+            plt.imsave(path, self.get())
 
 
 class Label:
