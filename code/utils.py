@@ -71,44 +71,64 @@ class Image:
         plt.show()
 
 
-class Batch:
-    def __init__(self, images, labels, noise=False, noise_mean=0.0, noise_std=0.1):
-        if noise:
-            self.images = [image.noisy(noise_mean, noise_std) for image in images]
-        else:
-            self.images = images
+class Label:
+    def __init__(self, label, one_hot=True, dictionary=None, length=None):
+        if one_hot is True and dictionary is None and length is None:
+            raise ValueError('If one_hot is true needs either dictionary or length')
 
-        self.labels = labels
+        if one_hot:
+            if dictionary is None:
+                dictionary = range(length)
+
+            if length is None:
+                length = len(dictionary)
+
+            self.label = np.zeros(length)
+            self.label[dictionary.index(label)] = 1
+        else:
+            self.label = label
+
+    def get(self):
+        return self.label
+
+
+class Batch:
+    def __init__(self, images, targets, noise=False, noise_mean=0.0, noise_std=0.1):
+        if noise:
+            self._images = [image.noisy(noise_mean, noise_std) for image in images]
+        else:
+            self._images = images
+
+        self._targets = targets
         self.noise = noise
         self.noise_mean = noise_mean
         self.noise_std = noise_std
-        self._tensor = None
 
-    def tensor(self):
-        if self._tensor is None:
-            self._tensor = np.array([image.get() for image in self.images])
+    def images(self):
+        return np.array([image.get() for image in self._images])
 
-        return self._tensor
+    def targets(self):
+        return np.array([target.get() for target in self._targets])
 
     def noisy(self, mean=0.0, std=0.1):
-        return Batch(images=self.images, labels=self.labels, noise=True, noise_mean=mean, noise_std=std)
+        return Batch(images=self._images, targets=self._targets, noise=True, noise_mean=mean, noise_std=std)
 
 
 class DataSet(Batch):
-    def __init__(self, images, labels, batch_size=128):
-        if len(images) != len(labels):
-            raise ValueError('Images and labels should have the same size')
+    def __init__(self, images, targets, batch_size=128):
+        if len(images) != len(targets):
+            raise ValueError('Images and targets should have the same size')
 
         self.batch_size = batch_size
         self.length = len(images)
         self.epochs_completed = 0
         self.current_index = 0
 
-        Batch.__init__(self, images, labels)
+        Batch.__init__(self, images, targets)
 
     def batch(self):
         batch_images = self.images[self.current_index:(self.current_index + self.batch_size)]
-        batch_labels = self.labels[self.current_index:(self.current_index + self.batch_size)]
+        batch_targets = self.targets[self.current_index:(self.current_index + self.batch_size)]
 
         self.current_index += self.batch_size
 
@@ -119,21 +139,21 @@ class DataSet(Batch):
             perm = np.random.permutation(self.length)
 
             self.images = self.images[perm]
-            self.labels = self.labels[perm]
+            self.targets = self.targets[perm]
 
-        return Batch(batch_images, batch_labels)
-        
+        return Batch(batch_images, batch_targets)
+
 
 class DataSets:
-    def __init__(self, images, labels, batch_size=128, split=(0.6, 0.2, 0.2)):
+    def __init__(self, images, targets, batch_size=128, split=(0.6, 0.2, 0.2)):
         if sum(split) != 1.0:
             raise ValueError('Values of split should sum up to 1.0')
 
-        if len(images) != len(labels):
-            raise ValueError('Images and labels should have the same size')
+        if len(images) != len(targets):
+            raise ValueError('Images and targets should have the same size')
 
         self.length = len(images)
-        
+
         train_len = int(self.length * split[0])
         valid_len = int(self.length * split[1])
 
@@ -145,15 +165,15 @@ class DataSets:
         test_idxs = [idx for idx in idxs if idx not in valid_idxs]
 
         train_images = np.array(images)[train_idxs]
-        train_labels = np.array(labels)[train_idxs]
+        train_targets = np.array(targets)[train_idxs]
         valid_images = np.array(images)[valid_idxs]
-        valid_labels = np.array(labels)[valid_idxs]
+        valid_targets = np.array(targets)[valid_idxs]
         test_images = np.array(images)[test_idxs]
-        test_labels = np.array(labels)[test_idxs]
+        test_targets = np.array(targets)[test_idxs]
 
-        self.train = DataSet(train_images, train_labels, batch_size)
-        self.valid = DataSet(valid_images, valid_labels, batch_size)
-        self.test = DataSet(test_images, test_labels, batch_size)
+        self.train = DataSet(train_images, train_targets, batch_size)
+        self.valid = DataSet(valid_images, valid_targets, batch_size)
+        self.test = DataSet(test_images, test_targets, batch_size)
 
 
 def load_face_image(batch_size=128, split=(0.6, 0.2, 0.2), shape=(64, 64), keep_in_memory=True, preload=False):
@@ -195,16 +215,14 @@ def load_face_image(batch_size=128, split=(0.6, 0.2, 0.2), shape=(64, 64), keep_
     df['label'] = df['gender'].astype(str) + '_' + df['age'].astype(str)
 
     images = []
-    labels = []
+    targets = []
 
     for _, row in df.iterrows():
         path, _, _, label = row
-        one_hot = np.zeros(len(dictionary))
-        one_hot[dictionary.index(label)] = 1
         images.append(Image(path=path, shape=shape, keep_in_memory=keep_in_memory, preload=preload))
-        labels.append(one_hot)
+        targets.append(Label(label, dictionary=dictionary))
 
-    return DataSets(images, labels, batch_size, split)
+    return DataSets(images, targets, batch_size, split)
 
 
 def load_mnist(batch_size=128, split=(0.6, 0.2, 0.2)):
@@ -219,18 +237,15 @@ def load_mnist(batch_size=128, split=(0.6, 0.2, 0.2)):
         urllib.urlretrieve(url, csv_path)
 
     images = []
-    labels = []
+    targets = []
 
     matrix = pd.read_csv(csv_path).as_matrix()
 
     for row in matrix:
-        one_hot = np.zeros(10)
-        one_hot[row[0]] = 1
-        image = np.reshape(row[1:], (28, 28))
-        images.append(Image(image=image))
-        labels.append(one_hot)
+        images.append(Image(image=np.reshape(row[1:], (28, 28))))
+        targets.append(Label(row[0], length=10))
 
-    return DataSets(images, labels, batch_size, split)
+    return DataSets(images, targets, batch_size, split)
 
 
 def load_cifar(batch_size=128, split=(0.6, 0.2, 0.2)):
@@ -250,7 +265,7 @@ def load_cifar(batch_size=128, split=(0.6, 0.2, 0.2)):
             tar.extractall(root_path)
 
     images = []
-    labels = []
+    targets = []
 
     files = ['data_batch_%d' % i for i in range(1, 6)] + ['test_batch']
     paths = map(lambda x: os.path.join(data_path, x), files)
@@ -260,13 +275,11 @@ def load_cifar(batch_size=128, split=(0.6, 0.2, 0.2)):
             dict = cPickle.load(f)
 
         for i in range(len(dict['labels'])):
-            one_hot = np.zeros(10)
-            one_hot[dict['labels'][i]] = 1
             image = np.reshape(dict['data'][i], (3, 32, 32)).transpose(1, 2, 0)
             images.append(Image(image=image))
-            labels.append(one_hot)
+            targets.append(Label(dict['labels'][i], length=10))
 
-    return DataSets(images, labels, batch_size, split)
+    return DataSets(images, targets, batch_size, split)
 
 
 def load_gtsrb(batch_size=128, split=(0.6, 0.2, 0.2), shape=(32, 32), keep_in_memory=True, preload=False):
@@ -287,19 +300,17 @@ def load_gtsrb(batch_size=128, split=(0.6, 0.2, 0.2), shape=(32, 32), keep_in_me
             z.extractall(root_path)
 
     images = []
-    labels = []
+    targets = []
 
     class_dirs = [o for o in os.listdir(img_path) if os.path.isdir(os.path.join(img_path, o))]
 
     for class_dir in class_dirs:
         label = int(class_dir)
-        one_hot = np.zeros(43)
-        one_hot[label] = 1
         class_path = os.path.join(img_path, class_dir)
         paths = [os.path.join(class_path, f) for f in os.listdir(class_path) if f.endswith('.ppm')]
 
         for path in paths:
             images.append(Image(path=path, shape=shape, keep_in_memory=keep_in_memory, preload=preload))
-            labels.append(one_hot)
+            targets.append(Label(label, length=43))
 
-    return DataSets(images, labels, batch_size, split)
+    return DataSets(images, targets, batch_size, split)
