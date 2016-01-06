@@ -62,13 +62,17 @@ class Image:
         return image
 
     def noisy(self, mean=0.0, std=0.1):
-        return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=self.keep_in_memory,
-                     preload=self.preload, normalize=self.normalize, noise=True, noise_mean=mean, noise_std=std)
+        return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True,
+                     normalize=self.normalize, noise=True, noise_mean=mean, noise_std=std)
 
-    def display(self):
+    def display(self, path=None):
         plt.imshow(self.get())
         plt.axis('off')
-        plt.show()
+
+        if path is None:
+            plt.show()
+        else:
+            plt.savefig(path, bbox_inches='tight')
 
 
 class Label:
@@ -129,11 +133,14 @@ class DataSet(Batch):
 
         Batch.__init__(self, images, targets)
 
-    def batch(self):
-        batch_images = self._images[self.current_index:(self.current_index + self.batch_size)]
-        batch_targets = self._targets[self.current_index:(self.current_index + self.batch_size)]
+    def batch(self, size=None):
+        if size is None:
+            size = self.batch_size
 
-        self.current_index += self.batch_size
+        batch_images = self._images[self.current_index:(self.current_index + size)]
+        batch_targets = self._targets[self.current_index:(self.current_index + size)]
+
+        self.current_index += size
 
         if self.current_index >= self.length:
             self.current_index = 0

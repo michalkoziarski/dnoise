@@ -132,7 +132,24 @@ class Denoising(Network):
                self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape)
         }) for i in range(dataset.length)]) / dataset.length
 
-    def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=10, display_step=50):
+    def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=10, display_step=50, visualize=0):
+        if visualize > 0:
+            import os
+
+            from utils import Image
+
+            clean_images = datasets.test.batch(visualize)
+            noisy_images = clean_images.noisy()
+
+            root_path = '../results'
+
+            if not os.path.exists(root_path):
+                os.makedirs(root_path)
+
+            for i in range(visualize):
+                clean_images._images[i].display(os.path.join(root_path, 'original_image_%d.jpg' % i))
+                noisy_images._images[i].display(os.path.join(root_path, 'noisy_image_%d.jpg' % i))
+
         batch_size = tf.placeholder(tf.float32)
         l2loss = tf.reduce_sum(tf.nn.l2_loss(self.y_ - self.output())) / batch_size
         train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(l2loss)
@@ -145,6 +162,13 @@ class Denoising(Network):
                 if batches_completed % display_step == 0:
                     print 'batch #%d, L2 loss = %f' % \
                           (batches_completed, self.accuracy(datasets.valid))
+
+                    for i in range(visualize):
+                        image = self.output().eval(feed_dict={
+                            self.x: np.reshape(noisy_images._images[i].get(), [1] + self.input_shape)
+                        })
+
+                        Image(image=image).display(os.path.join(root_path, 'denoised_image_%d.jpg' % i))
 
                 batch = datasets.train.batch()
 
