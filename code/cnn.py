@@ -69,7 +69,7 @@ class Network:
 
         return np.mean([accuracy.eval(feed_dict={
                self.x: np.reshape(dataset._images[i].get(), [-1] + self.input_shape),
-               self.y_: [dataset._targets[i]],
+               self.y_: [dataset._targets[i].get()],
                self.keep_prob: 1.0
         }) for i in range(dataset.length)]) * 100
 
