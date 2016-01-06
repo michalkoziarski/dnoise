@@ -68,8 +68,8 @@ class Network:
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         return np.mean([accuracy.eval(feed_dict={
-               self.x: np.reshape(dataset.images[i].get(), [-1] + self.input_shape),
-               self.y_: [dataset.labels[i]],
+               self.x: np.reshape(dataset._images[i].get(), [-1] + self.input_shape),
+               self.y_: [dataset._targets[i]],
                self.keep_prob: 1.0
         }) for i in range(dataset.length)]) * 100
 
@@ -89,8 +89,8 @@ class Network:
                 batch = datasets.train.batch()
 
                 train_op.run(feed_dict={
-                    self.x: np.reshape(batch.tensor(), [-1] + self.input_shape),
-                    self.y_: batch.labels, self.keep_prob: 0.5
+                    self.x: np.reshape(batch.images(), [-1] + self.input_shape),
+                    self.y_: batch.targets(), self.keep_prob: 0.5
                 })
 
                 batches_completed += 1
