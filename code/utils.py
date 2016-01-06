@@ -65,13 +65,18 @@ class Image:
         return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True,
                      normalize=self.normalize, noise=True, noise_mean=mean, noise_std=std)
 
-    def display(self, path=None):
+    def display(self, path=None, size=(128, 128)):
+        image = self.get()
+
+        if size is not None:
+            image = misc.imresize(image, size)
+
         if path is None:
-            plt.imshow(self.get())
+            plt.imshow(image)
             plt.axis('off')
             plt.show()
         else:
-            plt.imsave(path, self.get())
+            plt.imsave(path, image)
 
 
 class Label:
