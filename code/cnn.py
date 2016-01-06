@@ -164,9 +164,9 @@ class Denoising(Network):
                           (batches_completed, self.accuracy(datasets.valid))
 
                     for i in range(visualize):
-                        image = self.output().eval(feed_dict={
+                        image = np.reshape(self.output().eval(feed_dict={
                             self.x: np.reshape(noisy_images._images[i].get(), [1] + self.input_shape)
-                        })
+                        }), self.input_shape)
 
                         Image(image=image).display(os.path.join(root_path, 'denoised_image_%d.jpg' % i))
 
