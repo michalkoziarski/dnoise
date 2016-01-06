@@ -132,14 +132,14 @@ class Denoising(Network):
                self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape)
         }) for i in range(dataset.length)]) / dataset.length
 
-    def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=10, display_step=50, visualize=0):
+    def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=10, display_step=50, std=0.1, visualize=0):
         if visualize > 0:
             import os
 
             from utils import Image
 
             clean_images = datasets.test.batch(visualize)
-            noisy_images = clean_images.noisy()
+            noisy_images = clean_images.noisy(std=std)
 
             root_path = '../results'
 
@@ -168,7 +168,9 @@ class Denoising(Network):
                             self.x: np.reshape(noisy_images._images[i].get(), [1] + self.input_shape)
                         }), self.input_shape)
 
-                        Image(image=image).display(os.path.join(root_path, 'denoised_image_%d.jpg' % (i + 1)))
+                        Image(image=image).display(
+                            os.path.join(root_path, 'denoised_image_%d_batch_%d.jpg' % (i + 1, batches_completed))
+                        )
 
                 batch = datasets.train.batch()
 
