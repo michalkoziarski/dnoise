@@ -133,7 +133,7 @@ class Denoising(Network):
         }) for i in range(dataset.length)]) / dataset.length
 
     def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=10, display_step=50):
-        batch_size = tf.placeholder(tf.int8)
+        batch_size = tf.placeholder(tf.float32)
         l2loss = tf.reduce_sum(tf.nn.l2_loss(self.y_ - self.output())) / batch_size
         train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(l2loss)
 
