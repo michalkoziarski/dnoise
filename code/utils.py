@@ -177,6 +177,7 @@ class DataSets:
         idxs = [idx for idx in idxs if idx not in train_idxs]
         valid_idxs = np.random.choice(idxs, valid_len)
         test_idxs = [idx for idx in idxs if idx not in valid_idxs]
+        np.random.shuffle(test_idxs)
 
         train_images = np.array(images)[train_idxs]
         train_targets = np.array(targets)[train_idxs]
