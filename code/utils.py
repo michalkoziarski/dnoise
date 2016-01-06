@@ -113,6 +113,9 @@ class Batch:
     def noisy(self, mean=0.0, std=0.1):
         return Batch(images=self._images, targets=self._targets, noise=True, noise_mean=mean, noise_std=std)
 
+    def size(self):
+        return len(self._images)
+
 
 class DataSet(Batch):
     def __init__(self, images, targets, batch_size=128):
