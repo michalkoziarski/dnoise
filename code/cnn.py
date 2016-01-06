@@ -147,8 +147,8 @@ class Denoising(Network):
                 os.makedirs(root_path)
 
             for i in range(visualize):
-                clean_images._images[i].display(os.path.join(root_path, 'original_image_%d.jpg' % i))
-                noisy_images._images[i].display(os.path.join(root_path, 'noisy_image_%d.jpg' % i))
+                clean_images._images[i].display(os.path.join(root_path, 'original_image_%d.jpg' % (i + 1)))
+                noisy_images._images[i].display(os.path.join(root_path, 'noisy_image_%d.jpg' % (i + 1)))
 
         batch_size = tf.placeholder(tf.float32)
         l2loss = tf.reduce_sum(tf.nn.l2_loss(self.y_ - self.output())) / batch_size
@@ -168,7 +168,7 @@ class Denoising(Network):
                             self.x: np.reshape(noisy_images._images[i].get(), [1] + self.input_shape)
                         }), self.input_shape)
 
-                        Image(image=image).display(os.path.join(root_path, 'denoised_image_%d.jpg' % i))
+                        Image(image=image).display(os.path.join(root_path, 'denoised_image_%d.jpg' % (i + 1)))
 
                 batch = datasets.train.batch()
 
