@@ -1,3 +1,4 @@
+import os
 import tensorflow as tf
 import numpy as np
 
@@ -93,18 +94,37 @@ class CNN(Network):
                self.keep_prob: 1.0
         }) for i in range(dataset.length)]) * 100
 
-    def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=10, display_step=50):
+    def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=10, display_step=50, log='classification'):
         cross_entropy = -tf.reduce_sum(self.y_ * tf.log(tf.clip_by_value(self.output(), 1e-9, 1.0)))
         train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(cross_entropy)
+
+        if log is not None:
+            from time import gmtime, strftime
+
+            root_path = '../results'
+
+            if not os.path.exists(root_path):
+                os.makedirs(root_path)
+
+            log_path = os.path.join(root_path, '%s_%s.log' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()), log))
+
+            with open(log_path, 'w') as f:
+                f.write('epoch,batch,score')
 
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
             batches_completed = 0
 
             while datasets.train.epochs_completed < epochs:
+                accuracy = self.accuracy(datasets.valid)
+
+                if log is not None:
+                    with open(log_path, 'a') as f:
+                        f.write('%d,%d,%f' % (datasets.train.epochs_completed, batches_completed, accuracy))
+
                 if batches_completed % display_step == 0:
                     print 'batch #%d, validation accuracy = %f%%' % \
-                          (batches_completed, self.accuracy(datasets.valid))
+                          (batches_completed, accuracy)
 
                 batch = datasets.train.batch()
 
@@ -115,7 +135,13 @@ class CNN(Network):
 
                 batches_completed += 1
 
-            print 'test accuracy = %f%%' % self.accuracy(datasets.test)
+            accuracy = self.accuracy(datasets.test)
+
+            if log is not None:
+                with open(log_path, 'a') as f:
+                    f.write('%d,%d,%f' % (-1, -1, accuracy))
+
+            print 'test accuracy = %f%%' % accuracy
 
 
 class Denoising(Network):
@@ -132,10 +158,9 @@ class Denoising(Network):
                self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape)
         }) for i in range(dataset.length)])
 
-    def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=10, display_step=50, std=0.1, visualize=0):
+    def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=10, display_step=50, std=0.1, visualize=0,
+              log='denoising'):
         if visualize > 0:
-            import os
-
             from utils import Image
 
             clean_images = datasets.test.batch(visualize)
@@ -150,6 +175,19 @@ class Denoising(Network):
                 clean_images._images[i].display(os.path.join(root_path, 'original_image_%d.jpg' % (i + 1)))
                 noisy_images._images[i].display(os.path.join(root_path, 'noisy_image_%d.jpg' % (i + 1)))
 
+        if log is not None:
+            from time import gmtime, strftime
+
+            root_path = '../results'
+
+            if not os.path.exists(root_path):
+                os.makedirs(root_path)
+
+            log_path = os.path.join(root_path, '%s_%s.log' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()), log))
+
+            with open(log_path, 'w') as f:
+                f.write('epoch,batch,score')
+
         batch_size = tf.placeholder(tf.float32)
         l2loss = tf.reduce_sum(tf.nn.l2_loss(self.y_ - self.output())) / batch_size
         train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(l2loss)
@@ -160,8 +198,14 @@ class Denoising(Network):
 
             while datasets.train.epochs_completed < epochs:
                 if batches_completed % display_step == 0:
+                    accuracy = self.accuracy(datasets.valid)
+
+                    if log is not None:
+                        with open(log_path, 'a') as f:
+                            f.write('%d,%d,%f' % (datasets.train.epochs_completed, batches_completed, accuracy))
+
                     print 'batch #%d, L2 loss = %f' % \
-                          (batches_completed, self.accuracy(datasets.valid))
+                          (batches_completed, accuracy)
 
                     for i in range(visualize):
                         image = np.reshape(self.output().eval(feed_dict={
@@ -182,4 +226,10 @@ class Denoising(Network):
 
                 batches_completed += 1
 
-            print 'test L2 loss = %f' % self.accuracy(datasets.test)
+            accuracy = self.accuracy(datasets.test)
+
+            if log is not None:
+                with open(log_path, 'a') as f:
+                    f.write('%d,%d,%f' % (-1, -1, accuracy))
+
+            print 'test L2 loss = %f' % accuracy
