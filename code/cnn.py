@@ -109,7 +109,7 @@ class CNN(Network):
             log_path = os.path.join(root_path, '%s_%s.log' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()), log))
 
             with open(log_path, 'w') as f:
-                f.write('epoch,batch,score')
+                f.write('epoch,batch,score\n')
 
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
@@ -121,7 +121,7 @@ class CNN(Network):
 
                     if log is not None:
                         with open(log_path, 'a') as f:
-                            f.write('%d,%d,%f' % (datasets.train.epochs_completed, batches_completed, accuracy))
+                            f.write('%d,%d,%f\n' % (datasets.train.epochs_completed, batches_completed, accuracy))
 
                     print 'batch #%d, validation accuracy = %f%%' % \
                           (batches_completed, accuracy)
@@ -139,7 +139,7 @@ class CNN(Network):
 
             if log is not None:
                 with open(log_path, 'a') as f:
-                    f.write('%d,%d,%f' % (-1, -1, accuracy))
+                    f.write('%d,%d,%f\n' % (-1, -1, accuracy))
 
             print 'test accuracy = %f%%' % accuracy
 
@@ -186,7 +186,7 @@ class Denoising(Network):
             log_path = os.path.join(root_path, '%s_%s.log' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()), log))
 
             with open(log_path, 'w') as f:
-                f.write('epoch,batch,score')
+                f.write('epoch,batch,score\n')
 
         batch_size = tf.placeholder(tf.float32)
         l2loss = tf.reduce_sum(tf.nn.l2_loss(self.y_ - self.output())) / batch_size
@@ -202,7 +202,7 @@ class Denoising(Network):
 
                     if log is not None:
                         with open(log_path, 'a') as f:
-                            f.write('%d,%d,%f' % (datasets.train.epochs_completed, batches_completed, accuracy))
+                            f.write('%d,%d,%f\n' % (datasets.train.epochs_completed, batches_completed, accuracy))
 
                     print 'batch #%d, L2 loss = %f' % \
                           (batches_completed, accuracy)
@@ -230,6 +230,6 @@ class Denoising(Network):
 
             if log is not None:
                 with open(log_path, 'a') as f:
-                    f.write('%d,%d,%f' % (-1, -1, accuracy))
+                    f.write('%d,%d,%f\n' % (-1, -1, accuracy))
 
             print 'test L2 loss = %f' % accuracy
