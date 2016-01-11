@@ -116,13 +116,13 @@ class CNN(Network):
             batches_completed = 0
 
             while datasets.train.epochs_completed < epochs:
-                accuracy = self.accuracy(datasets.valid)
-
-                if log is not None:
-                    with open(log_path, 'a') as f:
-                        f.write('%d,%d,%f' % (datasets.train.epochs_completed, batches_completed, accuracy))
-
                 if batches_completed % display_step == 0:
+                    accuracy = self.accuracy(datasets.valid)
+
+                    if log is not None:
+                        with open(log_path, 'a') as f:
+                            f.write('%d,%d,%f' % (datasets.train.epochs_completed, batches_completed, accuracy))
+
                     print 'batch #%d, validation accuracy = %f%%' % \
                           (batches_completed, accuracy)
 
