@@ -173,9 +173,9 @@ class DataSets:
 
         idxs = range(self.length)
 
-        train_idxs = np.random.choice(idxs, train_len)
+        train_idxs = np.random.choice(idxs, train_len, replace=False)
         idxs = [idx for idx in idxs if idx not in train_idxs]
-        valid_idxs = np.random.choice(idxs, valid_len)
+        valid_idxs = np.random.choice(idxs, valid_len, replace=False)
         test_idxs = [idx for idx in idxs if idx not in valid_idxs]
         np.random.shuffle(test_idxs)
 
