@@ -13,3 +13,6 @@ if not os.path.exists(root_path):
 
 if not os.path.exists(img_path):
     urllib.urlretrieve(img_url, img_path)
+
+image = code.utils.Image(path=img_path).noisy(noise=code.utils.QuantizationNoise(q=0.5))
+image.display(size=(512, 512))
