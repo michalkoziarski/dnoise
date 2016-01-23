@@ -1,12 +1,13 @@
 import os
 import urllib
-import tensorflow as tf
 
-from dnoise import utils, noise
+from dnoise.utils import *
+from dnoise.noise import *
 
 
 data_path = '../data'
 results_path = '../results'
+log_path = os.path.join(results_path, 'noise.log')
 img_url = 'http://sipi.usc.edu/database/download.php?vol=misc&img=4.2.04'
 img_name = 'lenna.tiff'
 img_path = os.path.join(data_path, img_name)
@@ -18,24 +19,33 @@ for path in [data_path, results_path]:
 if not os.path.exists(img_path):
     urllib.urlretrieve(img_url, img_path)
 
-image = utils.Image(path=img_path)
+with open(log_path, 'w') as f:
+    f.write('name,mse,psnr,ssim\n')
+
+image = Image(path=img_path)
 image.display(path=os.path.join(results_path, 'lenna.png'))
 
-with tf.Session() as sess:
-    noisy = image.noisy(noise.PhotonCountingNoise())
+x = image.get()
 
-    x = image.get()
+
+def process_and_log(noise, name):
+    noisy = image.noisy(noise)
+    noisy.display(os.path.join(results_path, '%s.png' % name))
+
     y = noisy.get()
 
-    print noise.mse(x, y)
-    print noise.psnr(x, y)
-    print noise.ssim(x, y)
+    with open(log_path, 'a') as f:
+        f.write('%s,%f,%f,%f\n' % (name, mse(x, y), psnr(x, y), ssim(x, y)))
 
-    x = tf.Variable(x)
-    y = tf.Variable(y)
 
-    sess.run(tf.initialize_all_variables())
+with tf.Session() as sess:
+    for std in [0.05, 0.1, 0.2, 0.5]:
+        process_and_log(GaussianNoise(std=std), 'gaussian_%.2f' % std)
 
-    print noise.tf_mse(x, y).eval()
-    print noise.tf_psnr(x, y).eval()
-    print noise.tf_ssim(x, y).eval()
+    for p in [0.05, 0.1, 0.2, 0.5]:
+        process_and_log(SaltAndPepperNoise(p=p), 'salt_and_pepper_%.2f' % p)
+
+    for q in [0.05, 0.1, 0.2, 0.5]:
+        process_and_log(QuantizationNoise(q=q), 'quantization_%.2f' % q)
+
+    process_and_log(PhotonCountingNoise(), 'photon_counting')
