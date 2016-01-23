@@ -25,10 +25,10 @@ class Noise:
 
 class GaussianNoise(Noise):
     def __init__(self, std=0.05, mean=0.0, scale=DEFAULT_SCALE):
+        Noise.__init__(self, scale)
+
         self.std = std
         self.mean = mean
-
-        Noise.__init__(scale)
 
     def __apply(self, image):
         return image + np.random.normal(self.mean, self.std, image.shape)
@@ -36,9 +36,9 @@ class GaussianNoise(Noise):
 
 class SaltAndPepperNoise(Noise):
     def __init__(self, p=0.05, scale=DEFAULT_SCALE):
-        self.p = p
+        Noise.__init__(self, scale)
 
-        Noise.__init__(scale)
+        self.p = p
 
     def __apply(self, image):
         noisy = np.copy(image)
@@ -53,9 +53,9 @@ class SaltAndPepperNoise(Noise):
 
 class QuantizationNoise(Noise):
     def __init__(self, q=0.01, scale=DEFAULT_SCALE):
-        self.q = q
+        Noise.__init__(self, scale)
 
-        Noise.__init__(scale)
+        self.q = q
 
     def __apply(self, image):
         return image + self.q * np.random.random(image.shape)
