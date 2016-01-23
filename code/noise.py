@@ -66,12 +66,20 @@ class PhotonCountingNoise(Noise):
 
 
 def mse(x, y):
-    pass
+    return np.mean(np.power(x - y, 2))
 
 
-def psnr(x, y):
-    pass
+def psnr(x, y, max=1.0):
+    return 20 * np.log10(max) - 10 * np.log10(np.max([mse(x, y), 1e-20]))
 
 
-def ssim(x, y):
-    pass
+def ssim(x, y, l=1.0, k1=0.01, k2=0.03):
+    mean_x = np.mean(x)
+    mean_y = np.mean(y)
+    cov_xy = np.sum((x - mean_x) * (y - mean_y)) / (reduce(lambda a, b: a * b, x.shape, 1) - 1)
+    c1 = (k1 * l) ** 2
+    c2 = (k2 * l) ** 2
+    numerator = (2 * mean_x * mean_y + c1) * (2 * cov_xy + c2)
+    denominator = (mean_x ** 2 + mean_y ** 2 + c1) * (np.var(x) + np.var(y) + c2)
+
+    return numerator / denominator
