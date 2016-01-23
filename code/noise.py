@@ -8,11 +8,11 @@ class Noise:
     def __init__(self, scale=DEFAULT_SCALE):
         self.scale = scale
 
-    def __apply(self, image):
+    def _apply(self, image):
         raise NotImplementedError('Must be subclassed')
 
     def apply(self, image):
-        noisy = self.__apply(image)
+        noisy = self._apply(image)
 
         noisy[noisy < self.scale[0]] = self.scale[0]
         noisy[noisy > self.scale[1]] = self.scale[1]
@@ -30,7 +30,7 @@ class GaussianNoise(Noise):
         self.std = std
         self.mean = mean
 
-    def __apply(self, image):
+    def _apply(self, image):
         return image + np.random.normal(self.mean, self.std, image.shape)
 
 
@@ -40,7 +40,7 @@ class SaltAndPepperNoise(Noise):
 
         self.p = p
 
-    def __apply(self, image):
+    def _apply(self, image):
         noisy = np.copy(image)
 
         p = np.random.random(image.shape)
@@ -57,7 +57,7 @@ class QuantizationNoise(Noise):
 
         self.q = q
 
-    def __apply(self, image):
+    def _apply(self, image):
         return image + self.q * np.random.random(image.shape)
 
 
