@@ -12,7 +12,7 @@ from scipy import misc
 
 class Image:
     def __init__(self, image=None, path=None, shape=None, keep_in_memory=True, preload=False, normalize=True,
-                 noise=None):
+                 noise=None, scale=(0, 255)):
         if preload and not keep_in_memory:
             raise ValueError('Can\'t preload without keeping in memory')
 
@@ -25,15 +25,8 @@ class Image:
         self.preload = preload
         self.normalize = normalize
         self.noise = noise
+        self.scale = scale
         self.image = None
-
-        if noise is not None:
-            if self.normalize:
-                scale = (0.0, 1.0)
-            else:
-                scale = (0, 255)
-
-            self.noise.set_scale(scale)
 
         if preload or image is not None:
             self.load_and_process(image)
@@ -47,14 +40,20 @@ class Image:
     def load_and_process(self, image=None):
         if image is None:
             image = misc.imread(self.path)
+        else:
+            image = np.copy(image)
 
         if self.shape is not None:
             image = misc.imresize(image, self.shape)
 
-        if self.normalize:
+        if self.normalize and self.scale[1] != 1.0:
+            self.scale = (0, 1.0)
+
             image = image / 255.
 
         if self.noise is not None:
+            self.noise.set_scale(self.scale)
+
             image = self.noise.apply(image)
 
         if self.keep_in_memory:
@@ -64,7 +63,7 @@ class Image:
 
     def noisy(self, noise=GaussianNoise()):
         return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True, normalize=self.normalize,
-                     noise=noise)
+                     noise=noise, scale=self.scale)
 
     def display(self, path=None, size=None):
         image = self.get()
