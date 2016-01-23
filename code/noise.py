@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 
 
 DEFAULT_SCALE = (0.0, 1.0)
@@ -62,7 +63,13 @@ class QuantizationNoise(Noise):
 
 
 class PhotonCountingNoise(Noise):
-    pass
+    def _apply(self, image):
+        if self.scale[1] == 1.0:
+            image *= 255
+
+            return (image + np.random.poisson(image)) / 255.
+
+        return image + np.random.poisson(image)
 
 
 def mse(x, y):
@@ -76,10 +83,34 @@ def psnr(x, y, max=1.0):
 def ssim(x, y, l=1.0, k1=0.01, k2=0.03):
     mean_x = np.mean(x)
     mean_y = np.mean(y)
-    cov_xy = np.sum((x - mean_x) * (y - mean_y)) / (reduce(lambda a, b: a * b, x.shape, 1) - 1)
+    cov_xy = np.mean((x - mean_x) * (y - mean_y))
     c1 = (k1 * l) ** 2
     c2 = (k2 * l) ** 2
     numerator = (2 * mean_x * mean_y + c1) * (2 * cov_xy + c2)
     denominator = (mean_x ** 2 + mean_y ** 2 + c1) * (np.var(x) + np.var(y) + c2)
+
+    return numerator / denominator
+
+
+def tf_mse(x, y):
+    return tf.reduce_mean(tf.pow(x - y, 2))
+
+
+def tf_psnr(x, y, max=1.0):
+    log10 = lambda v: tf.log(v) / np.log(10)
+
+    return 20 * np.log10(max) - 10 * log10(tf.maximum(tf_mse(x, y), 1e-20))
+
+
+def tf_ssim(x, y, l=1.0, k1=0.01, k2=0.03):
+    var = lambda v: tf.reduce_mean(tf.mul(v - tf.reduce_mean(v), v - tf.reduce_mean(v)))
+
+    mean_x = tf.reduce_mean(x)
+    mean_y = tf.reduce_mean(y)
+    cov_xy = tf.reduce_mean((x - mean_x) * (y - mean_y))
+    c1 = (k1 * l) ** 2
+    c2 = (k2 * l) ** 2
+    numerator = (2 * mean_x * mean_y + c1) * (2 * cov_xy + c2)
+    denominator = (tf.mul(mean_x, mean_x) + tf.mul(mean_y, mean_y) + c1) * (var(x) + var(y) + c2)
 
     return numerator / denominator

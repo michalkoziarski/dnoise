@@ -2,6 +2,7 @@ import code.utils
 import code.noise
 import os
 import urllib
+import tensorflow as tf
 
 
 root_path = '../data'
@@ -16,11 +17,22 @@ if not os.path.exists(img_path):
     urllib.urlretrieve(img_url, img_path)
 
 image = code.utils.Image(path=img_path)
-noisy = image.noisy(code.utils.GaussianNoise(std=0.5))
 
-x = image.get()
-y = noisy.get()
+with tf.Session() as sess:
+    noisy = image.noisy(code.utils.PhotonCountingNoise())
 
-print code.noise.mse(x, y)
-print code.noise.psnr(x, y)
-print code.noise.ssim(x, y)
+    x = image.get()
+    y = noisy.get()
+
+    print code.noise.mse(x, y)
+    print code.noise.psnr(x, y)
+    print code.noise.ssim(x, y)
+
+    x = tf.Variable(x)
+    y = tf.Variable(y)
+
+    sess.run(tf.initialize_all_variables())
+
+    print code.noise.tf_mse(x, y).eval()
+    print code.noise.tf_psnr(x, y).eval()
+    print code.noise.tf_ssim(x, y).eval()

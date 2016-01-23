@@ -66,7 +66,7 @@ class Image:
         return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True, normalize=self.normalize,
                      noise=noise)
 
-    def display(self, path=None, size=(128, 128)):
+    def display(self, path=None, size=None):
         image = self.get()
 
         if size is not None:
