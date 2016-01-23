@@ -3,16 +3,16 @@ import urllib
 import tarfile
 import zipfile
 import cPickle
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from noise import *
 from scipy import misc
 
 
 class Image:
     def __init__(self, image=None, path=None, shape=None, keep_in_memory=True, preload=False, normalize=True,
-                 noise=False, noise_mean=0.0, noise_std=0.1):
+                 noise=None):
         if preload and not keep_in_memory:
             raise ValueError('Can\'t preload without keeping in memory')
 
@@ -25,9 +25,15 @@ class Image:
         self.preload = preload
         self.normalize = normalize
         self.noise = noise
-        self.noise_mean = noise_mean
-        self.noise_std = noise_std
         self.image = None
+
+        if noise is not None:
+            if self.normalize:
+                scale = (0.0, 1.0)
+            else:
+                scale = (0, 255)
+
+            self.noise.set_scale(scale)
 
         if preload or image is not None:
             self.load_and_process(image)
@@ -48,22 +54,17 @@ class Image:
         if self.normalize:
             image = image / 255.
 
-        if self.noise:
-            image += np.random.normal(self.noise_mean, self.noise_std, image.shape)
-
-            upper_bound = 1.0 if self.normalize else 255
-
-            image[image < 0] = 0
-            image[image > upper_bound] = upper_bound
+        if self.noise is not None:
+            image = self.noise.apply(image)
 
         if self.keep_in_memory:
             self.image = image
 
         return image
 
-    def noisy(self, mean=0.0, std=0.1):
-        return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True,
-                     normalize=self.normalize, noise=True, noise_mean=mean, noise_std=std)
+    def noisy(self, noise=GaussianNoise()):
+        return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True, normalize=self.normalize,
+                     noise=noise)
 
     def display(self, path=None, size=(128, 128)):
         image = self.get()
@@ -101,16 +102,14 @@ class Label:
 
 
 class Batch:
-    def __init__(self, images, targets, noise=False, noise_mean=0.0, noise_std=0.1):
-        if noise:
-            self._images = [image.noisy(noise_mean, noise_std) for image in images]
+    def __init__(self, images, targets, noise=None):
+        if noise is not None:
+            self._images = [image.noisy(noise) for image in images]
         else:
             self._images = images
 
         self._targets = targets
         self.noise = noise
-        self.noise_mean = noise_mean
-        self.noise_std = noise_std
 
     def images(self):
         return np.array([image.get() for image in self._images])
@@ -118,8 +117,8 @@ class Batch:
     def targets(self):
         return np.array([target.get() for target in self._targets])
 
-    def noisy(self, mean=0.0, std=0.1):
-        return Batch(images=self._images, targets=self._targets, noise=True, noise_mean=mean, noise_std=std)
+    def noisy(self, noise=GaussianNoise()):
+        return Batch(images=self._images, targets=self._targets, noise=noise)
 
     def size(self):
         return len(self._images)
