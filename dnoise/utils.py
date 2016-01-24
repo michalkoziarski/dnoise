@@ -40,8 +40,12 @@ class Image:
         if self.shape is not None:
             image = misc.imresize(image, self.shape)
 
-        if self.normalize and self.scale[1] != 1.0:
-            self.scale = (0, 1.0)
+            if self.normalize and self.scale[1] == 1.0:
+                image = image / 255.
+
+        if self.normalize and self.scale[1] == 255:
+            if self.keep_in_memory:
+                self.scale = (0.0, 1.0)
 
             image = image / 255.
 
