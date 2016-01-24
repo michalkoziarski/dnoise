@@ -114,7 +114,8 @@ def load_cifar(batch_size=128, split=(0.6, 0.2, 0.2)):
     return DataSets(images, targets, batch_size, split)
 
 
-def load_gtsrb(batch_size=128, split=(0.6, 0.2, 0.2), shape=(32, 32), keep_in_memory=True, preload=False):
+def load_gtsrb(batch_size=128, split=(0.6, 0.2, 0.2), shape=(32, 32), keep_in_memory=True, preload=False,
+               train_noise=None, valid_noise=None, test_noise=None):
     root_path = '../data'
     data_path = os.path.join(root_path, 'GTSRB')
     img_path = os.path.join(data_path, 'Final_Training', 'Images')
@@ -145,4 +146,5 @@ def load_gtsrb(batch_size=128, split=(0.6, 0.2, 0.2), shape=(32, 32), keep_in_me
             images.append(Image(path=path, shape=shape, keep_in_memory=keep_in_memory, preload=preload))
             targets.append(Label(label, length=43))
 
-    return DataSets(images, targets, batch_size, split)
+    return DataSets(images, targets, batch_size, split, train_noise=train_noise, valid_noise=valid_noise,
+                    test_noise=test_noise)
