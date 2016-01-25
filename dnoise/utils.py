@@ -101,7 +101,7 @@ class Label:
 class Batch:
     def __init__(self, images, targets, noise=None):
         if noise is not None:
-            self._images = [image.noisy(noise) for image in images]
+            self._images = np.array([image.noisy(noise) for image in images])
         else:
             self._images = images
 
