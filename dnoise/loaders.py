@@ -54,7 +54,7 @@ def load_face_image(batch_size=128, split=(0.6, 0.2, 0.2), shape=(64, 64), keep_
         images.append(Image(path=path, shape=shape, keep_in_memory=keep_in_memory, preload=preload))
         targets.append(Label(label, dictionary=dictionary))
 
-    return DataSets(images, targets, batch_size, split)
+    return DataSets.split(images, targets, batch_size, split)
 
 
 def load_mnist(batch_size=128, split=(0.6, 0.2, 0.2)):
@@ -77,7 +77,7 @@ def load_mnist(batch_size=128, split=(0.6, 0.2, 0.2)):
         images.append(Image(image=np.reshape(row[1:], (28, 28))))
         targets.append(Label(row[0], length=10))
 
-    return DataSets(images, targets, batch_size, split)
+    return DataSets.split(images, targets, batch_size, split)
 
 
 def load_cifar(batch_size=128, split=(0.6, 0.2, 0.2)):
@@ -111,40 +111,67 @@ def load_cifar(batch_size=128, split=(0.6, 0.2, 0.2)):
             images.append(Image(image=image))
             targets.append(Label(dict['labels'][i], length=10))
 
-    return DataSets(images, targets, batch_size, split)
+    return DataSets.split(images, targets, batch_size, split)
 
 
-def load_gtsrb(batch_size=128, split=(0.6, 0.2, 0.2), shape=(32, 32), keep_in_memory=True, preload=False,
-               train_noise=None, valid_noise=None, test_noise=None):
+def load_gtsrb(batch_size=128, shape=(32, 32), keep_in_memory=True, preload=False, train_noise=None, test_noise=None):
     root_path = '../data'
     data_path = os.path.join(root_path, 'GTSRB')
-    img_path = os.path.join(data_path, 'Final_Training', 'Images')
-    zip_path = os.path.join(root_path, 'GTSRB_Final_Training_Images.zip')
-    url = 'http://benchmark.ini.rub.de/Dataset/GTSRB_Final_Training_Images.zip'
+    train_img_path = os.path.join(data_path, 'Final_Training', 'Images')
+    test_img_path = os.path.join(data_path, 'Final_Test', 'Images')
+    annotations_path = os.path.join(root_path, 'GT-final_test.csv')
+    train_zip_path = os.path.join(root_path, 'GTSRB_Final_Training_Images.zip')
+    test_zip_path = os.path.join(root_path, 'GTSRB_Final_Test_Images.zip')
+    annotations_zip_path = os.path.join(root_path, 'GTSRB_Final_Test_GT.zip')
+    train_url = 'http://benchmark.ini.rub.de/Dataset/GTSRB_Final_Training_Images.zip'
+    test_url = 'http://benchmark.ini.rub.de/Dataset/GTSRB_Final_Test_Images.zip'
+    annotations_url = 'http://benchmark.ini.rub.de/Dataset/GTSRB_Final_Test_GT.zip'
 
     if not os.path.exists(root_path):
         os.makedirs(root_path)
 
     if not os.path.exists(data_path):
-        if not os.path.exists(zip_path):
-            urllib.urlretrieve(url, zip_path)
+        for zip_path, url in [[train_zip_path, train_url], [test_zip_path, test_url], [annotations_zip_path, annotations_url]]:
+            if not os.path.exists(zip_path):
+                urllib.urlretrieve(url, zip_path)
 
-        with zipfile.ZipFile(zip_path) as z:
-            z.extractall(root_path)
+            with zipfile.ZipFile(zip_path) as z:
+                z.extractall(root_path)
 
-    images = []
-    targets = []
+    train_images = []
+    test_images = []
+    train_targets = []
+    test_targets = []
 
-    class_dirs = [o for o in os.listdir(img_path) if os.path.isdir(os.path.join(img_path, o))]
+    class_dirs = [o for o in os.listdir(train_img_path) if os.path.isdir(os.path.join(train_img_path, o))]
 
     for class_dir in class_dirs:
         label = int(class_dir)
-        class_path = os.path.join(img_path, class_dir)
+        class_path = os.path.join(train_img_path, class_dir)
         paths = [os.path.join(class_path, f) for f in os.listdir(class_path) if f.endswith('.ppm')]
 
         for path in paths:
-            images.append(Image(path=path, shape=shape, keep_in_memory=keep_in_memory, preload=preload))
-            targets.append(Label(label, length=43))
+            train_images.append(Image(path=path, shape=shape, keep_in_memory=keep_in_memory, preload=preload))
+            train_targets.append(Label(label, length=43))
 
-    return DataSets(images, targets, batch_size, split, train_noise=train_noise, valid_noise=valid_noise,
-                    test_noise=test_noise)
+    annotations = pd.read_csv(annotations_path, sep=';')
+
+    for f in os.listdir(test_img_path):
+        if not f.endswith('.ppm'):
+            continue
+
+        path = os.path.join(test_img_path, f)
+        label = annotations[annotations['Filename'] == f]['ClassId']
+        test_images.append(Image(path=path, shape=shape, keep_in_memory=keep_in_memory, preload=preload))
+        test_targets.append(Label(label, length=43))
+
+    train_set = DataSet(train_images, train_targets, batch_size, train_noise)
+    test_set = DataSet(test_images, test_targets, batch_size, test_noise)
+
+    datasets = DataSets([], [])
+    datasets.train = train_set
+    datasets.test = test_set
+    datasets.valid = None
+    datasets.length = train_set.length + test_set.length
+
+    return datasets

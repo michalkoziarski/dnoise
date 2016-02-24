@@ -117,7 +117,10 @@ class CNN(Network):
 
             while datasets.train.epochs_completed < epochs:
                 if batches_completed % display_step == 0:
-                    accuracy = self.accuracy(datasets.valid)
+                    if datasets.valid is not None:
+                        accuracy = self.accuracy(datasets.valid)
+                    else:
+                        accuracy = self.accuracy(datasets.test)
 
                     if log is not None:
                         with open(log_path, 'a') as f:
@@ -198,7 +201,10 @@ class Denoising(Network):
 
             while datasets.train.epochs_completed < epochs:
                 if batches_completed % display_step == 0:
-                    accuracy = self.accuracy(datasets.valid)
+                    if datasets.valid is not None:
+                        accuracy = self.accuracy(datasets.valid)
+                    else:
+                        accuracy = self.accuracy(datasets.test)
 
                     if log is not None:
                         with open(log_path, 'a') as f:

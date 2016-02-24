@@ -158,7 +158,13 @@ class DataSet(Batch):
 
 
 class DataSets:
-    def __init__(self, images, targets, batch_size=128, split=(0.6, 0.2, 0.2), train_noise=None, valid_noise=None,
+    def __init__(self, train, test, valid=None):
+        self.train = train
+        self.test = test
+        self.valid = valid
+
+    @staticmethod
+    def split(images, targets, batch_size=128, split=(0.6, 0.2, 0.2), train_noise=None, valid_noise=None,
                  test_noise=None):
         if sum(split) != 1.0:
             raise ValueError('Values of split should sum up to 1.0')
@@ -166,12 +172,12 @@ class DataSets:
         if len(images) != len(targets):
             raise ValueError('Images and targets should have the same size')
 
-        self.length = len(images)
+        length = len(images)
 
-        train_len = int(self.length * split[0])
-        valid_len = int(self.length * split[1])
+        train_len = int(length * split[0])
+        valid_len = int(length * split[1])
 
-        idxs = range(self.length)
+        idxs = range(length)
 
         train_idxs = np.random.choice(idxs, train_len, replace=False)
         idxs = [idx for idx in idxs if idx not in train_idxs]
@@ -186,6 +192,8 @@ class DataSets:
         test_images = np.array(images)[test_idxs]
         test_targets = np.array(targets)[test_idxs]
 
-        self.train = DataSet(train_images, train_targets, batch_size, train_noise)
-        self.valid = DataSet(valid_images, valid_targets, batch_size, valid_noise)
-        self.test = DataSet(test_images, test_targets, batch_size, test_noise)
+        train = DataSet(train_images, train_targets, batch_size, train_noise)
+        valid = DataSet(valid_images, valid_targets, batch_size, valid_noise)
+        test = DataSet(test_images, test_targets, batch_size, test_noise)
+
+        return DataSets(train, test, valid)
