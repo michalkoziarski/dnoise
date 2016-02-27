@@ -6,7 +6,7 @@ from scipy import misc
 
 class Image:
     def __init__(self, image=None, path=None, shape=None, keep_in_memory=True, preload=False, normalize=True,
-                 noise=None, scale=(0, 255)):
+                 noise=None, scale=(0, 255), grayscale=False):
         if preload and not keep_in_memory:
             raise ValueError('Can\'t preload without keeping in memory')
 
@@ -20,6 +20,7 @@ class Image:
         self.normalize = normalize
         self.noise = noise
         self.scale = scale
+        self.grayscale = grayscale
         self.image = None
 
         if preload or image is not None:
@@ -49,6 +50,11 @@ class Image:
 
             image = image / 255.
 
+        if self.grayscale and np.shape(image)[2] == 3:
+            r, g, b = image[:, :, 0], image[:, :, 1], image[:, :, 2]
+
+            image = 0.2989 * r + 0.5870 * g + 0.1140 * b
+
         if self.noise is not None:
             self.noise.set_scale(self.scale)
 
@@ -65,16 +71,17 @@ class Image:
 
     def display(self, path=None, size=None):
         image = self.get()
+        color_map = plt.cm.Greys_r if self.grayscale else None
 
         if size is not None:
             image = misc.imresize(image, size)
 
         if path is None:
-            plt.imshow(image)
+            plt.imshow(image, cmap=color_map)
             plt.axis('off')
             plt.show()
         else:
-            plt.imsave(path, image)
+            plt.imsave(path, image, cmap=color_map)
 
 
 class Label:
