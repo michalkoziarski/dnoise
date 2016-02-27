@@ -149,9 +149,11 @@ class CNN(Network):
 
 class Denoising(Network):
     def setup(self):
-        self.conv(16, 16, self.input_shape[2], 512, activation=tf.nn.sigmoid).\
-            conv(1, 1, 512, 512, activation=tf.nn.sigmoid).\
-            conv(8, 8, 512, 3, activation=tf.nn.sigmoid)
+        self.conv(5, 5, self.input_shape[2], 24, activation=tf.nn.sigmoid).\
+            conv(5, 5, 24, 24, activation=tf.nn.sigmoid).\
+            conv(5, 5, 24, 24, activation=tf.nn.sigmoid).\
+            conv(5, 5, 24, 24, activation=tf.nn.sigmoid).\
+            conv(5, 5, 24, self.output_shape[2], activation=tf.nn.sigmoid)
 
     def accuracy(self, dataset):
         l2loss = tf.reduce_sum(tf.nn.l2_loss(self.y_ - self.output()))
