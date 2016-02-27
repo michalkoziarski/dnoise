@@ -229,8 +229,8 @@ class Denoising(Network):
                 batch = datasets.train.batch()
 
                 train_op.run(feed_dict={
-                    self.x: np.reshape(batch.images(), [-1] + self.input_shape),
-                    self.y_: np.reshape(batch.noisy().images(), [-1] + self.output_shape),
+                    self.x: np.reshape(batch.noisy().images(), [-1] + self.input_shape),
+                    self.y_: np.reshape(batch.images(), [-1] + self.output_shape),
                     batch_size: batch.size()
                 })
 
