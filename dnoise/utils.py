@@ -110,9 +110,9 @@ class Batch:
         if noise is not None:
             self._images = np.array([image.noisy(noise) for image in images])
         else:
-            self._images = images
+            self._images = np.array(images)
 
-        self._targets = targets
+        self._targets = np.array(targets)
         self.noise = noise
 
     def images(self):
