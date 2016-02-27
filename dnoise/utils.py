@@ -50,7 +50,7 @@ class Image:
 
             image = image / 255.
 
-        if self.grayscale and np.shape(image)[2] == 3:
+        if self.grayscale and len(np.shape(image)) == 3 and np.shape(image)[2] == 3:
             r, g, b = image[:, :, 0], image[:, :, 1], image[:, :, 2]
 
             image = 0.2989 * r + 0.5870 * g + 0.1140 * b
@@ -67,7 +67,7 @@ class Image:
 
     def noisy(self, noise=GaussianNoise()):
         return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True, normalize=self.normalize,
-                     noise=noise, scale=self.scale)
+                     noise=noise, scale=self.scale, grayscale=self.grayscale)
 
     def display(self, path=None, size=None):
         image = self.get()
