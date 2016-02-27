@@ -2,6 +2,8 @@ import os
 import tensorflow as tf
 import numpy as np
 
+from noise import *
+
 
 class Network:
     def __init__(self, input_shape, output_shape):
@@ -163,13 +165,13 @@ class Denoising(Network):
                self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape)
         }) for i in range(dataset.length)])
 
-    def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=10, display_step=50, std=0.1, visualize=0,
-              log='denoising'):
+    def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=100, display_step=50, visualize=0,
+              log='denoising', noise=GaussianNoise()):
         if visualize > 0:
             from utils import Image
 
             clean_images = datasets.test.batch(visualize)
-            noisy_images = clean_images.noisy(std=std)
+            noisy_images = clean_images.noisy(noise)
 
             root_path = '../results'
 
