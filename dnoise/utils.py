@@ -71,7 +71,7 @@ class Image:
 
     def display(self, path=None, size=None):
         image = self.get()
-        color_map = plt.cm.Greys_r if self.grayscale else None
+        color_map = plt.cm.Greys_r if len(np.shape(image)) == 2 or np.shape(image)[2] == 1 else None
 
         if size is not None:
             image = misc.imresize(image, size)
