@@ -161,7 +161,7 @@ def load_gtsrb(batch_size=128, shape=(32, 32), keep_in_memory=True, preload=Fals
             continue
 
         path = os.path.join(test_img_path, f)
-        label = annotations[annotations['Filename'] == f]['ClassId']
+        label = annotations[annotations['Filename'] == f]['ClassId'].iloc[0]
         test_images.append(Image(path=path, shape=shape, keep_in_memory=keep_in_memory, preload=preload))
         test_targets.append(Label(label, length=43))
 
