@@ -157,12 +157,12 @@ class Denoising(Network):
             conv(5, 5, 24, 24, activation=tf.nn.sigmoid).\
             conv(5, 5, 24, self.output_shape[2], activation=tf.nn.sigmoid)
 
-    def accuracy(self, dataset):
-        l2loss = tf.reduce_sum(tf.nn.l2_loss(
+        self.loss = tf.reduce_sum(tf.nn.l2_loss(
             tf.slice(self.y_ - self.output(), [0, 5, 5, 0], [-1, self.input_shape[0] - 10, self.input_shape[1] - 10, -1])
         ))
 
-        return np.mean([l2loss.eval(feed_dict={
+    def accuracy(self, dataset):
+        return np.mean([self.loss.eval(feed_dict={
                self.x: np.reshape(dataset._images[i].noisy().get(), [-1] + self.input_shape),
                self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape)
         }) for i in range(dataset.length)])
@@ -198,10 +198,7 @@ class Denoising(Network):
                 f.write('epoch,batch,score\n')
 
         batch_size = tf.placeholder(tf.float32)
-        l2loss = tf.reduce_sum(tf.nn.l2_loss(
-            tf.slice(self.y_ - self.output(), [0, 5, 5, 0], [-1, self.input_shape[0] - 10, self.input_shape[1] - 10, -1])
-        )) / batch_size
-        train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(l2loss)
+        train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss / batch_size)
 
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
@@ -233,7 +230,7 @@ class Denoising(Network):
                 batch = datasets.train.batch()
 
                 train_op.run(feed_dict={
-                    self.x: np.reshape(batch.noisy().images(), [-1] + self.input_shape),
+                    self.x: np.reshape(batch.noisy(noise).images(), [-1] + self.input_shape),
                     self.y_: np.reshape(batch.images(), [-1] + self.output_shape),
                     batch_size: batch.size()
                 })
