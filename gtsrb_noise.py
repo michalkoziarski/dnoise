@@ -14,7 +14,7 @@ def process_and_log(noise, name, train_noise, test_noise):
     else:
         test_noise = None
 
-    ds = load_gtsrb(shape=(24, 24), train_noise=train_noise, valid_noise=test_noise, test_noise=test_noise)
+    ds = load_gtsrb(shape=(24, 24), train_noise=train_noise, test_noise=test_noise)
     cnn = CNN(input_shape=[24, 24, 3], output_shape=[43])
     cnn.train(ds, epochs=200, display_step=1000, log=name)
 
