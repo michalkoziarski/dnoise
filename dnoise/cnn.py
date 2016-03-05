@@ -6,13 +6,15 @@ from noise import *
 
 
 class Network:
-    def __init__(self, input_shape, output_shape):
+    def __init__(self, input_shape, output_shape, weight_decay=0.002):
         self.input_shape = input_shape
         self.output_shape = output_shape
+        self.weight_decay = weight_decay
         self.x = tf.placeholder(tf.float32, shape=[None] + input_shape)
         self.y_ = tf.placeholder(tf.float32, shape=[None] + output_shape)
         self.keep_prob = tf.placeholder(tf.float32)
         self.layers = [self.x]
+        self.weight_loss = tf.Variable(0)
         self.setup()
 
     def setup(self):
@@ -33,6 +35,8 @@ class Network:
             h = conv + b
         else:
             h = activation(conv + b)
+
+        self.weight_loss += self.weight_decay * tf.nn.l2_loss(W)
 
         self.add(h)
 
@@ -56,6 +60,8 @@ class Network:
         b = tf.Variable(tf.constant(b, shape=[size]))
         flat = tf.reshape(self.output(), [-1, dim])
         fully = activation(tf.matmul(flat, W) + b)
+
+        self.weight_loss += self.weight_decay * tf.nn.l2_loss(W)
 
         self.add(fully)
 
@@ -157,14 +163,17 @@ class Denoising(Network):
             conv(5, 5, 24, 24, activation=tf.nn.sigmoid).\
             conv(5, 5, 24, self.output_shape[2], activation=tf.nn.sigmoid)
 
+        self.batch_size = tf.placeholder(tf.float32)
+
         self.loss = tf.reduce_sum(tf.nn.l2_loss(
             tf.slice(self.y_ - self.output(), [0, 5, 5, 0], [-1, self.input_shape[0] - 10, self.input_shape[1] - 10, -1])
-        ))
+        )) / self.batch_size + self.weight_loss
 
     def accuracy(self, dataset):
         return np.mean([self.loss.eval(feed_dict={
-               self.x: np.reshape(dataset._images[i].noisy().get(), [-1] + self.input_shape),
-               self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape)
+            self.x: np.reshape(dataset._images[i].noisy().get(), [-1] + self.input_shape),
+            self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape),
+            self.batch_size: 1
         }) for i in range(dataset.length)])
 
     def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=100, display_step=50, visualize=0,
@@ -197,8 +206,7 @@ class Denoising(Network):
             with open(log_path, 'w') as f:
                 f.write('epoch,batch,score\n')
 
-        batch_size = tf.placeholder(tf.float32)
-        train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss / batch_size)
+        train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss)
 
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
@@ -232,7 +240,7 @@ class Denoising(Network):
                 train_op.run(feed_dict={
                     self.x: np.reshape(batch.noisy(noise).images(), [-1] + self.input_shape),
                     self.y_: np.reshape(batch.images(), [-1] + self.output_shape),
-                    batch_size: batch.size()
+                    self.batch_size: batch.size()
                 })
 
                 batches_completed += 1
