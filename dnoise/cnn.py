@@ -14,7 +14,7 @@ class Network:
         self.y_ = tf.placeholder(tf.float32, shape=[None] + output_shape)
         self.keep_prob = tf.placeholder(tf.float32)
         self.layers = [self.x]
-        self.weight_loss = tf.Variable(0)
+        self.weight_loss = tf.Variable(0.)
         self.setup()
 
     def setup(self):
