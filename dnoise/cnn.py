@@ -26,7 +26,7 @@ class Network:
     def output(self):
         return self.layers[-1]
 
-    def conv(self, width, height, in_depth, out_depth, stride=1, W=0.1, b=0.1, activation=tf.nn.relu):
+    def conv(self, width, height, in_depth, out_depth, stride=1, W=0.001, b=0.0, activation=tf.nn.relu):
         W = tf.Variable(tf.truncated_normal([width, height, in_depth, out_depth], stddev=W))
         b = tf.Variable(tf.constant(b, shape=[out_depth]))
         conv = tf.nn.conv2d(self.output(), W, strides=[stride] * 4, padding='SAME')
@@ -51,7 +51,7 @@ class Network:
 
         return self
 
-    def fully(self, size=1024, activation=tf.nn.relu, W=0.1, b=0.1):
+    def fully(self, size=1024, activation=tf.nn.relu, W=0.001, b=0.0):
         dim = 1
         for d in self.output().get_shape()[1:].as_list():
             dim *= d
@@ -252,3 +252,16 @@ class Denoising(Network):
                     f.write('%d,%d,%f\n' % (-1, -1, accuracy))
 
             print 'test L2 loss = %f' % accuracy
+
+
+class Restoring(Denoising):
+    def setup(self):
+        self.conv(16, 16, self.input_shape[2], 512, activation=tf.nn.tanh).\
+            conv(1, 1, 512, 512, activation=tf.nn.tanh).\
+            conv(8, 8, 512, self.output_shape[2], activation=None)
+
+        self.batch_size = tf.placeholder(tf.float32)
+
+        self.loss = tf.reduce_sum(tf.nn.l2_loss(
+            tf.slice(self.y_ - self.output(), [0, 5, 5, 0], [-1, self.input_shape[0] - 10, self.input_shape[1] - 10, -1])
+        )) / (self.batch_size * (self.input_shape[0] - 10) * (self.input_shape[1] - 10) * self.input_shape[2]) + self.weight_loss
