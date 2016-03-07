@@ -339,7 +339,7 @@ class Restoring(Denoising):
                     self.x: np.reshape(batch.noisy(noise).images(), [-1] + self.input_shape),
                     self.y_: np.reshape(batch.images()[:, 11:53, 11:53], [-1] + self.output_shape),
                     self.batch_size: batch.size(),
-                    self.learning_rate: learning_rate / (1. + 5 * datasets.train.epochs_completed * 10e-7)
+                    self.learning_rate: learning_rate / (1. + 5 * batches_completed * 0.0000001)
                 })
 
                 batches_completed += 1
