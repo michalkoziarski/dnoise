@@ -14,7 +14,7 @@ class Network:
         self.y_ = tf.placeholder(tf.float32, shape=[None] + output_shape)
         self.keep_prob = tf.placeholder(tf.float32)
         self.layers = [self.x]
-        self.weight_loss = tf.Variable(0.)
+        self.weight_loss = tf.constant(0.)
         self.setup()
 
     def setup(self):
@@ -26,10 +26,10 @@ class Network:
     def output(self):
         return self.layers[-1]
 
-    def conv(self, width, height, in_depth, out_depth, stride=1, W=0.001, b=0.0, activation=tf.nn.relu):
+    def conv(self, width, height, in_depth, out_depth, stride=1, W=0.001, b=0.0, activation=tf.nn.relu, padding='SAME'):
         W = tf.Variable(tf.truncated_normal([width, height, in_depth, out_depth], stddev=W))
         b = tf.Variable(tf.constant(b, shape=[out_depth]))
-        conv = tf.nn.conv2d(self.output(), W, strides=[stride] * 4, padding='SAME')
+        conv = tf.nn.conv2d(self.output(), W, strides=[stride] * 4, padding=padding)
 
         if activation is None:
             h = conv + b
@@ -256,12 +256,98 @@ class Denoising(Network):
 
 class Restoring(Denoising):
     def setup(self):
-        self.conv(16, 16, self.input_shape[2], 512, activation=tf.nn.tanh).\
-            conv(1, 1, 512, 512, activation=tf.nn.tanh).\
-            conv(8, 8, 512, self.output_shape[2], activation=None)
+        self.conv(16, 16, self.input_shape[2], 512, activation=tf.nn.tanh, padding='VALID').\
+            conv(1, 1, 512, 512, activation=tf.nn.tanh, padding='VALID').\
+            conv(8, 8, 512, self.output_shape[2], activation=None, padding='VALID')
 
         self.batch_size = tf.placeholder(tf.float32)
+        self.learning_rate = tf.placeholder(tf.float32)
 
         self.loss = tf.reduce_sum(tf.nn.l2_loss(
-            tf.slice(self.y_ - self.output(), [0, 5, 5, 0], [-1, self.input_shape[0] - 10, self.input_shape[1] - 10, -1])
-        )) / (self.batch_size * (self.input_shape[0] - 10) * (self.input_shape[1] - 10) * self.input_shape[2]) + self.weight_loss
+            self.y_ - self.output()
+        )) / (2 * 42 * 42 * 1) + self.weight_loss
+
+    def accuracy(self, dataset):
+        return np.mean([self.loss.eval(feed_dict={
+            self.x: np.reshape(dataset._images[i].noisy().get(), [-1] + self.input_shape),
+            self.y_: np.reshape(dataset._images[i].get()[11:53, 11:53], [-1] + self.output_shape),
+            self.batch_size: 1
+        }) for i in range(dataset.length)])
+
+    def train(self, datasets, learning_rate=0.001, epochs=1000, display_step=1000, visualize=5, log='restoring', noise=GaussianNoise()):
+        assert visualize > 0
+
+        from utils import Image
+
+        clean_images = datasets.test.batch(visualize)
+        noisy_images = clean_images.noisy(noise)
+
+        root_path = '../results'
+
+        if not os.path.exists(root_path):
+            os.makedirs(root_path)
+
+        for i in range(visualize):
+            clean_images._images[i].display(os.path.join(root_path, 'original_image_%d.jpg' % (i + 1)))
+            noisy_images._images[i].display(os.path.join(root_path, 'noisy_image_%d.jpg' % (i + 1)))
+
+        if log is not None:
+            from time import gmtime, strftime
+
+            root_path = '../results'
+
+            if not os.path.exists(root_path):
+                os.makedirs(root_path)
+
+            log_path = os.path.join(root_path, '%s_%s.log' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()), log))
+
+            with open(log_path, 'w') as f:
+                f.write('epoch,batch,score\n')
+
+        train_op = tf.train.GradientDescentOptimizer(self.learning_rate).minimize(self.loss)
+
+        with tf.Session() as sess:
+            sess.run(tf.initialize_all_variables())
+            batches_completed = 0
+
+            while datasets.train.epochs_completed < epochs:
+                if batches_completed % display_step == 0:
+                    if datasets.valid is not None:
+                        accuracy = self.accuracy(datasets.valid)
+                    else:
+                        accuracy = self.accuracy(datasets.test)
+
+                    if log is not None:
+                        with open(log_path, 'a') as f:
+                            f.write('%d,%d,%f\n' % (datasets.train.epochs_completed, batches_completed, accuracy))
+
+                    print 'batch #%d, L2 loss = %f' % \
+                          (batches_completed, accuracy)
+
+                    for i in range(visualize):
+                        image = np.reshape(self.output().eval(feed_dict={
+                            self.x: np.reshape(noisy_images._images[i].get(), [1] + self.input_shape)
+                        }), self.output_shape)
+
+                        Image(image=image).display(
+                            os.path.join(root_path, 'restored_image_%d_batch_%d.jpg' % (i + 1, batches_completed))
+                        )
+
+                batch = datasets.train.batch()
+
+                train_op.run(feed_dict={
+                    self.x: np.reshape(batch.noisy(noise).images(), [-1] + self.input_shape),
+                    self.y_: np.reshape(batch.images()[:, 11:53, 11:53], [-1] + self.output_shape),
+                    self.batch_size: batch.size(),
+                    self.learning_rate: learning_rate / (1. + 5 * datasets.train.epochs_completed * 10e-7)
+                })
+
+                batches_completed += 1
+
+            accuracy = self.accuracy(datasets.test)
+
+            if log is not None:
+                with open(log_path, 'a') as f:
+                    f.write('%d,%d,%f\n' % (-1, -1, accuracy))
+
+            print 'test L2 loss = %f' % accuracy
