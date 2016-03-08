@@ -233,3 +233,50 @@ def load_stl(batch_size=128, shape=(96, 96), grayscale=True, train_noise=None, t
     datasets.length = train_set.length + test_set.length
 
     return datasets
+
+
+def load_stl_unsupervised(batch_size=128, shape=(96, 96), grayscale=True, train_noise=None, test_noise=None):
+    root_path = '../data'
+    data_path = os.path.join(root_path, 'stl10_binary')
+    tar_path = os.path.join(root_path, 'stl10_binary.tar.gz')
+    url = 'http://ai.stanford.edu/~acoates/stl10/stl10_binary.tar.gz'
+
+    if not os.path.exists(root_path):
+        os.makedirs(root_path)
+
+    if not os.path.exists(data_path):
+        if not os.path.exists(tar_path):
+            urllib.urlretrieve(url, tar_path)
+
+        with tarfile.open(tar_path) as tar:
+            tar.extractall(root_path)
+
+    def load_images(path):
+        result = []
+
+        with open(os.path.join(data_path, path), 'rb') as f:
+            everything = np.fromfile(f, dtype=np.uint8)
+
+            images = np.reshape(everything, (-1, 3, 96, 96))
+            images = np.transpose(images, (0, 3, 2, 1))
+
+        for image in images:
+            result.append(Image(image=image, shape=shape, keep_in_memory=True, grayscale=grayscale))
+
+        return result
+
+    train_images = load_images('unlabeled_X.bin')
+    test_images = load_images('train_X.bin')
+    train_targets = train_images
+    test_targets = test_images
+
+    train_set = DataSet(train_images, train_targets, batch_size, train_noise)
+    test_set = DataSet(test_images, test_targets, batch_size, test_noise)
+
+    datasets = DataSets([], [])
+    datasets.train = train_set
+    datasets.test = test_set
+    datasets.valid = None
+    datasets.length = train_set.length + test_set.length
+
+    return datasets
