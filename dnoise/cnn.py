@@ -256,21 +256,21 @@ class Denoising(Network):
 
 class Restoring(Denoising):
     def setup(self):
-        self.conv(16, 16, self.input_shape[2], 512, activation=tf.nn.tanh, padding='VALID').\
+        self.conv(5, 5, self.input_shape[2], 512, activation=tf.nn.tanh, padding='VALID').\
             conv(1, 1, 512, 512, activation=tf.nn.tanh, padding='VALID').\
-            conv(8, 8, 512, self.output_shape[2], activation=None, padding='VALID')
+            conv(3, 3, 512, self.output_shape[2], activation=None, padding='VALID')
 
         self.batch_size = tf.placeholder(tf.float32)
         self.learning_rate = tf.placeholder(tf.float32)
 
         self.loss = tf.reduce_sum(tf.nn.l2_loss(
             self.y_ - self.output()
-        )) / (2 * 42 * 42 * 1) + self.weight_loss
+        )) / (2 * 58 * 58 * 1) + self.weight_loss
 
     def accuracy(self, dataset):
         return np.mean([self.loss.eval(feed_dict={
             self.x: np.reshape(dataset._images[i].noisy().get(), [-1] + self.input_shape),
-            self.y_: np.reshape(dataset._images[i].get()[11:53, 11:53], [-1] + self.output_shape),
+            self.y_: np.reshape(dataset._images[i].get()[3:61, 3:61], [-1] + self.output_shape),
             self.batch_size: 1
         }) for i in range(dataset.length)])
 
@@ -337,7 +337,7 @@ class Restoring(Denoising):
 
                 train_op.run(feed_dict={
                     self.x: np.reshape(batch.noisy(noise).images(), [-1] + self.input_shape),
-                    self.y_: np.reshape(batch.images()[:, 11:53, 11:53], [-1] + self.output_shape),
+                    self.y_: np.reshape(batch.images()[:, 3:61, 3:61], [-1] + self.output_shape),
                     self.batch_size: batch.size(),
                     self.learning_rate: learning_rate / (1. + 5 * batches_completed * 0.0000001)
                 })
