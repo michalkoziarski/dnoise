@@ -376,4 +376,4 @@ class RestoringIdentity(Restoring):
 
         self.loss = tf.reduce_sum(tf.nn.l2_loss(
             self.y_ - self.output()
-        )) / (2 * 58 * 58 * 1) + self.weight_loss
+        )) / (2 * 58 * 58 * 1)
