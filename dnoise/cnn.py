@@ -294,11 +294,6 @@ class Restoring(Denoising):
         if log is not None:
             from time import gmtime, strftime
 
-            root_path = '../results'
-
-            if not os.path.exists(root_path):
-                os.makedirs(root_path)
-
             log_path = os.path.join(root_path, '%s_%s.log' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()), log))
 
             with open(log_path, 'w') as f:
@@ -366,8 +361,6 @@ class RestoringIdentity(Restoring):
             h = conv + b
         else:
             h = activation(conv + b)
-
-        self.weight_loss += self.weight_decay * tf.nn.l2_loss(W)
 
         self.add(h)
 
