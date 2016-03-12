@@ -1,4 +1,4 @@
-from dnoise.cnn import Restoring
+from dnoise.cnn import RestoringIdentity as Restoring
 from dnoise.loaders import load_stl_unsupervised
 from dnoise.noise import *
 

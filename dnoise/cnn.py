@@ -351,3 +351,36 @@ class Restoring(Denoising):
                     f.write('%d,%d,%f\n' % (-1, -1, accuracy))
 
             print 'test L2 loss = %f' % accuracy
+
+
+class RestoringIdentity(Restoring):
+    def conv(self, width, height, in_depth, out_depth, stride=1, std=0.001, b=0.0, activation=tf.nn.relu, padding='SAME'):
+        W = np.zeros((width, height, in_depth, out_depth), dtype=np.float32)
+        W[width // 2, height // 2, :, :] = 1.
+        W += np.random.normal(scale=std, size=(width, height, in_depth, out_depth))
+        W = tf.Variable(W)
+        b = tf.Variable(tf.constant(b, shape=[out_depth]))
+        conv = tf.nn.conv2d(self.output(), W, strides=[stride] * 4, padding=padding)
+
+        if activation is None:
+            h = conv + b
+        else:
+            h = activation(conv + b)
+
+        self.weight_loss += self.weight_decay * tf.nn.l2_loss(W)
+
+        self.add(h)
+
+        return self
+
+    def setup(self):
+        self.conv(5, 5, self.input_shape[2], 512, activation=tf.nn.relu, padding='VALID').\
+            conv(1, 1, 512, 512, activation=tf.nn.relu, padding='VALID').\
+            conv(3, 3, 512, self.output_shape[2], activation=None, padding='VALID')
+
+        self.batch_size = tf.placeholder(tf.float32)
+        self.learning_rate = tf.placeholder(tf.float32)
+
+        self.loss = tf.reduce_sum(tf.nn.l2_loss(
+            self.y_ - self.output()
+        )) / (2 * 58 * 58 * 1) + self.weight_loss
