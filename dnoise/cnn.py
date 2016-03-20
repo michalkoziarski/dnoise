@@ -15,6 +15,7 @@ class Network:
         self.keep_prob = tf.placeholder(tf.float32)
         self.layers = [self.x]
         self.weight_loss = tf.constant(0.)
+        self.logits = None
         self.setup()
 
     def setup(self):
@@ -65,6 +66,9 @@ class Network:
 
         self.add(fully)
 
+        if activation == tf.nn.softmax:
+            self.logits = tf.matmul(flat, W) + b
+
         return self
 
     def softmax(self):
@@ -104,9 +108,10 @@ class CNN(Network):
                self.keep_prob: 1.0
         }) for i in range(dataset.length)]) * 100
 
-    def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=10, display_step=50, log='classification'):
-        cross_entropy = -tf.reduce_sum(self.y_ * tf.log(tf.clip_by_value(self.output(), 1e-9, 1.0)))
-        train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(cross_entropy)
+    def train(self, datasets, learning_rate=0.001, momentum=0.9, epochs=10, display_step=50, log='classification'):
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.y_))
+        self.loss = cross_entropy + self.weight_loss
+        train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(loss)
 
         if log is not None:
             from time import gmtime, strftime
@@ -119,7 +124,7 @@ class CNN(Network):
             log_path = os.path.join(root_path, '%s_%s.log' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()), log))
 
             with open(log_path, 'w') as f:
-                f.write('epoch,batch,score\n')
+                f.write('epoch,batch,score,loss\n')
 
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
@@ -127,17 +132,17 @@ class CNN(Network):
 
             while datasets.train.epochs_completed < epochs:
                 if batches_completed % display_step == 0:
-                    if datasets.valid is not None:
-                        accuracy = self.accuracy(datasets.valid)
-                    else:
-                        accuracy = self.accuracy(datasets.test)
+                    validation_set = datasets.valid if datasets.valid is not None else datasets.test
+                    batch = validation_set.batch()
+                    accuracy = self.accuracy(validation_set)
+                    loss = self.loss.eval(feed_dict={self.x: batch.images(), self.y_: batch.targets(), self.keep_prob: 1.})
 
                     if log is not None:
                         with open(log_path, 'a') as f:
-                            f.write('%d,%d,%f\n' % (datasets.train.epochs_completed, batches_completed, accuracy))
+                            f.write('%d,%d,%f\n' % (datasets.train.epochs_completed, batches_completed, accuracy, loss))
 
-                    print 'batch #%d, validation accuracy = %f%%' % \
-                          (batches_completed, accuracy)
+                    print 'batch #%d, validation accuracy = %f%%, loss = %f' % \
+                          (batches_completed, accuracy, loss)
 
                 batch = datasets.train.batch()
 
