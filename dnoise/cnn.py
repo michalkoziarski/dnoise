@@ -6,7 +6,7 @@ from noise import *
 
 
 class Network:
-    def __init__(self, input_shape, output_shape, weight_decay=0.002):
+    def __init__(self, input_shape, output_shape, weight_decay=0.):
         self.input_shape = input_shape
         self.output_shape = output_shape
         self.weight_decay = weight_decay
@@ -26,7 +26,7 @@ class Network:
     def output(self):
         return self.layers[-1]
 
-    def conv(self, width, height, in_depth, out_depth, stride=1, W=0.001, b=0.0, activation=tf.nn.relu, padding='SAME'):
+    def conv(self, width, height, in_depth, out_depth, stride=1, W=0.01, b=0.0, activation=tf.nn.relu, padding='SAME'):
         W = tf.Variable(tf.truncated_normal([width, height, in_depth, out_depth], stddev=W))
         b = tf.Variable(tf.constant(b, shape=[out_depth]))
         conv = tf.nn.conv2d(self.output(), W, strides=[stride] * 4, padding=padding)
@@ -51,7 +51,7 @@ class Network:
 
         return self
 
-    def fully(self, size=1024, activation=tf.nn.relu, W=0.001, b=0.0):
+    def fully(self, size, activation=tf.nn.relu, W=0.01, b=0.0):
         dim = 1
         for d in self.output().get_shape()[1:].as_list():
             dim *= d
@@ -89,6 +89,7 @@ class CNN(Network):
             conv(3, 3, 128, 128).\
             pool().\
             fully(512).\
+            dropout().\
             fully(512).\
             dropout().\
             softmax()
