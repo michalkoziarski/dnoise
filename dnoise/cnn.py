@@ -139,7 +139,7 @@ class CNN(Network):
 
                     if log is not None:
                         with open(log_path, 'a') as f:
-                            f.write('%d,%d,%f\n' % (datasets.train.epochs_completed, batches_completed, accuracy, loss))
+                            f.write('%d,%d,%f,%f\n' % (datasets.train.epochs_completed, batches_completed, accuracy, loss))
 
                     print 'batch #%d, validation accuracy = %f%%, loss = %f' % \
                           (batches_completed, accuracy, loss)
