@@ -85,10 +85,11 @@ class CNN(Network):
             conv(3, 3, 32, 64).\
             conv(3, 3, 64, 64).\
             pool().\
-            conv(5, 5, 64, 128).\
-            conv(5, 5, 128, 128).\
+            conv(3, 3, 64, 128).\
+            conv(3, 3, 128, 128).\
             pool().\
-            fully(1024).\
+            fully(512).\
+            fully(512).\
             dropout().\
             softmax()
 
