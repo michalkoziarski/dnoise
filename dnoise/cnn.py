@@ -111,7 +111,7 @@ class CNN(Network):
     def train(self, datasets, learning_rate=0.001, momentum=0.9, epochs=10, display_step=50, log='classification'):
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.y_))
         self.loss = cross_entropy + self.weight_loss
-        train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(loss)
+        train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss)
 
         if log is not None:
             from time import gmtime, strftime
