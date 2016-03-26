@@ -124,7 +124,7 @@ class CNN(Network):
             log_path = os.path.join(root_path, '%s_%s.log' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()), log))
 
             with open(log_path, 'w') as f:
-                f.write('epoch,batch,score,loss\n')
+                f.write('epoch,batch,score\n')
 
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
@@ -133,16 +133,14 @@ class CNN(Network):
             while datasets.train.epochs_completed < epochs:
                 if batches_completed % display_step == 0:
                     validation_set = datasets.valid if datasets.valid is not None else datasets.test
-                    batch = validation_set.batch()
                     accuracy = self.accuracy(validation_set)
-                    loss = self.loss.eval(feed_dict={self.x: batch.images(), self.y_: batch.targets(), self.keep_prob: 1.})
 
                     if log is not None:
                         with open(log_path, 'a') as f:
-                            f.write('%d,%d,%f,%f\n' % (datasets.train.epochs_completed, batches_completed, accuracy, loss))
+                            f.write('%d,%d,%f\n' % (datasets.train.epochs_completed, batches_completed, accuracy))
 
-                    print 'batch #%d, validation accuracy = %f%%, loss = %f' % \
-                          (batches_completed, accuracy, loss)
+                    print 'batch #%d, validation accuracy = %f%%' % \
+                          (batches_completed, accuracy)
 
                 batch = datasets.train.batch()
 
