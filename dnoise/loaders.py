@@ -177,7 +177,7 @@ def load_gtsrb(batch_size=128, shape=(32, 32), keep_in_memory=True, preload=Fals
     return datasets
 
 
-def load_stl(batch_size=128, shape=(96, 96), grayscale=True, train_noise=None, test_noise=None):
+def load_stl(batch_size=128, shape=(96, 96), grayscale=True, normalize=True, train_noise=None, test_noise=None):
     root_path = '../data'
     data_path = os.path.join(root_path, 'stl10_binary')
     tar_path = os.path.join(root_path, 'stl10_binary.tar.gz')
@@ -203,7 +203,8 @@ def load_stl(batch_size=128, shape=(96, 96), grayscale=True, train_noise=None, t
             images = np.transpose(images, (0, 3, 2, 1))
 
         for image in images:
-            result.append(Image(image=image, shape=shape, keep_in_memory=True, grayscale=grayscale))
+            result.append(Image(image=image, shape=shape, keep_in_memory=True, grayscale=grayscale,
+                                normalize=normalize))
 
         return result
 
