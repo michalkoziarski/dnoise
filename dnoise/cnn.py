@@ -14,6 +14,7 @@ class Network:
         self.y_ = tf.placeholder(tf.float32, shape=[None] + output_shape)
         self.keep_prob = tf.placeholder(tf.float32)
         self.layers = [self.x]
+        self.weights = []
         self.weight_loss = tf.constant(0.)
         self.logits = None
         self.setup()
@@ -38,7 +39,7 @@ class Network:
             h = activation(conv + b)
 
         self.weight_loss += self.weight_decay * tf.nn.l2_loss(W)
-
+        self.weights.append(W)
         self.add(h)
 
         return self
@@ -63,7 +64,7 @@ class Network:
         fully = activation(tf.matmul(flat, W) + b)
 
         self.weight_loss += self.weight_decay * tf.nn.l2_loss(W)
-
+        self.weights.append(W)
         self.add(fully)
 
         if activation == tf.nn.softmax:
@@ -98,19 +99,27 @@ class CNN(Network):
             dropout().\
             softmax()
 
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.y_))
+        self.loss = cross_entropy + self.weight_loss
+
     def accuracy(self, dataset):
         correct_prediction = tf.equal(tf.argmax(self.output(), 1), tf.argmax(self.y_, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-        return np.mean([accuracy.eval(feed_dict={
+        return float(np.mean([accuracy.eval(feed_dict={
                self.x: np.reshape(dataset._images[i].get(), [-1] + self.input_shape),
                self.y_: [dataset._targets[i].get()],
                self.keep_prob: 1.0
-        }) for i in range(dataset.length)]) * 100
+        }) for i in range(dataset.length)])) * 100
+
+    def train_loss(self, dataset):
+        return float(np.mean([self.loss.eval(feed_dict={
+               self.x: np.reshape(dataset._images[i].get(), [-1] + self.input_shape),
+               self.y_: [dataset._targets[i].get()],
+               self.keep_prob: 1.0
+        }) for i in range(dataset.length)]))
 
     def train(self, datasets, learning_rate=0.001, momentum=0.9, epochs=10, display_step=50, log='classification'):
-        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.y_))
-        self.loss = cross_entropy + self.weight_loss
         train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss)
 
         if log is not None:
@@ -139,8 +148,12 @@ class CNN(Network):
                         with open(log_path, 'a') as f:
                             f.write('%d,%d,%f\n' % (datasets.train.epochs_completed, batches_completed, accuracy))
 
-                    print 'batch #%d, validation accuracy = %f%%' % \
-                          (batches_completed, accuracy)
+                    print 'batch #%d, validation accuracy = %f%%, loss = %f' % \
+                          (batches_completed, accuracy, self.train_loss(datasets.train))
+
+                    print '\n'
+                    print self.weights[-1].eval()
+                    print '\n'
 
                 batch = datasets.train.batch()
 
