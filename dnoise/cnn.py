@@ -86,18 +86,15 @@ class Network:
 
 class CNN(Network):
     def setup(self):
-        self.conv(3, 3, self.input_shape[2], 32).\
-            conv(3, 3, 32, 32).\
+        self.conv(7, 7, self.input_shape[2], 32).\
             pool().\
-            conv(3, 3, 32, 64).\
-            conv(3, 3, 64, 64).\
+            conv(5, 5, 32, 64).\
             pool().\
             conv(3, 3, 64, 128).\
-            conv(3, 3, 128, 128).\
             pool().\
-            fully(512).\
+            fully(1024).\
             dropout().\
-            fully(512).\
+            fully(1024).\
             dropout().\
             softmax()
 
@@ -202,14 +199,14 @@ class CNN(Network):
                 row.append(weights[:, :, index])
 
                 if j < (n_cols - 1):
-                    row.append(np.zeros((weights.shape[0], 1)))
+                    row.append(np.ones((weights.shape[0], 1)))
 
                 index += 1
 
             filters.append(np.hstack(row))
 
             if i < (n_rows - 1):
-                filters.append(np.zeros((1, filters[0].shape[1])))
+                filters.append(np.ones((1, filters[0].shape[1])))
 
         filters = np.vstack(filters)
 
