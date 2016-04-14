@@ -2,6 +2,8 @@ import os
 import tensorflow as tf
 import numpy as np
 
+from time import gmtime, strftime
+from utils import Image
 from noise import *
 
 
@@ -112,19 +114,18 @@ class CNN(Network):
                self.keep_prob: 1.0
         }) for i in range(dataset.length)])) * 100
 
-    def train_loss(self, dataset):
-        return float(np.mean([self.loss.eval(feed_dict={
-               self.x: np.reshape(dataset._images[i].get(), [-1] + self.input_shape),
-               self.y_: [dataset._targets[i].get()],
-               self.keep_prob: 1.0
-        }) for i in range(dataset.length)]))
+    def train_loss(self, batch):
+        return self.loss.eval(feed_dict={
+            self.x: np.reshape(batch.images(), [-1] + self.input_shape),
+            self.y_: batch.targets(),
+            self.keep_prob: 1.0
+        })
 
-    def train(self, datasets, learning_rate=0.001, momentum=0.9, epochs=10, display_step=50, log='classification'):
+    def train(self, datasets, learning_rate=0.001, momentum=0.9, epochs=10, display_step=50, log='classification',
+              debug=False):
         train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss)
 
         if log is not None:
-            from time import gmtime, strftime
-
             root_path = '../results'
 
             if not os.path.exists(root_path):
@@ -140,7 +141,13 @@ class CNN(Network):
             batches_completed = 0
 
             while datasets.train.epochs_completed < epochs:
-                if batches_completed % display_step == 0:
+                batch = datasets.train.batch()
+
+                if debug:
+                    print '* Batch #%d' % (batches_completed + 1)
+                    print 'Train loss before update = %f' % self.train_loss(batch)
+
+                if batches_completed % display_step == 0 or debug:
                     validation_set = datasets.valid if datasets.valid is not None else datasets.test
                     accuracy = self.accuracy(validation_set)
 
@@ -148,19 +155,19 @@ class CNN(Network):
                         with open(log_path, 'a') as f:
                             f.write('%d,%d,%f\n' % (datasets.train.epochs_completed, batches_completed, accuracy))
 
-                    print 'batch #%d, validation accuracy = %f%%, loss = %f' % \
-                          (batches_completed, accuracy, self.train_loss(datasets.train))
-
-                    print '\n'
-                    print self.weights[-1].eval()
-                    print '\n'
-
-                batch = datasets.train.batch()
+                    if debug:
+                        print 'Validation accuracy = %f%%' % accuracy
+                    else:
+                        print 'Batch #%d, validation accuracy = %f%%' % (batches_completed, accuracy)
 
                 train_op.run(feed_dict={
                     self.x: np.reshape(batch.images(), [-1] + self.input_shape),
-                    self.y_: batch.targets(), self.keep_prob: 0.5
+                    self.y_: batch.targets(),
+                    self.keep_prob: 0.5
                 })
+
+                if debug:
+                    print 'Train loss after update = %f' % self.train_loss(batch)
 
                 batches_completed += 1
 
@@ -170,7 +177,7 @@ class CNN(Network):
                 with open(log_path, 'a') as f:
                     f.write('%d,%d,%f\n' % (-1, -1, accuracy))
 
-            print 'test accuracy = %f%%' % accuracy
+            print 'Test accuracy = %f%%' % accuracy
 
 
 class Denoising(Network):
@@ -197,8 +204,6 @@ class Denoising(Network):
     def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=100, display_step=50, visualize=0,
               log='denoising', noise=GaussianNoise()):
         if visualize > 0:
-            from utils import Image
-
             clean_images = datasets.test.batch(visualize)
             noisy_images = clean_images.noisy(noise)
 
@@ -212,8 +217,6 @@ class Denoising(Network):
                 noisy_images._images[i].display(os.path.join(root_path, 'noisy_image_%d.jpg' % (i + 1)))
 
         if log is not None:
-            from time import gmtime, strftime
-
             root_path = '../results'
 
             if not os.path.exists(root_path):
@@ -295,8 +298,6 @@ class Restoring(Denoising):
     def train(self, datasets, learning_rate=0.001, epochs=1000, display_step=1000, visualize=5, log='restoring', noise=GaussianNoise()):
         assert visualize > 0
 
-        from utils import Image
-
         clean_images = datasets.test.batch(visualize)
         noisy_images = clean_images.noisy(noise)
 
@@ -310,8 +311,6 @@ class Restoring(Denoising):
             noisy_images._images[i].display(os.path.join(root_path, 'noisy_image_%d.jpg' % (i + 1)))
 
         if log is not None:
-            from time import gmtime, strftime
-
             log_path = os.path.join(root_path, '%s_%s.log' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()), log))
 
             with open(log_path, 'w') as f:

@@ -177,7 +177,8 @@ def load_gtsrb(batch_size=128, shape=(32, 32), keep_in_memory=True, preload=Fals
     return datasets
 
 
-def load_stl(batch_size=128, shape=(96, 96), grayscale=True, normalize=True, train_noise=None, test_noise=None):
+def load_stl(batch_size=128, shape=(96, 96), grayscale=True, normalize=True, train_noise=None, test_noise=None,
+             n=None):
     root_path = '../data'
     data_path = os.path.join(root_path, 'stl10_binary')
     tar_path = os.path.join(root_path, 'stl10_binary.tar.gz')
@@ -193,7 +194,7 @@ def load_stl(batch_size=128, shape=(96, 96), grayscale=True, normalize=True, tra
         with tarfile.open(tar_path) as tar:
             tar.extractall(root_path)
 
-    def load_images(path):
+    def load_images(path, n=None):
         result = []
 
         with open(os.path.join(data_path, path), 'rb') as f:
@@ -206,9 +207,12 @@ def load_stl(batch_size=128, shape=(96, 96), grayscale=True, normalize=True, tra
             result.append(Image(image=image, shape=shape, keep_in_memory=True, grayscale=grayscale,
                                 normalize=normalize))
 
+            if n and len(result) >= len:
+                return result
+
         return result
 
-    def load_targets(path):
+    def load_targets(path, n=None):
         result = []
 
         with open(os.path.join(data_path, path), 'rb') as f:
@@ -217,12 +221,15 @@ def load_stl(batch_size=128, shape=(96, 96), grayscale=True, normalize=True, tra
         for label in labels:
             result.append(Label(label - 1, length=10))
 
+            if n and len(result) >= len:
+                return result
+
         return result
 
-    train_images = load_images('train_X.bin')
-    test_images = load_images('test_X.bin')
-    train_targets = load_targets('train_y.bin')
-    test_targets = load_targets('test_y.bin')
+    train_images = load_images('train_X.bin', n)
+    test_images = load_images('test_X.bin', n)
+    train_targets = load_targets('train_y.bin', n)
+    test_targets = load_targets('test_y.bin', n)
 
     train_set = DataSet(train_images, train_targets, batch_size, train_noise)
     test_set = DataSet(test_images, test_targets, batch_size, test_noise)
