@@ -152,10 +152,12 @@ class CNN(Network):
                 batch = datasets.train.batch()
 
                 if debug:
+                    self._visualize_weights(8, 12, batches_completed)
+
                     print '* Batch #%d' % (batches_completed + 1)
                     print 'Train loss before update = %f' % self.train_loss(batch)
 
-                if batches_completed % display_step == 0 or debug:
+                if display_step and batches_completed % display_step == 0:
                     validation_set = datasets.valid if datasets.valid is not None else datasets.test
                     accuracy = self.accuracy(validation_set)
 
@@ -186,6 +188,34 @@ class CNN(Network):
                     f.write('%d,%d,%f\n' % (-1, -1, accuracy))
 
             print 'Test accuracy = %f%%' % accuracy
+
+    def _visualize_weights(self, n_rows, n_cols, batches_completed, layer=0):
+        weights = self.weights[layer].eval()
+        weights = np.reshape(weights, (weights.shape[0], weights.shape[1], -1))
+        index = 0
+        filters = []
+
+        for i in range(n_rows):
+            row = []
+
+            for j in range(n_cols):
+                row.append(weights[:, :, index])
+
+                if j < (n_cols - 1):
+                    row.append(np.zeros((weights.shape[0], 1)))
+
+                index += 1
+
+            filters.append(np.hstack(row))
+
+            if i < (n_rows - 1):
+                filters.append(np.zeros((1, filters[0].shape[1])))
+
+        filters = np.vstack(filters)
+
+        Image(image=filters, shape=(filters.shape[0] * 10, filters.shape[1] * 10)).display(
+            os.path.join('..', 'results', 'weights_batch_%d.png' % (batches_completed + 1))
+        )
 
 
 class Denoising(Network):
