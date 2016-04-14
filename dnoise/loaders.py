@@ -207,7 +207,7 @@ def load_stl(batch_size=128, shape=(96, 96), grayscale=True, normalize=True, tra
             result.append(Image(image=image, shape=shape, keep_in_memory=True, grayscale=grayscale,
                                 normalize=normalize))
 
-            if n and len(result) >= len:
+            if n is not None and len(result) >= n:
                 return result
 
         return result
@@ -221,7 +221,7 @@ def load_stl(batch_size=128, shape=(96, 96), grayscale=True, normalize=True, tra
         for label in labels:
             result.append(Label(label - 1, length=10))
 
-            if n and len(result) >= len:
+            if n is not None and len(result) >= n:
                 return result
 
         return result

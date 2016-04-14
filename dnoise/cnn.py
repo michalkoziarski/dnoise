@@ -136,6 +136,14 @@ class CNN(Network):
             with open(log_path, 'w') as f:
                 f.write('epoch,batch,score\n')
 
+        if debug:
+            print 'Train set size: %d' % datasets.train.length
+
+            if datasets.valid:
+                print 'Valid set size: %d' % datasets.valid.length
+
+            print 'Test set size: %d' % datasets.test.length
+
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
             batches_completed = 0
