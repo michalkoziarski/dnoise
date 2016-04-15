@@ -248,7 +248,7 @@ class CNN(Network):
         filters = np.vstack(filters)
 
         Image(image=filters, shape=(filters.shape[0] * 10, filters.shape[1] * 10)).display(
-            os.path.join('..', 'results', 'weights_batch_%d_layer_%d.png' % (batches_completed, layer))
+            os.path.join('..', 'results', 'weights_layer_%d_batch_%d.png' % (layer, batches_completed))
         )
 
 
