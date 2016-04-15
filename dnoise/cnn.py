@@ -188,6 +188,7 @@ class CNN(Network):
                         plt.ylabel('loss')
                         plt.title('Train loss')
                         plt.savefig(os.path.join(root_path, 'train_loss.png'))
+                        plt.close()
 
                         plt.figure()
                         plt.plot(batches, train_accuracies)
@@ -197,6 +198,7 @@ class CNN(Network):
                         plt.title('Accuracy')
                         plt.legend(['train', 'validation'], loc=2)
                         plt.savefig(os.path.join(root_path, 'accuracy.png'))
+                        plt.close()
 
                     else:
                         print 'Batch #%d, validation accuracy = %f%%' % (batches_completed, accuracy)
