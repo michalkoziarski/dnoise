@@ -123,12 +123,12 @@ class CNN(Network):
               debug=False):
         train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss)
 
+        root_path = '../results'
+
+        if not os.path.exists(root_path):
+            os.makedirs(root_path)
+
         if log is not None:
-            root_path = '../results'
-
-            if not os.path.exists(root_path):
-                os.makedirs(root_path)
-
             log_path = os.path.join(root_path, '%s_%s.log' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()), log))
 
             with open(log_path, 'w') as f:
@@ -166,6 +166,12 @@ class CNN(Network):
                         losses.append(train_loss)
 
                         print '* Batch #%d' % batches_completed
+
+                        for i in range(len(self.weights)):
+                            W = self.weights[i].eval()
+
+                            print 'W in layer #%d: min = %f, max = %f, std = %f' % (i + 1, W.min(), W.max(), W.std())
+
                         print 'Validation accuracy = %f%%' % accuracy
                         print 'Train loss before update = %f' % train_loss
                     else:
@@ -192,7 +198,7 @@ class CNN(Network):
 
             if debug:
                 plt.plot(losses)
-                plt.show()
+                plt.savefig(os.path.join(root_path, 'train_loss.png'))
 
     def _visualize_weights(self, n_rows, n_cols, batches_completed, layer=0):
         weights = self.weights[layer].eval()
