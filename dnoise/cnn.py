@@ -1,6 +1,7 @@
 import os
 import tensorflow as tf
 import numpy as np
+import matplotlib.pyplot as plt
 
 from time import gmtime, strftime
 from utils import Image
@@ -141,6 +142,8 @@ class CNN(Network):
 
             print 'Test set size: %d' % datasets.test.length
 
+            losses = []
+
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
             batches_completed = 0
@@ -148,13 +151,7 @@ class CNN(Network):
             while datasets.train.epochs_completed < epochs:
                 batch = datasets.train.batch()
 
-                if debug:
-                    self._visualize_weights(8, 12, batches_completed)
-
-                    print '* Batch #%d' % (batches_completed + 1)
-                    print 'Train loss before update = %f' % self.train_loss(batch)
-
-                if display_step and batches_completed % display_step == 0:
+                if batches_completed % display_step == 0:
                     validation_set = datasets.valid if datasets.valid is not None else datasets.test
                     accuracy = self.accuracy(validation_set)
 
@@ -163,7 +160,14 @@ class CNN(Network):
                             f.write('%d,%d,%f\n' % (datasets.train.epochs_completed, batches_completed, accuracy))
 
                     if debug:
+                        self._visualize_weights(8, 12, batches_completed)
+
+                        train_loss = self.train_loss(batch)
+                        losses.append(train_loss)
+
+                        print '* Batch #%d' % batches_completed
                         print 'Validation accuracy = %f%%' % accuracy
+                        print 'Train loss before update = %f' % train_loss
                     else:
                         print 'Batch #%d, validation accuracy = %f%%' % (batches_completed, accuracy)
 
@@ -173,7 +177,7 @@ class CNN(Network):
                     self.keep_prob: 0.5
                 })
 
-                if debug:
+                if batches_completed % display_step == 0 and debug:
                     print 'Train loss after update = %f' % self.train_loss(batch)
 
                 batches_completed += 1
@@ -186,9 +190,16 @@ class CNN(Network):
 
             print 'Test accuracy = %f%%' % accuracy
 
+            if debug:
+                plt.plot(losses)
+                plt.show()
+
     def _visualize_weights(self, n_rows, n_cols, batches_completed, layer=0):
         weights = self.weights[layer].eval()
-        weights = np.reshape(weights, (weights.shape[0], weights.shape[1], -1))
+        flat = np.reshape(weights, (-1))
+        flat -= np.min(flat)
+        flat /= np.max(flat)
+        weights = np.reshape(flat, (weights.shape[0], weights.shape[1], -1))
         index = 0
         filters = []
 
@@ -199,14 +210,14 @@ class CNN(Network):
                 row.append(weights[:, :, index])
 
                 if j < (n_cols - 1):
-                    row.append(np.ones((weights.shape[0], 1)))
+                    row.append(np.zeros((weights.shape[0], 1)))
 
                 index += 1
 
             filters.append(np.hstack(row))
 
             if i < (n_rows - 1):
-                filters.append(np.ones((1, filters[0].shape[1])))
+                filters.append(np.zeros((1, filters[0].shape[1])))
 
         filters = np.vstack(filters)
 
