@@ -178,6 +178,8 @@ class CNN(Network):
                         print 'Train loss before update = %f' % train_loss
 
                         plt.plot(batches, losses)
+                        plt.xlabel('batch')
+                        plt.ylabel('loss')
                         plt.savefig(os.path.join(root_path, 'train_loss.png'))
                     else:
                         print 'Batch #%d, validation accuracy = %f%%' % (batches_completed, accuracy)
