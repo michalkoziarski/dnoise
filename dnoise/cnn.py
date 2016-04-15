@@ -144,6 +144,8 @@ class CNN(Network):
 
             losses = []
             batches = []
+            train_accuracies = []
+            valid_accuracies = []
 
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
@@ -168,6 +170,8 @@ class CNN(Network):
                         train_loss = self.train_loss(batch)
                         losses.append(train_loss)
                         batches.append(batches_completed)
+                        train_accuracies.append(self.accuracy(datasets.train))
+                        valid_accuracies.append(accuracy)
 
                         print '* Batch #%d' % batches_completed
 
@@ -179,10 +183,22 @@ class CNN(Network):
                         print 'Validation accuracy = %f%%' % accuracy
                         print 'Train loss before update = %f' % train_loss
 
+                        plt.figure()
                         plt.plot(batches, losses)
                         plt.xlabel('batch')
                         plt.ylabel('loss')
+                        plt.title('Train loss')
                         plt.savefig(os.path.join(root_path, 'train_loss.png'))
+
+                        plt.figure()
+                        plt.plot(batches, train_accuracies)
+                        plt.plot(batches, valid_accuracies)
+                        plt.xlabel('batch')
+                        plt.ylabel('accuracy')
+                        plt.title('Accuracy')
+                        plt.legend(['train', 'validation'])
+                        plt.savefig(os.path.join(root_path, 'accuracy.png'))
+
                     else:
                         print 'Batch #%d, validation accuracy = %f%%' % (batches_completed, accuracy)
 
