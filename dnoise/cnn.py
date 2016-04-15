@@ -163,9 +163,8 @@ class CNN(Network):
                             f.write('%d,%d,%f\n' % (datasets.train.epochs_completed, batches_completed, accuracy))
 
                     if debug:
-                        self._visualize_weights(8, 12, batches_completed, layer=0)
-                        self._visualize_weights(32, 64, batches_completed, layer=1)
-                        self._visualize_weights(64, 128, batches_completed, layer=2)
+                        for layer in [0, 1, 2]:
+                            self._visualize_weights(8, 12, batches_completed, layer=layer)
 
                         train_loss = self.train_loss(batch)
                         losses.append(train_loss)
