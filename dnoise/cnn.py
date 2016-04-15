@@ -143,6 +143,7 @@ class CNN(Network):
             print 'Test set size: %d' % datasets.test.length
 
             losses = []
+            batches = []
 
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
@@ -164,6 +165,7 @@ class CNN(Network):
 
                         train_loss = self.train_loss(batch)
                         losses.append(train_loss)
+                        batches.append(batches_completed)
 
                         print '* Batch #%d' % batches_completed
 
@@ -174,6 +176,9 @@ class CNN(Network):
 
                         print 'Validation accuracy = %f%%' % accuracy
                         print 'Train loss before update = %f' % train_loss
+
+                        plt.plot(batches, losses)
+                        plt.savefig(os.path.join(root_path, 'train_loss.png'))
                     else:
                         print 'Batch #%d, validation accuracy = %f%%' % (batches_completed, accuracy)
 
@@ -195,10 +200,6 @@ class CNN(Network):
                     f.write('%d,%d,%f\n' % (-1, -1, accuracy))
 
             print 'Test accuracy = %f%%' % accuracy
-
-            if debug:
-                plt.plot(losses)
-                plt.savefig(os.path.join(root_path, 'train_loss.png'))
 
     def _visualize_weights(self, n_rows, n_cols, batches_completed, layer=0):
         weights = self.weights[layer].eval()
