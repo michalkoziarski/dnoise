@@ -195,7 +195,7 @@ class CNN(Network):
                         plt.xlabel('batch')
                         plt.ylabel('accuracy')
                         plt.title('Accuracy')
-                        plt.legend(['train', 'validation'])
+                        plt.legend(['train', 'validation'], loc=2)
                         plt.savefig(os.path.join(root_path, 'accuracy.png'))
 
                     else:
