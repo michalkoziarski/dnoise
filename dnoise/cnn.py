@@ -102,15 +102,15 @@ class CNN(Network):
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.y_))
         self.loss = cross_entropy + self.weight_loss
 
-    def accuracy(self, dataset):
+    def score(self, dataset):
         correct_prediction = tf.equal(tf.argmax(self.output(), 1), tf.argmax(self.y_, 1))
-        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        score = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-        return float(np.mean([accuracy.eval(feed_dict={
+        return float(np.mean([score.eval(feed_dict={
                self.x: np.reshape(dataset._images[i].get(), [-1] + self.input_shape),
                self.y_: [dataset._targets[i].get()],
                self.keep_prob: 1.0
-        }) for i in range(dataset.length)])) * 100
+        }) for i in range(dataset.length)]))
 
     def train_loss(self, batch):
         return self.loss.eval(feed_dict={
@@ -156,11 +156,11 @@ class CNN(Network):
 
                 if batches_completed % display_step == 0:
                     validation_set = datasets.valid if datasets.valid is not None else datasets.test
-                    accuracy = self.accuracy(validation_set)
+                    score = self.score(validation_set)
 
                     if log is not None:
                         with open(log_path, 'a') as f:
-                            f.write('%d,%d,%f\n' % (datasets.train.epochs_completed, batches_completed, accuracy))
+                            f.write('%d,%d,%f\n' % (datasets.train.epochs_completed, batches_completed, score))
 
                     if debug:
                         for layer in [0, 1, 2]:
@@ -169,8 +169,8 @@ class CNN(Network):
                         train_loss = self.train_loss(batch)
                         losses.append(train_loss)
                         batches.append(batches_completed)
-                        train_accuracies.append(self.accuracy(datasets.train))
-                        valid_accuracies.append(accuracy)
+                        train_accuracies.append(self.score(datasets.train))
+                        valid_accuracies.append(score)
 
                         print '* Batch #%d' % batches_completed
 
@@ -179,7 +179,7 @@ class CNN(Network):
 
                             print 'W in layer #%d: min = %f, max = %f, std = %f' % (i + 1, W.min(), W.max(), W.std())
 
-                        print 'Validation accuracy = %f%%' % accuracy
+                        print 'Validation score = %f%%' % score
                         print 'Train loss before update = %f' % train_loss
 
                         plt.figure()
@@ -194,14 +194,14 @@ class CNN(Network):
                         plt.plot(batches, train_accuracies)
                         plt.plot(batches, valid_accuracies)
                         plt.xlabel('batch')
-                        plt.ylabel('accuracy')
-                        plt.title('Accuracy')
+                        plt.ylabel('score')
+                        plt.title('Score')
                         plt.legend(['train', 'validation'], loc=2)
-                        plt.savefig(os.path.join(root_path, 'accuracy.png'))
+                        plt.savefig(os.path.join(root_path, 'score.png'))
                         plt.close()
 
                     else:
-                        print 'Batch #%d, validation accuracy = %f%%' % (batches_completed, accuracy)
+                        print 'Batch #%d, validation accuracy = %f%%' % (batches_completed, score)
 
                 train_op.run(feed_dict={
                     self.x: np.reshape(batch.images(), [-1] + self.input_shape),
@@ -214,13 +214,13 @@ class CNN(Network):
 
                 batches_completed += 1
 
-            accuracy = self.accuracy(datasets.test)
+            score = self.score(datasets.test)
 
             if log is not None:
                 with open(log_path, 'a') as f:
-                    f.write('%d,%d,%f\n' % (-1, -1, accuracy))
+                    f.write('%d,%d,%f\n' % (-1, -1, score))
 
-            print 'Test accuracy = %f%%' % accuracy
+            print 'Test score = %f%%' % score
 
     def _visualize_weights(self, n_rows, n_cols, batches_completed, layer=0):
         weights = self.weights[layer].eval()
@@ -437,34 +437,3 @@ class Restoring(Denoising):
                     f.write('%d,%d,%f\n' % (-1, -1, accuracy))
 
             print 'test L2 loss = %f' % accuracy
-
-
-class RestoringIdentity(Restoring):
-    def conv(self, width, height, in_depth, out_depth, stride=1, std=0.001, b=0.0, activation=tf.nn.relu, padding='SAME'):
-        W = np.zeros((width, height, in_depth, out_depth), dtype=np.float32)
-        W[width // 2, height // 2, :, :] = 1.
-        W += np.random.normal(scale=std, size=(width, height, in_depth, out_depth))
-        W = tf.Variable(W)
-        b = tf.Variable(tf.constant(b, shape=[out_depth]))
-        conv = tf.nn.conv2d(self.output(), W, strides=[stride] * 4, padding=padding)
-
-        if activation is None:
-            h = conv + b
-        else:
-            h = activation(conv + b)
-
-        self.add(h)
-
-        return self
-
-    def setup(self):
-        self.conv(5, 5, self.input_shape[2], 512, activation=tf.nn.relu, padding='VALID').\
-            conv(1, 1, 512, 512, activation=tf.nn.relu, padding='VALID').\
-            conv(3, 3, 512, self.output_shape[2], activation=None, padding='VALID')
-
-        self.batch_size = tf.placeholder(tf.float32)
-        self.learning_rate = tf.placeholder(tf.float32)
-
-        self.loss = tf.reduce_sum(tf.nn.l2_loss(
-            self.y_ - self.output()
-        )) / (2 * 58 * 58 * 1)
