@@ -105,7 +105,7 @@ class Network:
             self.keep_prob: 1.0
         })
 
-    def train(self, datasets, learning_rate=0.01, momentum=0.9, epochs=10, display_step=50, log='classification',
+    def train(self, datasets, learning_rate=0.01, momentum=0.9, epochs=10, display_step=50, log='log',
               debug=False, noise=None, visualize=0, score_samples=None, max_filter_visualization=20):
         train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss)
 
@@ -117,7 +117,7 @@ class Network:
             os.makedirs(root_path)
 
         if log is not None:
-            log_path = os.path.join(root_path, '%s_%s.log' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()), log))
+            log_path = os.path.join(root_path, '%s_%s.csv' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()), log))
 
             with open(log_path, 'w') as f:
                 f.write('epoch,batch,score\n')
