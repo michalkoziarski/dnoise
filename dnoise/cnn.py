@@ -106,7 +106,7 @@ class Network:
         })
 
     def train(self, datasets, learning_rate=0.01, momentum=0.9, epochs=10, display_step=50, log='classification',
-              debug=False, noise=None, visualize=0, score_samples=None):
+              debug=False, noise=None, visualize=0, score_samples=None, max_filter_visualization=20):
         train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss)
 
         self.noise = noise
@@ -160,7 +160,7 @@ class Network:
 
                     if debug:
                         for layer in [0, 1, 2]:
-                            self._visualize_weights(batches_completed, layer=layer)
+                            self._visualize_weights(batches_completed, layer=layer, n_max=max_filter_visualization)
 
                         train_loss = self.train_loss(batch)
                         losses.append(train_loss)
@@ -228,11 +228,11 @@ class Network:
 
             print 'Test score = %f%%' % score
 
-    def _visualize_weights(self, batches_completed, layer=0):
+    def _visualize_weights(self, batches_completed, layer=0, n_max=np.inf):
         weights = self.weights[layer].eval()
         n_weights = weights.shape[2] * weights.shape[3]
-        n_rows = int(np.floor(np.sqrt(n_weights)))
-        n_cols = int(np.floor(n_weights / float(n_rows)))
+        n_rows = np.min([int(np.floor(np.sqrt(n_weights))), n_max])
+        n_cols = np.min([int(np.floor(n_weights / float(n_rows))), n_max])
         flat = np.reshape(weights, (-1))
         flat -= np.min(flat)
         flat /= np.max(flat)
