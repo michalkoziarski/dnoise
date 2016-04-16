@@ -20,9 +20,20 @@ class Network:
         self.weights = []
         self.weight_loss = tf.constant(0.)
         self.logits = None
+        self.loss = None
         self.setup()
+        self.declare_loss()
 
     def setup(self):
+        raise NotImplementedError('Must be subclassed')
+
+    def declare_loss(self):
+        raise NotImplementedError('Must be subclassed')
+
+    def convert_batch(self, batch):
+        raise NotImplementedError('Must be subclassed')
+
+    def score(self, dataset):
         raise NotImplementedError('Must be subclassed')
 
     def add(self, layer):
@@ -84,38 +95,12 @@ class Network:
 
         return self
 
-
-class CNN(Network):
-    def setup(self):
-        self.conv(7, 7, self.input_shape[2], 32).\
-            pool().\
-            conv(5, 5, 32, 64).\
-            pool().\
-            conv(3, 3, 64, 128).\
-            pool().\
-            fully(1024).\
-            dropout().\
-            fully(1024).\
-            dropout().\
-            softmax()
-
-        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.y_))
-        self.loss = cross_entropy + self.weight_loss
-
-    def score(self, dataset):
-        correct_prediction = tf.equal(tf.argmax(self.output(), 1), tf.argmax(self.y_, 1))
-        score = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
-        return float(np.mean([score.eval(feed_dict={
-               self.x: np.reshape(dataset._images[i].get(), [-1] + self.input_shape),
-               self.y_: [dataset._targets[i].get()],
-               self.keep_prob: 1.0
-        }) for i in range(dataset.length)]))
-
     def train_loss(self, batch):
+        x, y_ = self.convert_batch(batch)
+
         return self.loss.eval(feed_dict={
-            self.x: np.reshape(batch.images(), [-1] + self.input_shape),
-            self.y_: batch.targets(),
+            self.x: x,
+            self.y_: y_,
             self.keep_prob: 1.0
         })
 
@@ -254,6 +239,37 @@ class CNN(Network):
         )
 
 
+class CNN(Network):
+    def setup(self):
+        self.conv(7, 7, self.input_shape[2], 32).\
+            pool().\
+            conv(5, 5, 32, 64).\
+            pool().\
+            conv(3, 3, 64, 128).\
+            pool().\
+            fully(1024).\
+            dropout().\
+            fully(1024).\
+            dropout().\
+            softmax()
+
+    def declare_loss(self):
+        self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.y_)) + self.weight_loss
+
+    def convert_batch(self, batch):
+        return np.reshape(batch.images(), [-1] + self.input_shape), batch.targets()
+
+    def score(self, dataset):
+        correct_prediction = tf.equal(tf.argmax(self.output(), 1), tf.argmax(self.y_, 1))
+        score = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+        return float(np.mean([score.eval(feed_dict={
+               self.x: np.reshape(dataset._images[i].get(), [-1] + self.input_shape),
+               self.y_: [dataset._targets[i].get()],
+               self.keep_prob: 1.0
+        }) for i in range(dataset.length)]))
+
+
 class Denoising(Network):
     def setup(self):
         self.conv(5, 5, self.input_shape[2], 48, activation=tf.nn.sigmoid).\
@@ -264,9 +280,9 @@ class Denoising(Network):
 
         self.batch_size = tf.placeholder(tf.float32)
 
-        self.loss = tf.reduce_sum(tf.nn.l2_loss(
+        self.loss = tf.reduce_mean(tf.nn.l2_loss(
             tf.slice(self.y_ - self.output(), [0, 5, 5, 0], [-1, self.input_shape[0] - 10, self.input_shape[1] - 10, -1])
-        )) / (self.batch_size * (self.input_shape[0] - 10) * (self.input_shape[1] - 10) * self.input_shape[2]) + self.weight_loss
+        )) + self.weight_loss
 
     def accuracy(self, dataset):
         return np.mean([self.loss.eval(feed_dict={
