@@ -34,7 +34,7 @@ class Network:
     def convert_batch(self, batch):
         raise NotImplementedError('Must be subclassed')
 
-    def score(self, dataset):
+    def score(self, dataset, samples=None):
         raise NotImplementedError('Must be subclassed')
 
     def add(self, layer):
@@ -106,7 +106,7 @@ class Network:
         })
 
     def train(self, datasets, learning_rate=0.01, momentum=0.9, epochs=10, display_step=50, log='classification',
-              debug=False, noise=None, visualize=0):
+              debug=False, noise=None, visualize=0, score_samples=None):
         train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss)
 
         self.noise = noise
@@ -152,7 +152,7 @@ class Network:
 
                 if batches_completed % display_step == 0:
                     validation_set = datasets.valid if datasets.valid is not None else datasets.test
-                    score = self.score(validation_set)
+                    score = self.score(validation_set, score_samples)
 
                     if log is not None:
                         with open(log_path, 'a') as f:
@@ -165,7 +165,7 @@ class Network:
                         train_loss = self.train_loss(batch)
                         losses.append(train_loss)
                         batches.append(batches_completed)
-                        train_accuracies.append(self.score(datasets.train))
+                        train_accuracies.append(self.score(datasets.train, score_samples))
                         valid_accuracies.append(score)
 
                         print '* Batch #%d' % batches_completed
@@ -283,7 +283,10 @@ class CNN(Network):
     def convert_batch(self, batch):
         return np.reshape(batch.images(), [-1] + self.input_shape), batch.targets()
 
-    def score(self, dataset):
+    def score(self, dataset, samples=None):
+        if not samples:
+            samples = dataset.length
+
         correct_prediction = tf.equal(tf.argmax(self.output(), 1), tf.argmax(self.y_, 1))
         score = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
@@ -291,7 +294,7 @@ class CNN(Network):
                self.x: np.reshape(dataset._images[i].get(), [-1] + self.input_shape),
                self.y_: [dataset._targets[i].get()],
                self.keep_prob: 1.0
-        }) for i in range(dataset.length)]))
+        }) for i in range(samples)]))
 
 
 class Denoising(Network):
@@ -311,11 +314,14 @@ class Denoising(Network):
         return np.reshape(batch.noisy(self.noise).images(), [-1] + self.input_shape), \
                np.reshape(batch.images(), [-1] + self.output_shape)
 
-    def score(self, dataset):
+    def score(self, dataset, samples=None):
+        if not samples:
+            samples = dataset.length
+
         return np.mean([self.loss.eval(feed_dict={
             self.x: np.reshape(dataset._images[i].noisy(self.noise).get(), [-1] + self.input_shape),
             self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape)
-        }) for i in range(dataset.length)])
+        }) for i in range(samples)])
 
 
 class Restoring(Denoising):
@@ -327,8 +333,11 @@ class Restoring(Denoising):
     def declare_loss(self):
         self.loss = tf.reduce_mean(tf.nn.l2_loss(self.y_ - self.output())) + self.weight_loss
 
-    def score(self, dataset):
+    def score(self, dataset, samples=None):
+        if not samples:
+            samples = dataset.length
+
         return np.mean([self.loss.eval(feed_dict={
             self.x: np.reshape(dataset._images[i].noisy().get(), [-1] + self.input_shape),
             self.y_: np.reshape(dataset._images[i].get()[3:61, 3:61], [-1] + self.output_shape)
-        }) for i in range(dataset.length)])
+        }) for i in range(samples)])
