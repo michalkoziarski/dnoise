@@ -310,7 +310,7 @@ class Denoising(Network):
 
     def score(self, dataset):
         return np.mean([self.loss.eval(feed_dict={
-            self.x: np.reshape(dataset._images[i].noisy().get(), [-1] + self.input_shape),
+            self.x: np.reshape(dataset._images[i].noisy(self.noise).get(), [-1] + self.input_shape),
             self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape)
         }) for i in range(dataset.length)])
 
