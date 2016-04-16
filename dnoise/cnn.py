@@ -21,6 +21,7 @@ class Network:
         self.weight_loss = tf.constant(0.)
         self.logits = None
         self.loss = None
+        self.noise = None
         self.setup()
         self.declare_loss()
 
@@ -104,9 +105,11 @@ class Network:
             self.keep_prob: 1.0
         })
 
-    def train(self, datasets, learning_rate=0.001, momentum=0.9, epochs=10, display_step=50, log='classification',
-              debug=False):
+    def train(self, datasets, learning_rate=0.01, momentum=0.9, epochs=10, display_step=50, log='classification',
+              debug=False, noise=None, visualize=0):
         train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss)
+
+        self.noise = noise
 
         root_path = '../results'
 
@@ -131,6 +134,14 @@ class Network:
             batches = []
             train_accuracies = []
             valid_accuracies = []
+
+        if visualize > 0:
+            clean_images = datasets.test.batch(visualize)
+            noisy_images = clean_images.noisy(noise)
+
+            for i in range(visualize):
+                clean_images._images[i].display(os.path.join(root_path, 'original_image_%d.jpg' % (i + 1)))
+                noisy_images._images[i].display(os.path.join(root_path, 'noisy_image_%d.jpg' % (i + 1)))
 
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
@@ -184,13 +195,23 @@ class Network:
                         plt.legend(['train', 'validation'], loc=2)
                         plt.savefig(os.path.join(root_path, 'score.png'))
                         plt.close()
-
                     else:
                         print 'Batch #%d, validation accuracy = %f%%' % (batches_completed, score)
 
+                    for i in range(visualize):
+                        image = np.reshape(self.output().eval(feed_dict={
+                            self.x: np.reshape(noisy_images._images[i].get(), [1] + self.input_shape)
+                        }), self.output_shape)
+
+                        Image(image=image).display(
+                            os.path.join(root_path, 'denoised_image_%d_batch_%d.jpg' % (i + 1, batches_completed))
+                        )
+
+                x, y_ = self.convert_batch(batch)
+
                 train_op.run(feed_dict={
-                    self.x: np.reshape(batch.images(), [-1] + self.input_shape),
-                    self.y_: batch.targets(),
+                    self.x: x,
+                    self.y_: y_,
                     self.keep_prob: 0.5
                 })
 
@@ -278,91 +299,20 @@ class Denoising(Network):
             conv(5, 5, 48, 48, activation=tf.nn.sigmoid).\
             conv(5, 5, 48, self.output_shape[2], activation=tf.nn.sigmoid)
 
-        self.batch_size = tf.placeholder(tf.float32)
-
+    def declare_loss(self):
         self.loss = tf.reduce_mean(tf.nn.l2_loss(
             tf.slice(self.y_ - self.output(), [0, 5, 5, 0], [-1, self.input_shape[0] - 10, self.input_shape[1] - 10, -1])
         )) + self.weight_loss
 
-    def accuracy(self, dataset):
+    def convert_batch(self, batch):
+        return np.reshape(batch.noisy(self.noise).images(), [-1] + self.input_shape), \
+               np.reshape(batch.images(), [-1] + self.output_shape)
+
+    def score(self, dataset):
         return np.mean([self.loss.eval(feed_dict={
             self.x: np.reshape(dataset._images[i].noisy().get(), [-1] + self.input_shape),
-            self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape),
-            self.batch_size: 1
+            self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape)
         }) for i in range(dataset.length)])
-
-    def train(self, datasets, learning_rate=1e-6, momentum=0.9, epochs=100, display_step=50, visualize=0,
-              log='denoising', noise=GaussianNoise()):
-        if visualize > 0:
-            clean_images = datasets.test.batch(visualize)
-            noisy_images = clean_images.noisy(noise)
-
-            root_path = '../results'
-
-            if not os.path.exists(root_path):
-                os.makedirs(root_path)
-
-            for i in range(visualize):
-                clean_images._images[i].display(os.path.join(root_path, 'original_image_%d.jpg' % (i + 1)))
-                noisy_images._images[i].display(os.path.join(root_path, 'noisy_image_%d.jpg' % (i + 1)))
-
-        if log is not None:
-            root_path = '../results'
-
-            if not os.path.exists(root_path):
-                os.makedirs(root_path)
-
-            log_path = os.path.join(root_path, '%s_%s.log' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()), log))
-
-            with open(log_path, 'w') as f:
-                f.write('epoch,batch,score\n')
-
-        train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss)
-
-        with tf.Session() as sess:
-            sess.run(tf.initialize_all_variables())
-            batches_completed = 0
-
-            while datasets.train.epochs_completed < epochs:
-                if batches_completed % display_step == 0:
-                    if datasets.valid is not None:
-                        accuracy = self.accuracy(datasets.valid)
-                    else:
-                        accuracy = self.accuracy(datasets.test)
-
-                    if log is not None:
-                        with open(log_path, 'a') as f:
-                            f.write('%d,%d,%f\n' % (datasets.train.epochs_completed, batches_completed, accuracy))
-
-                    print 'batch #%d, L2 loss = %f' % \
-                          (batches_completed, accuracy)
-
-                    for i in range(visualize):
-                        image = np.reshape(self.output().eval(feed_dict={
-                            self.x: np.reshape(noisy_images._images[i].get(), [1] + self.input_shape)
-                        }), self.output_shape)
-
-                        Image(image=image).display(
-                            os.path.join(root_path, 'denoised_image_%d_batch_%d.jpg' % (i + 1, batches_completed))
-                        )
-
-                batch = datasets.train.batch()
-
-                train_op.run(feed_dict={
-                    self.x: np.reshape(batch.noisy(noise).images(), [-1] + self.input_shape),
-                    self.y_: np.reshape(batch.images(), [-1] + self.output_shape),
-                    self.batch_size: batch.size()
-                })
-
-                batches_completed += 1
-
-            accuracy = self.accuracy(datasets.test)
-
-            if log is not None:
-                with open(log_path, 'a') as f:
-                    f.write('%d,%d,%f\n' % (-1, -1, accuracy))
-
-            print 'test L2 loss = %f' % accuracy
 
 
 class Restoring(Denoising):
