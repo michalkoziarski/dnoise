@@ -335,7 +335,7 @@ class Restoring(Network):
 
     def convert_batch(self, batch):
         return np.reshape(batch.noisy(self.noise).images(), [-1] + self.input_shape), \
-               np.reshape(batch.images()[:, 3:61, 3:61], [-1] + self.output_shape)
+               np.reshape(batch.images()[:, 3:93, 3:93], [-1] + self.output_shape)
 
     def score(self, dataset, samples=None):
         if not samples:
@@ -343,5 +343,5 @@ class Restoring(Network):
 
         return np.mean([self.loss.eval(feed_dict={
             self.x: np.reshape(dataset._images[i].noisy().get(), [-1] + self.input_shape),
-            self.y_: np.reshape(dataset._images[i].get()[3:61, 3:61], [-1] + self.output_shape)
+            self.y_: np.reshape(dataset._images[i].get()[3:93, 3:93], [-1] + self.output_shape)
         }) for i in range(samples)])
