@@ -160,7 +160,7 @@ class Network:
 
                     if debug:
                         for layer in [0, 1, 2]:
-                            self._visualize_weights(8, 12, batches_completed, layer=layer)
+                            self._visualize_weights(batches_completed, layer=layer)
 
                         train_loss = self.train_loss(batch)
                         losses.append(train_loss)
@@ -228,8 +228,11 @@ class Network:
 
             print 'Test score = %f%%' % score
 
-    def _visualize_weights(self, n_rows, n_cols, batches_completed, layer=0):
+    def _visualize_weights(self, batches_completed, layer=0):
         weights = self.weights[layer].eval()
+        n_weights = weights.shape[2] * weights.shape[3]
+        n_rows = int(np.floor(np.sqrt(n_weights)))
+        n_cols = int(np.floor(n_weights / float(n_rows)))
         flat = np.reshape(weights, (-1))
         flat -= np.min(flat)
         flat /= np.max(flat)
