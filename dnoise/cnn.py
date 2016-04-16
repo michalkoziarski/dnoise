@@ -324,7 +324,7 @@ class Denoising(Network):
         }) for i in range(samples)])
 
 
-class Restoring(Denoising):
+class Restoring(Network):
     def setup(self):
         self.conv(5, 5, self.input_shape[2], 512, activation=tf.nn.tanh, padding='VALID').\
             conv(1, 1, 512, 512, activation=tf.nn.tanh, padding='VALID').\
@@ -332,6 +332,10 @@ class Restoring(Denoising):
 
     def declare_loss(self):
         self.loss = tf.reduce_mean(tf.nn.l2_loss(self.y_ - self.output())) + self.weight_loss
+
+    def convert_batch(self, batch):
+        return np.reshape(batch.noisy(self.noise).images(), [-1] + self.input_shape), \
+               np.reshape(batch.images()[:, 3:61, 3:61], [-1] + self.output_shape)
 
     def score(self, dataset, samples=None):
         if not samples:
