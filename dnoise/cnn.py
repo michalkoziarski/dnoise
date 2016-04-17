@@ -243,10 +243,6 @@ class Network:
         n_weights = weights.shape[2] * weights.shape[3]
         n_rows = np.min([int(np.floor(np.sqrt(n_weights))), n_max])
         n_cols = np.min([int(np.floor(n_weights / float(n_rows))), n_max])
-        flat = np.reshape(weights, (-1))
-        flat -= np.min(flat)
-        flat /= np.max(flat)
-        weights = np.reshape(flat, (weights.shape[0], weights.shape[1], -1))
         index = 0
         filters = []
 
@@ -254,7 +250,11 @@ class Network:
             row = []
 
             for j in range(n_cols):
-                row.append(weights[:, :, index])
+                filter = weights[:, :, index]
+                filter -= np.min(filter)
+                filter /= np.max(filter)
+
+                row.append(filter)
 
                 if j < (n_cols - 1):
                     row.append(np.zeros((weights.shape[0], 1)))
