@@ -241,7 +241,7 @@ class Network:
     def visualize_weights(self, batches_completed, layer=0, n_max=np.inf):
         weights = self.weights[layer].eval()
         weights = np.reshape(weights, (weights.shape[0], weights.shape[1], -1))
-        n_weights = weights.shape[2] * weights.shape[3]
+        n_weights = weights.shape[2]
         n_rows = np.min([int(np.floor(np.sqrt(n_weights))), n_max])
         n_cols = np.min([int(np.floor(n_weights / float(n_rows))), n_max])
         index = 0
