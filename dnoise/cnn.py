@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 from time import gmtime, strftime
 from utils import Image
+from noise import tf_psnr
 
 
 class Network:
@@ -355,7 +356,7 @@ class Restoring(Network):
         if not samples:
             samples = dataset.length
 
-        return np.mean([self.loss.eval(feed_dict={
-            self.x: np.reshape(dataset._images[i].noisy().get(), [-1] + self.input_shape),
-            self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape)
-        }) for i in range(samples)])
+        return np.mean([tf_psnr(
+            dataset._images[i].noisy().get(),
+            dataset._images[i].get()
+        ) for i in range(samples)])
