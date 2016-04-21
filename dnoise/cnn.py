@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from time import gmtime, strftime
 from utils import Image
-from noise import *
+#from noise import *
 
 
 class Network:
@@ -22,7 +22,6 @@ class Network:
         self.logits = None
         self.loss = None
         self.train_op = None
-        self.noise = None
         self.setup()
         self.declare_loss()
 
@@ -109,10 +108,16 @@ class Network:
     def train(self, datasets, learning_rate=0.01, momentum=0.9, epochs=10, display_step=50, log='log',
               debug=False, noise=None, visualize=0, score_samples=None, max_filter_visualization=20):
         self.train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss)
-        self.noise = noise
 
-        root_path, log_path, losses, batches, train_accuracies, valid_accuracies, noisy_images = \
-            self.init_logging(datasets, log, debug, visualize)
+        self.datasets = datasets
+        self.log = log
+        self.debug = debug
+        self.visualize = visualize
+        self.noise = noise
+        self.score_samples = score_samples
+        self.max_filter_visualization = max_filter_visualization
+
+        self.init_logging()
 
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
@@ -122,9 +127,7 @@ class Network:
                 batch = datasets.train.batch()
 
                 if batches_completed % display_step == 0:
-                    self.log(datasets, log, debug, visualize, root_path, log_path, score_samples, batches_completed,
-                             max_filter_visualization, batch, losses, batches, train_accuracies, valid_accuracies,
-                             noisy_images)
+                    self.log(batch, batches_completed)
 
                 x, y_ = self.convert_batch(batch)
 
@@ -139,65 +142,63 @@ class Network:
             score = self.score(datasets.test)
 
             if log is not None:
-                with open(log_path, 'a') as f:
+                with open(self.log_path, 'a') as f:
                     f.write('%d,%d,%f\n' % (-1, -1, score))
 
             print 'Test score = %f%%' % score
 
-    def init_logging(self, datasets, log, debug, visualize):
-        root_path = '../results'
-        log_path = None
-        noisy_images = None
-        losses = []
-        batches = []
-        train_accuracies = []
-        valid_accuracies = []
+    def init_logging(self):
+        self.root_path = '../results'
+        self.log_path = None
+        self.noisy_images = None
+        self.losses = []
+        self.batches = []
+        self.train_accuracies = []
+        self.valid_accuracies = []
 
-        if not os.path.exists(root_path):
-            os.makedirs(root_path)
+        if not os.path.exists(self.root_path):
+            os.makedirs(self.root_path)
 
-        if log is not None:
-            log_path = os.path.join(root_path, '%s_%s.csv' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()), log))
+        if self.log is not None:
+            self.log_path = os.path.join(self.root_path, '%s_%s.csv' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()),
+                                                                        self.log))
 
-            with open(log_path, 'w') as f:
+            with open(self.log_path, 'w') as f:
                 f.write('epoch,batch,score\n')
 
-        if debug:
-            print 'Train set size: %d' % datasets.train.length
+        if self.debug:
+            print 'Train set size: %d' % self.datasets.train.length
 
-            if datasets.valid:
-                print 'Valid set size: %d' % datasets.valid.length
+            if self.datasets.valid:
+                print 'Valid set size: %d' % self.datasets.valid.length
 
-            print 'Test set size: %d' % datasets.test.length
+            print 'Test set size: %d' % self.datasets.test.length
 
-        if visualize > 0:
-            clean_images = datasets.test.batch(visualize)
-            noisy_images = clean_images.noisy(self.noise)
+        if self.visualize > 0:
+            self.clean_images = self.datasets.test.batch(self.visualize)
+            self.noisy_images = self.clean_images.noisy(self.noise)
 
-            for i in range(visualize):
-                clean_images._images[i].display(os.path.join(root_path, 'original_image_%d.jpg' % (i + 1)))
-                noisy_images._images[i].display(os.path.join(root_path, 'noisy_image_%d.jpg' % (i + 1)))
+            for i in range(self.visualize):
+                self.clean_images._images[i].display(os.path.join(self.root_path, 'original_image_%d.jpg' % (i + 1)))
+                self.noisy_images._images[i].display(os.path.join(self.root_path, 'noisy_image_%d.jpg' % (i + 1)))
 
-        return root_path, log_path, losses, batches, train_accuracies, valid_accuracies, noisy_images
+    def log(self, batch, batches_completed):
+        validation_set = self.datasets.valid if self.datasets.valid is not None else self.datasets.test
+        score = self.score(validation_set, self.score_samples)
 
-    def log(self, datasets, log, debug, visualize, root_path, log_path, score_samples, batches_completed,
-            max_filter_visualization, batch, losses, batches, train_accuracies, valid_accuracies, noisy_images):
-        validation_set = datasets.valid if datasets.valid is not None else datasets.test
-        score = self.score(validation_set, score_samples)
+        if self.log is not None:
+            with open(self.log_path, 'a') as f:
+                f.write('%d,%d,%f\n' % (self.datasets.train.epochs_completed, batches_completed, score))
 
-        if log is not None:
-            with open(log_path, 'a') as f:
-                f.write('%d,%d,%f\n' % (datasets.train.epochs_completed, batches_completed, score))
-
-        if debug:
+        if self.debug:
             for layer in [0, 1, 2]:
-                self.visualize_weights(batches_completed, layer=layer, n_max=max_filter_visualization)
+                self.visualize_weights(batches_completed, layer=layer, n_max=self.max_filter_visualization)
 
             train_loss = self.train_loss(batch)
-            losses.append(train_loss)
-            batches.append(batches_completed)
-            train_accuracies.append(self.score(datasets.train, score_samples))
-            valid_accuracies.append(score)
+            self.losses.append(train_loss)
+            self.batches.append(batches_completed)
+            self.train_accuracies.append(self.score(self.datasets.train, self.score_samples))
+            self.valid_accuracies.append(score)
 
             print '* Batch #%d' % batches_completed
 
@@ -210,32 +211,32 @@ class Network:
             print 'Train loss before update = %f' % train_loss
 
             plt.figure()
-            plt.plot(batches, losses)
+            plt.plot(self.batches, self.losses)
             plt.xlabel('batch')
             plt.ylabel('loss')
             plt.title('Train loss')
-            plt.savefig(os.path.join(root_path, 'train_loss.png'))
+            plt.savefig(os.path.join(self.root_path, 'train_loss.png'))
             plt.close()
 
             plt.figure()
-            plt.plot(batches, train_accuracies)
-            plt.plot(batches, valid_accuracies)
+            plt.plot(self.batches, self.train_accuracies)
+            plt.plot(self.batches, self.valid_accuracies)
             plt.xlabel('batch')
             plt.ylabel('score')
             plt.title('Score')
             plt.legend(['train', 'validation'], loc=2)
-            plt.savefig(os.path.join(root_path, 'score.png'))
+            plt.savefig(os.path.join(self.root_path, 'score.png'))
             plt.close()
         else:
             print 'Batch #%d, validation accuracy = %f%%' % (batches_completed, score)
 
-        for i in range(visualize):
+        for i in range(self.visualize):
             image = np.reshape(self.output().eval(feed_dict={
-                self.x: np.reshape(noisy_images._images[i].get(), [1] + self.input_shape)
+                self.x: np.reshape(self.noisy_images._images[i].get(), [1] + self.input_shape)
             }), self.output_shape)
 
             Image(image=image).display(
-                os.path.join(root_path, 'denoised_image_%d_batch_%d.jpg' % (i + 1, batches_completed))
+                os.path.join(self.root_path, 'denoised_image_%d_batch_%d.jpg' % (i + 1, batches_completed))
             )
 
     def visualize_weights(self, batches_completed, layer=0, n_max=np.inf):
