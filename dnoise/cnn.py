@@ -127,7 +127,7 @@ class Network:
                 batch = datasets.train.batch()
 
                 if batches_completed % display_step == 0:
-                    self.log(batch, batches_completed)
+                    self.logging_step(batch, batches_completed)
 
                 x, y_ = self.convert_batch(batch)
 
@@ -141,11 +141,7 @@ class Network:
 
             score = self.score(datasets.test)
 
-            if log is not None:
-                with open(self.log_path, 'a') as f:
-                    f.write('%d,%d,%f\n' % (-1, -1, score))
-
-            print 'Test score = %f%%' % score
+            self.end_logging(score)
 
     def init_logging(self):
         self.root_path = '../results'
@@ -182,7 +178,7 @@ class Network:
                 self.clean_images._images[i].display(os.path.join(self.root_path, 'original_image_%d.jpg' % (i + 1)))
                 self.noisy_images._images[i].display(os.path.join(self.root_path, 'noisy_image_%d.jpg' % (i + 1)))
 
-    def log(self, batch, batches_completed):
+    def logging_step(self, batch, batches_completed):
         validation_set = self.datasets.valid if self.datasets.valid is not None else self.datasets.test
         score = self.score(validation_set, self.score_samples)
 
@@ -238,6 +234,13 @@ class Network:
             Image(image=image).display(
                 os.path.join(self.root_path, 'denoised_image_%d_batch_%d.jpg' % (i + 1, batches_completed))
             )
+            
+    def end_logging(self, score):
+        if self.log is not None:
+            with open(self.log_path, 'a') as f:
+                f.write('%d,%d,%f\n' % (-1, -1, score))
+
+        print 'Test score = %f%%' % score
 
     def visualize_weights(self, batches_completed, layer=0, n_max=np.inf):
         weights = self.weights[layer].eval()
