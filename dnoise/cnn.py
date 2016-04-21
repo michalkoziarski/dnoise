@@ -106,7 +106,8 @@ class Network:
         })
 
     def train(self, datasets, learning_rate=0.01, momentum=0.9, epochs=10, display_step=50, log='log',
-              debug=False, noise=None, visualize=0, score_samples=None, max_filter_visualization=20):
+              debug=False, noise=None, visualize=0, score_samples=None, max_filter_visualization=20,
+              baseline_score=None):
         self.train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss)
 
         self.datasets = datasets
@@ -116,6 +117,7 @@ class Network:
         self.noise = noise
         self.score_samples = score_samples
         self.max_filter_visualization = max_filter_visualization
+        self.baseline_score = baseline_score
 
         self.init_logging()
 
@@ -217,10 +219,16 @@ class Network:
             plt.figure()
             plt.plot(self.batches, self.train_accuracies)
             plt.plot(self.batches, self.valid_accuracies)
+            legend = ['train', 'validation']
+
+            if self.baseline_score:
+                plt.plot(self.batches, len(self.batches) * [self.baseline_score])
+                legend += ['baseline']
+
             plt.xlabel('batch')
             plt.ylabel('score')
             plt.title('Score')
-            plt.legend(['train', 'validation'], loc=2)
+            plt.legend(legend, loc=2)
             plt.savefig(os.path.join(self.root_path, 'score.png'))
             plt.close()
         else:
