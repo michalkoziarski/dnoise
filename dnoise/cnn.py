@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 
 from time import gmtime, strftime
 from utils import Image
-#from noise import *
 
 
 class Network:
@@ -234,7 +233,7 @@ class Network:
             Image(image=image).display(
                 os.path.join(self.root_path, 'denoised_image_%d_batch_%d.jpg' % (i + 1, batches_completed))
             )
-            
+
     def end_logging(self, score):
         if self.log is not None:
             with open(self.log_path, 'a') as f:
