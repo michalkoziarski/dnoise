@@ -10,7 +10,8 @@ from dnoise.noise import *
 
 def log(ds, noise, name):
     psnr_input = [psnr(image.get(), image.noisy(noise).get()) for image in ds.train._images]
-    psnr_bm3d = [psnr(image.get(), bm3d(image.noisy(noise).get(), 0.1)) for image in ds.train._images]
+    psnr_bm3d = [psnr(np.expand_dims(image.get(), axis=2), bm3d(np.expand_dims(image.noisy(noise).get(), axis=2), 0.1))
+                 for image in ds.train._images]
     psnr_medfilt = [psnr(image.get(), medfilt(image.noisy(noise).get(), 3)) for image in ds.train._images]
     psnr_bilateral = [psnr(image.get(), denoise_bilateral(image.noisy(noise).get(), sigma_range=0.3, sigma_spatial=2))
                       for image in ds.train._images]
