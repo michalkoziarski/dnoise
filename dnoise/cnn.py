@@ -356,7 +356,9 @@ class Restoring(Network):
         if not samples:
             samples = dataset.length
 
-        return np.mean([tf_psnr(
-            dataset._images[i].noisy().get(),
-            dataset._images[i].get()
-        ) for i in range(samples)])
+        score = tf_psnr(self.x, self.y_)
+
+        return np.mean([score.eval(feed_dict={
+            self.x: np.reshape(dataset._images[i].noisy().get(), [-1] + self.input_shape),
+            self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape)
+        }) for i in range(samples)])
