@@ -107,7 +107,7 @@ class Network:
 
     def train(self, datasets, learning_rate=0.01, momentum=0.9, epochs=10, display_step=50, log='log',
               debug=False, noise=None, visualize=0, score_samples=None, max_filter_visualization=20,
-              baseline_score=None):
+              baseline_score=None, results_dir=None):
         self.train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss)
 
         self.datasets = datasets
@@ -118,6 +118,7 @@ class Network:
         self.score_samples = score_samples
         self.max_filter_visualization = max_filter_visualization
         self.baseline_score = baseline_score
+        self.results_dir = results_dir
 
         self.init_logging()
 
@@ -146,7 +147,14 @@ class Network:
             self.end_logging(score)
 
     def init_logging(self):
-        self.root_path = '../results'
+        if self.results_dir:
+            prefix = '%s_' % self.results_dir
+        else:
+            prefix = ''
+
+        timestamp = strftime('%Y_%m_%d_%H-%M-%S', gmtime())
+
+        self.root_path = os.path.join('../results', '%s%s' % (prefix, timestamp))
         self.log_path = None
         self.noisy_images = None
         self.losses = []
@@ -158,8 +166,7 @@ class Network:
             os.makedirs(self.root_path)
 
         if self.log is not None:
-            self.log_path = os.path.join(self.root_path, '%s_%s.csv' % (strftime('%Y_%m_%d_%H-%M-%S', gmtime()),
-                                                                        self.log))
+            self.log_path = os.path.join(self.root_path, '%s_%s.csv' % (timestamp, self.log))
 
             with open(self.log_path, 'w') as f:
                 f.write('epoch,batch,score\n')
@@ -249,6 +256,18 @@ class Network:
                 f.write('%d,%d,%f\n' % (-1, -1, score))
 
         print 'Test score = %f%%' % score
+
+        if self.visualize > 0:
+            denoised_path = os.path.join(self.root_path, 'denoised')
+
+            for i in range(self.datasets.test.length):
+                image = np.reshape(self.output().eval(feed_dict={
+                    self.x: np.reshape(self.datasets.test._images[i].get(), [1] + self.input_shape)
+                }), self.output_shape)
+
+                Image(image=image).display(
+                    os.path.join(denoised_path, 'denoised_image_%d.jpg' % (i + 1))
+                )
 
     def visualize_weights(self, batches_completed, layer=0, n_max=np.inf):
         weights = self.weights[layer].eval()
