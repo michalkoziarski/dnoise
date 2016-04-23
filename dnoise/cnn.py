@@ -192,7 +192,7 @@ class Network:
             for layer in [0, 1, 2]:
                 self.visualize_weights(batches_completed, layer=layer, n_max=self.max_filter_visualization)
 
-            train_loss = self.train_loss(batch)
+            train_loss = np.log(self.train_loss(batch) + 1.)
             self.losses.append(train_loss)
             self.batches.append(batches_completed)
             self.train_accuracies.append(self.score(self.datasets.train, self.score_samples))
