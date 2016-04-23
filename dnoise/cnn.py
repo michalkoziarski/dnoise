@@ -122,6 +122,8 @@ class Network:
 
         self.init_logging()
 
+        self.saver = tf.train.Saver()
+
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
             batches_completed = 0
@@ -145,6 +147,8 @@ class Network:
             score = self.score(datasets.test)
 
             self.end_logging(score)
+
+            self.saver.save(sess, os.path.join(self.root_path, 'model.ckpt'))
 
     def init_logging(self):
         if self.results_dir:
