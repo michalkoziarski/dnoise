@@ -14,7 +14,8 @@ def log(ds, noise, name):
                       bm3d(np.expand_dims(image.noisy(noise).get(), axis=2).astype(np.float32), 0.1))
                  for image in ds.train._images]
     psnr_medfilt = [psnr(image.get(), medfilt(image.noisy(noise).get(), 3)) for image in ds.train._images]
-    psnr_bilateral = [psnr(image.get(), denoise_bilateral(image.noisy(noise).get(), sigma_range=0.3, sigma_spatial=2))
+    psnr_bilateral = [psnr(image.get(), denoise_bilateral(image.noisy(noise).get(), sigma_range=0.3, sigma_spatial=2,
+                                                          multichannel=False))
                       for image in ds.train._images]
 
     with open(log_path, 'a') as f:
