@@ -364,9 +364,11 @@ class Restoring(Network):
         if not samples:
             samples = dataset.length
 
+        permutation = np.random.permutation(dataset.length)[:samples]
+
         score = tf_psnr(self.output(), self.y_)
 
         return np.mean([score.eval(feed_dict={
             self.x: np.reshape(dataset._images[i].noisy(self.noise).get(), [-1] + self.input_shape),
             self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape)
-        }) for i in range(samples)])
+        }) for i in permutation])
