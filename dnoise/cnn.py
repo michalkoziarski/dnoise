@@ -368,9 +368,13 @@ class Denoising(Network):
 
 class Restoring(Network):
     def setup(self):
-        self.conv(15, 15, self.input_shape[2], 512, activation=tf.nn.tanh).\
-            conv(1, 1, 512, 512, activation=tf.nn.tanh).\
-            conv(5, 5, 512, self.output_shape[2], activation=None)
+        self.conv(5, 5, self.input_shape[2], 64, activation=tf.nn.tanh).\
+            conv(5, 5, 64, 64, activation=tf.nn.tanh).\
+            conv(5, 5, 64, 64, activation=tf.nn.tanh).\
+            conv(5, 5, 64, 64, activation=tf.nn.tanh).\
+            conv(5, 5, 64, 64, activation=tf.nn.tanh).\
+            conv(5, 5, 64, 64, activation=tf.nn.tanh).\
+            conv(5, 5, 64, self.output_shape[2], activation=tf.nn.relu)
 
     def declare_loss(self):
         self.loss = tf.reduce_mean(tf.nn.l2_loss(self.y_ - self.output())) + self.weight_loss
