@@ -30,12 +30,17 @@ def log(ds, noise_type):
 
         outputs = dict()
 
-        outputs['bm3d'] = bm3d(noisy, 0.1)
-        outputs['medfilt'] = medfilt(noisy, 3)
+        outputs['bm3d'] = np.asarray(bm3d(noisy, 0.1))
+        outputs['medfilt'] = medfilt(noisy[:, :, 0], 3)
         outputs['bilateral'] = denoise_bilateral(noisy, sigma_range=0.3, sigma_spatial=2)
 
         for method in ['bm3d', 'medfilt', 'bilateral']:
-            psnrs[method].append(psnr(clean, outputs[method]))
+            if len(outputs[method].shape) > 2:
+                reshaped_clean = clean
+            else:
+                reshaped_clean = clean[:, :, 0]
+
+            psnrs[method].append(psnr(reshaped_clean, outputs[method]))
 
             Image(image=outputs[method]).display(
                 os.path.join(root_path, noise_type, method, 'denoised_%d.jpg' % (i + 1))
