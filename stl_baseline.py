@@ -10,14 +10,22 @@ from dnoise.utils import Image
 
 
 def log(ds, noise_type):
+    methods = ['input']
+    methods += ['bm3d_%.2f' % x for x in [0.1, 0.15, 0.2, 0.25]]
+    methods += ['medfilt_%d' % x for x in [3, 5, 7, 9]]
+    methods += ['bilateral_%.2f_%d' % (x, y) for x in [0.2, 0.3, 0.4] for y in [2, 3, 4]]
+
     if not os.path.exists(os.path.join(root_path, noise_type)):
         os.makedirs(os.path.join(root_path, noise_type))
 
-    for method in ['bm3d', 'medfilt', 'bilateral']:
+    for method in methods[1:]:
         if not os.path.exists(os.path.join(root_path, noise_type, method)):
             os.makedirs(os.path.join(root_path, noise_type, method))
 
-    psnrs = {'input': [], 'bm3d': [], 'medfilt': [], 'bilateral': []}
+    psnrs = dict()
+
+    for method in methods:
+        psnrs[method] = []
 
     noise = eval(noise_type)
 
@@ -30,11 +38,17 @@ def log(ds, noise_type):
 
         outputs = dict()
 
-        outputs['bm3d'] = np.asarray(bm3d(noisy, 0.1))
-        outputs['medfilt'] = medfilt(noisy[:, :, 0], 3)
-        outputs['bilateral'] = denoise_bilateral(noisy, sigma_range=0.3, sigma_spatial=2)
+        for x in [0.1, 0.15, 0.2, 0.25]:
+            outputs['bm3d_%.2f' % x] = np.asarray(bm3d(noisy, x))
 
-        for method in ['bm3d', 'medfilt', 'bilateral']:
+        for x in [3, 5, 7, 9]:
+            outputs['medfilt_%d' % x] = medfilt(noisy[:, :, 0], x)
+
+        for x in [0.2, 0.3, 0.4]:
+            for y in [2, 3, 4]:
+                outputs['bilateral_%.2f_%d' % (x, y)] = denoise_bilateral(noisy, sigma_range=x, sigma_spatial=y)
+
+        for method in methods[1:]:
             if len(outputs[method].shape) > 2:
                 reshaped_clean = clean
             else:
@@ -47,7 +61,7 @@ def log(ds, noise_type):
             )
 
     with open(log_path, 'a') as f:
-        for method in ['input', 'bm3d', 'medfilt', 'bilateral']:
+        for method in methods:
             f.write('%s,%s,%.3f,%.3f\n' % (noise_type, method, np.nanmean(psnrs[method]), np.nanstd(psnrs[method])))
 
 
