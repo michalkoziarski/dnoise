@@ -14,8 +14,8 @@ def process_and_log(noise, name, train_noise, test_noise):
     else:
         test_noise = None
 
-    ds = load_stl(grayscale=False, batch_size=50, n=None, train_noise=train_noise, test_noise=test_noise)
-    cnn = CNN(input_shape=[96, 96, 3], output_shape=[10])
+    ds = load_stl(grayscale=True, batch_size=50, n=None, train_noise=train_noise, test_noise=test_noise)
+    cnn = CNN(input_shape=[96, 96, 1], output_shape=[10])
     cnn.train(ds, debug=True, display_step=250, epochs=1000, learning_rate=0.01, results_dir=name)
 
 
