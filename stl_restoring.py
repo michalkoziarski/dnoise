@@ -9,8 +9,8 @@ if len(sys.argv) > 1:
     noise = eval(sys.argv[1])
     results_dir = sys.argv[1]
 else:
-    noise = GaussianNoise(std=0.2)
-    results_dir = 'GaussianNoise(0.2)'
+    noise = GaussianNoise(0.1)
+    results_dir = 'GaussianNoise(0.1)'
 
 ds = load_stl_unsupervised(shape=(96, 96), grayscale=True, batch_size=1)
 baseline = np.mean([psnr(image.get(), image.noisy(noise).get()) for image in ds.test._images])
