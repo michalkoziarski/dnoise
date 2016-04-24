@@ -2,6 +2,6 @@ from dnoise.cnn import CNN
 from dnoise.loaders import load_stl
 
 
-ds = load_stl(grayscale=False, batch_size=250)
-cnn = CNN(input_shape=[96, 96, 3], output_shape=[10], weight_decay=0.0005)
-cnn.train(ds, learning_rate=0.00001, momentum=0.9, epochs=10, display_step=20)
+ds = load_stl(grayscale=False, batch_size=50, n=None)
+cnn = CNN(input_shape=[96, 96, 3], output_shape=[10])
+cnn.train(ds, debug=True, log='stl_debug', display_step=250, epochs=1000, learning_rate=0.01)
