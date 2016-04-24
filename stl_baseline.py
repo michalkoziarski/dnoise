@@ -48,7 +48,7 @@ def log(ds, noise_type):
 
     with open(log_path, 'a') as f:
         for method in ['input', 'bm3d', 'medfilt', 'bilateral']:
-            f.write('%s,%s,%.3f,%.3f\n' % (noise_type, method, np.mean(psnrs[method]), np.std(psnrs[method])))
+            f.write('%s,%s,%.3f,%.3f\n' % (noise_type, method, np.nanmean(psnrs[method]), np.nanstd(psnrs[method])))
 
 
 ds = load_stl(shape=(96, 96), grayscale=True, batch_size=1)
