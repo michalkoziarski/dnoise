@@ -264,6 +264,9 @@ class Network:
         if self.visualize > 0:
             denoised_path = os.path.join(self.root_path, 'denoised')
 
+            if not os.path.exists(denoised_path):
+                os.makedirs(denoised_path)
+
             for i in range(self.datasets.test.length):
                 image = np.reshape(self.output().eval(feed_dict={
                     self.x: np.reshape(self.datasets.test._images[i].get(), [1] + self.input_shape)
@@ -305,7 +308,7 @@ class Network:
         filters = np.vstack(filters)
 
         Image(image=filters, shape=(filters.shape[0] * 10, filters.shape[1] * 10)).display(
-            os.path.join('..', 'results', 'weights_layer_%d_batch_%d.png' % (layer, batches_completed))
+            os.path.join(self.root_path, 'weights_layer_%d_batch_%d.png' % (layer, batches_completed))
         )
 
 
