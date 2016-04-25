@@ -200,8 +200,7 @@ class Network:
                 f.write('%d,%d,%f\n' % (self.datasets.train.epochs_completed, batches_completed, score))
 
         if self.debug:
-            for layer in [0, 1, 2]:
-                self.visualize_weights(batches_completed, layer=layer, n_max=self.max_filter_visualization)
+            self.visualize_weights(batches_completed, layer=0, n_max=self.max_filter_visualization)
 
             train_loss = np.log(self.train_loss(batch) + 1.)
             self.losses.append(train_loss)
