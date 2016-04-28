@@ -89,6 +89,7 @@ class RandomNoise(Noise):
 
         return type(parameter, scale=self.scale)._apply(image)
 
+
 def mse(x, y):
     return np.mean(np.power(x - y, 2))
 
