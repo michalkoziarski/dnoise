@@ -107,7 +107,7 @@ class Network:
 
     def train(self, datasets, learning_rate=0.01, momentum=0.9, epochs=10, display_step=50, log='log',
               debug=False, noise=None, visualize=0, score_samples=None, max_filter_visualization=20,
-              baseline_score=None, results_dir=None):
+              baseline_score=None, results_dir=None, save_model=True, visualize_layers=1):
         self.train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss)
 
         self.datasets = datasets
@@ -119,6 +119,8 @@ class Network:
         self.max_filter_visualization = max_filter_visualization
         self.baseline_score = baseline_score
         self.results_dir = results_dir
+        self.save_model = save_model
+        self.visualize_layers = visualize_layers
 
         self.init_logging()
 
@@ -148,7 +150,8 @@ class Network:
 
             self.end_logging(score)
 
-            self.saver.save(sess, os.path.join(self.root_path, 'model.ckpt'))
+            if self.save_model:
+                self.saver.save(sess, os.path.join(self.root_path, 'model.ckpt'))
 
     def init_logging(self):
         if self.results_dir:
@@ -200,7 +203,8 @@ class Network:
                 f.write('%d,%d,%f\n' % (self.datasets.train.epochs_completed, batches_completed, score))
 
         if self.debug:
-            self.visualize_weights(batches_completed, layer=0, n_max=self.max_filter_visualization)
+            for layer in range(self.visualize_layers):
+                self.visualize_weights(batches_completed, layer=layer, n_max=self.max_filter_visualization)
 
             train_loss = np.log(self.train_loss(self.datasets.train) + 1.)
             self.losses.append(train_loss)
