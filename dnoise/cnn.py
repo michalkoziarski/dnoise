@@ -202,7 +202,7 @@ class Network:
         if self.debug:
             self.visualize_weights(batches_completed, layer=0, n_max=self.max_filter_visualization)
 
-            train_loss = np.log(self.train_loss(batch) + 1.)
+            train_loss = np.log(self.train_loss(self.datasets.train) + 1.)
             self.losses.append(train_loss)
             self.batches.append(batches_completed)
             self.train_accuracies.append(self.score(self.datasets.train, self.score_samples))
@@ -242,7 +242,7 @@ class Network:
             plt.savefig(os.path.join(self.root_path, 'score.png'))
             plt.close()
         else:
-            print 'Batch #%d, validation accuracy = %f%%' % (batches_completed, score)
+            print 'Batch #%d, validation score = %f' % (batches_completed, score)
 
         for i in range(self.visualize):
             image = np.reshape(self.output().eval(feed_dict={
@@ -258,7 +258,7 @@ class Network:
             with open(self.log_path, 'a') as f:
                 f.write('%d,%d,%f\n' % (-1, -1, score))
 
-        print 'Test score = %f%%' % score
+        print 'Test score = %f' % score
 
         if self.visualize > 0:
             denoised_path = os.path.join(self.root_path, 'denoised')
