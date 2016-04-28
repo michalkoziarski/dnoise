@@ -345,6 +345,24 @@ class CNN(Network):
         }) for i in range(samples)]))
 
 
+class DeepCNN(CNN):
+    def setup(self):
+        self.conv(3, 3, self.input_shape[2], 32, W=0.0001).\
+            conv(3, 3, 32, 32, W=0.0001).\
+            pool().\
+            conv(3, 3, 32, 64, W=0.0001).\
+            conv(3, 3, 64, 64, W=0.0001).\
+            pool().\
+            conv(3, 3, 64, 128, W=0.0001).\
+            conv(3, 3, 128, 128, W=0.0001).\
+            pool().\
+            fully(2048, W=0.0001).\
+            dropout().\
+            fully(2048, W=0.0001).\
+            dropout().\
+            softmax()
+
+
 class Denoising(Network):
     def setup(self):
         self.conv(5, 5, self.input_shape[2], 48, activation=tf.nn.sigmoid).\
