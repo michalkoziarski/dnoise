@@ -72,6 +72,23 @@ class PhotonCountingNoise(Noise):
         return image + np.random.poisson(image)
 
 
+class RandomNoise(Noise):
+    def __init__(self, type=None, range=(0.0, 0.5), scale=DEFAULT_SCALE):
+        Noise.__init__(self, scale)
+
+        self.type = type
+        self.range = range
+
+    def _apply(self, image):
+        if self.type:
+            type = self.type
+        else:
+            type = np.random.choice([GaussianNoise, SaltAndPepperNoise, QuantizationNoise])
+
+        parameter = np.random.random() * (self.range[1] - self.range[0]) + self.range[0]
+
+        return type(parameter, scale=self.scale)._apply(image)
+
 def mse(x, y):
     return np.mean(np.power(x - y, 2))
 
