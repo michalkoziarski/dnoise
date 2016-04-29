@@ -99,11 +99,11 @@ class Network:
     def train_loss(self, batch):
         x, y_ = self.convert_batch(batch)
 
-        return self.loss.eval(feed_dict={
-            self.x: x,
-            self.y_: y_,
+        return float(np.mean([self.loss.eval(feed_dict={
+            self.x: np.expand_dims(x[i], 0),
+            self.y_:  np.expand_dims(y_[i], 0),
             self.keep_prob: 1.0
-        })
+        }) for i in range(batch.length)]))
 
     def train(self, datasets, learning_rate=0.01, momentum=0.9, epochs=10, display_step=50, log='log',
               debug=False, noise=None, visualize=0, score_samples=None, max_filter_visualization=20,
