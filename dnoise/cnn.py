@@ -194,7 +194,7 @@ class Network:
                 self.clean_images._images[i].display(os.path.join(self.root_path, 'original_image_%d.jpg' % (i + 1)))
                 self.noisy_images._images[i].display(os.path.join(self.root_path, 'noisy_image_%d.jpg' % (i + 1)))
 
-    def logging_step(self, batch, batches_completed):
+    def logging_step(self, batches_completed):
         validation_set = self.datasets.valid if self.datasets.valid is not None else self.datasets.test
         score = self.score(validation_set, self.score_samples)
 
