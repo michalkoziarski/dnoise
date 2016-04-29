@@ -44,5 +44,5 @@ for kind in ({'train_noise': False, 'test_noise': True}, {'train_noise': True, '
     else:
         kind_str += 'clean'
 
-    process_and_log(noise_type, '%s_classification_%s' %
+    process_and_log(noise_type, 'Classification_%s_%s' %
                     (noise_name, kind_str), kind['train_noise'], kind['test_noise'])
