@@ -107,7 +107,7 @@ class Network:
 
     def train(self, datasets, learning_rate=0.01, momentum=0.9, epochs=10, display_step=50, log='log',
               debug=False, noise=None, visualize=0, score_samples=None, max_filter_visualization=20,
-              baseline_score=None, results_dir=None, save_model=True, visualize_layers=1):
+              baseline_score=None, results_dir=None, save_model=False, visualize_layers=0):
         self.train_op = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.loss)
 
         self.datasets = datasets
