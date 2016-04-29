@@ -134,7 +134,7 @@ class Network:
                 batch = datasets.train.batch()
 
                 if batches_completed % display_step == 0:
-                    self.logging_step(batch, batches_completed)
+                    self.logging_step(batches_completed)
 
                 x, y_ = self.convert_batch(batch)
 
