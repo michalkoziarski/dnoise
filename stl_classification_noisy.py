@@ -26,7 +26,7 @@ def process_and_log(noise, name, train_noise, test_noise):
 
     ds = load_stl(grayscale=True, batch_size=50, train_noise=train_noise, test_noise=test_noise)
     cnn = CNN(input_shape=[96, 96, 1], output_shape=[10])
-    cnn.train(ds, debug=True, display_step=250, epochs=1000, learning_rate=0.01, results_dir=name)
+    cnn.train(ds, debug=True, display_step=100, epochs=100, learning_rate=0.01, results_dir=name)
 
 
 for kind in ({'train_noise': False, 'test_noise': True}, {'train_noise': True, 'test_noise': True}):

@@ -24,5 +24,5 @@ if not denoised_path:
 
 ds = load_stl_denoised(denoised_path, grayscale=True, batch_size=50)
 cnn = CNN(input_shape=[96, 96, 1], output_shape=[10])
-cnn.train(ds, debug=False, display_step=250, epochs=1000, learning_rate=0.01,
+cnn.train(ds, debug=False, display_step=100, epochs=100, learning_rate=0.01,
           results_dir='Classification_%s_clean2denoised' % noise_name)
