@@ -243,6 +243,17 @@ def load_stl(batch_size=128, shape=(96, 96), grayscale=True, normalize=True, tra
     return datasets
 
 
+def load_stl_denoised(denoised_path, batch_size=128, shape=(96, 96), grayscale=True, normalize=True,
+                      train_noise=None, test_noise=None, n=None):
+    datasets = load_stl(batch_size, shape, grayscale, normalize, train_noise, test_noise, n)
+
+    for i in range(datasets.test.length):
+        datasets.test._images[i] = Image(path=os.path.join(denoised_path, 'denoised_image_%d.jpg' % (i + 1)),
+                                         shape=shape, keep_in_memory=True, grayscale=grayscale, normalize=normalize)
+
+    return datasets
+
+
 def load_stl_unsupervised(batch_size=128, shape=(96, 96), grayscale=True, normalize=True, train_noise=None,
                           test_noise=None):
     root_path = '../data'
