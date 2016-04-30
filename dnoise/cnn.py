@@ -423,3 +423,21 @@ class Restoring(Network):
             self.x: np.reshape(dataset._images[i].noisy(self.noise).get(), [-1] + self.input_shape),
             self.y_: np.reshape(dataset._images[i].get(), [-1] + self.output_shape)
         }) for i in permutation])
+
+    def load_and_denoise(self, path, batch):
+        self.saver = tf.train.Saver()
+
+        if not os.path.exists(os.path.join(path, 'denoised_test_images')):
+            os.makedirs(os.path.join(path, 'denoised_test_images'))
+
+        with tf.Session() as sess:
+            self.saver.restore(sess, os.path.join(path, 'model.ckpt'))
+
+            for i in range(batch.length):
+                image = np.reshape(self.output().eval(feed_dict={
+                    self.x: np.reshape(batch._images[i].get(), [1] + self.input_shape)
+                }), self.output_shape)
+
+                Image(image=image).display(
+                    os.path.join(path, 'denoised_test_images', 'denoised_image_%d.jpg' % (i + 1))
+                )
