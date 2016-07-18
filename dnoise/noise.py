@@ -1,6 +1,8 @@
 import numpy as np
 import tensorflow as tf
 
+from motion_blur import MotionBlur
+
 
 DEFAULT_SCALE = (0.0, 1.0)
 
