@@ -50,7 +50,7 @@ class Image:
 
             image = image / 255.
 
-        if self.grayscale and len(np.shape(image)) == 3 and np.shape(image)[2] == 3:
+        if self.grayscale and len(np.shape(image)) == 3 and np.shape(image)[2] >= 3:
             r, g, b = image[:, :, 0], image[:, :, 1], image[:, :, 2]
 
             image = 0.2989 * r + 0.5870 * g + 0.1140 * b
