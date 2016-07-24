@@ -3,6 +3,7 @@ import sys
 from dnoise.cnn import Restoring
 from dnoise.loaders import load_stl_unsupervised
 from dnoise.noise import *
+from dnoise.motion_blur import MotionBlur
 
 
 if len(sys.argv) > 1:
