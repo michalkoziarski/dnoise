@@ -38,7 +38,7 @@ def create_trajectory(trajectory_size=64, anxiety=0.005, n_samples=2000, max_len
         else:
             next_direction = 0
 
-        dv = next_direction + anxiety * (gaussian_term * (np.random.normal() + 1j * np.random.normal()) - 
+        dv = next_direction + anxiety * (gaussian_term * (np.random.normal() + 1j * np.random.normal()) -
                                          centripetal * x[t]) * (max_length / float(n_samples - 1))
         v += dv
         v = (v / np.abs(v)) * max_length / (n_samples - 1)
@@ -88,42 +88,58 @@ def create_psf(trajectory, size=64, exposure=1.0):
 def create_blurred_raw(y, psf, lambd, sigma_gauss):
     y = copy.copy(y)
     y = y * lambd
-    y_n, x_n = y.shape[0], y.shape[1]
-    ghy, ghx = psf.shape
+    x_n, y_n = y.shape[0], y.shape[1]
+    ghx, ghy = psf.shape
 
-    big_v = np.zeros((y_n, x_n))
-    big_v[((y_n - ghy) / 2):((y_n - ghy) / 2 + ghy), ((x_n - ghx) / 2):((x_n - ghx) / 2 + ghx)] = psf
+    big_v = np.zeros((x_n, y_n))
+    big_v[((x_n - ghx) / 2):((x_n - ghx) / 2 + ghx), ((y_n - ghy) / 2):((y_n - ghy) / 2 + ghy)] = psf
 
     V = fft2(big_v)
     y_blur = np.real(ifft2(V * fft2(y)))
 
     mixed = np.random.poisson(y_blur * (y_blur > 0))
 
-    hx, hy = x_n / 2, y_n / 2
+    hx, hy = x_n / 2., y_n / 2.
     raw = np.zeros((x_n, y_n))
-    raw[:hx, :hy] = mixed[hx:, hy:]
-    raw[hx:, :hy] = mixed[:hx, hy:]
-    raw[:hx, hy:] = mixed[hx:, :hy]
-    raw[hx:, hy:] = mixed[:hx, :hy]
+    raw[:np.floor(hx), :np.floor(hy)] = mixed[np.ceil(hx):, np.ceil(hy):]
+    raw[np.floor(hx):, :np.floor(hy)] = mixed[:np.ceil(hx), np.ceil(hy):]
+    raw[:np.floor(hx), np.floor(hy):] = mixed[np.ceil(hx):, :np.ceil(hy)]
+    raw[np.floor(hx):, np.floor(hy):] = mixed[:np.ceil(hx), :np.ceil(hy)]
+
+    raw = (raw - np.min(raw)) / np.max(raw)
 
     raw = raw + sigma_gauss * np.random.normal(size=raw.shape)
 
-    return raw / lambd
+    return raw
+
+
+def create_blurred_color(y, psf, lambd, sigma_gauss):
+    if len(y.shape) == 2:
+        return create_blurred_raw(y, psf, lambd, sigma_gauss)
+    elif len(y.shape) == 3:
+        result = np.zeros(y.shape)
+
+        for i in range(y.shape[2]):
+            result[:, :, i] = create_blurred_raw(y[:, :, i], psf, lambd, sigma_gauss)
+
+        return result
+    else:
+        raise AttributeError('Invalid image shape')
 
 
 class MotionBlur(Noise):
     def __init__(self, size=64, anxiety=0.005, exposure=1.0, lambd=2048, gaussian=0.05, scale=DEFAULT_SCALE):
         Noise.__init__(self, scale)
-        
+
         self.size = size
         self.anxiety = anxiety
         self.exposure = exposure
         self.lambd = lambd
         self.gaussian = gaussian
-        
+
     def _apply(self, image):
         trajectory = create_trajectory(trajectory_size=self.size, anxiety=self.anxiety, max_length=self.size)
         psf = create_psf(trajectory, size=self.size, exposure=self.exposure)
-        blurred = create_blurred_raw(image, psf, self.lambd, self.gaussian)
+        blurred = create_blurred_color(image, psf, self.lambd, self.gaussian)
 
         return blurred
