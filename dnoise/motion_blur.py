@@ -12,10 +12,9 @@
 
 
 import numpy as np
-import copy
 
 from noise import Noise, DEFAULT_SCALE
-from numpy.fft import fft2, ifft2
+from scipy import ndimage
 
 
 def create_trajectory(trajectory_size=64, anxiety=0.005, n_samples=2000, max_length=64):
@@ -52,22 +51,24 @@ def create_trajectory(trajectory_size=64, anxiety=0.005, n_samples=2000, max_len
     return x
 
 
-def create_psf(trajectory, size=64, exposure=1.0):
+def create_psf(trajectory, size=15, exposure=10.0):
     n_samples = len(trajectory)
     x = trajectory
-    PSF = np.zeros((size, size))
+    psf = np.zeros((size, size))
+
+    x = x - np.mean(x) + (size + 1j * size) / 2.
 
     triangle_fun = lambda d: np.max((0, 1 - np.abs(d)))
     triangle_fun_prod = lambda d1, d2: triangle_fun(d1) * triangle_fun(d2)
 
     for t in range(1, len(x) + 1):
-        if exposure * n_samples >= t and 0 < t - 1:
+        if exposure * n_samples >= t > 1:
             t_proportion = 1
-        elif exposure * n_samples >= t - 1 and 0 < t - 1:
+        elif exposure * n_samples + 1 >= t > 1:
             t_proportion = exposure * n_samples - t + 1
-        elif exposure * n_samples >= t and 0 < t:
+        elif exposure * n_samples >= t > 0:
             t_proportion = t
-        elif exposure * n_samples >= t - 1 and 0 < t:
+        elif exposure * n_samples + 1 >= t > 0:
             t_proportion = exposure * n_samples
         else:
             t_proportion = 0
@@ -77,50 +78,36 @@ def create_psf(trajectory, size=64, exposure=1.0):
         m1 = np.min((size - 1, np.max((1, np.floor(np.imag(x[t - 1])))))) - 1
         M1 = m1 + 1
 
-        PSF[m1][m2] = PSF[m1][m2] + t_proportion * triangle_fun_prod(np.real(x[t - 1]) - m2, np.imag(x[t - 1]) - m1)
-        PSF[m1][M2] = PSF[m1][M2] + t_proportion * triangle_fun_prod(np.real(x[t - 1]) - M2, np.imag(x[t - 1]) - m1)
-        PSF[M1][m2] = PSF[M1][m2] + t_proportion * triangle_fun_prod(np.real(x[t - 1]) - m2, np.imag(x[t - 1]) - M1)
-        PSF[M1][M2] = PSF[M1][M2] + t_proportion * triangle_fun_prod(np.real(x[t - 1]) - M2, np.imag(x[t - 1]) - M1)
+        psf[m1][m2] += t_proportion * triangle_fun_prod(np.real(x[t - 1]) - m2, np.imag(x[t - 1]) - m1)
+        psf[m1][M2] += t_proportion * triangle_fun_prod(np.real(x[t - 1]) - M2, np.imag(x[t - 1]) - m1)
+        psf[M1][m2] += t_proportion * triangle_fun_prod(np.real(x[t - 1]) - m2, np.imag(x[t - 1]) - M1)
+        psf[M1][M2] += t_proportion * triangle_fun_prod(np.real(x[t - 1]) - M2, np.imag(x[t - 1]) - M1)
 
-    return PSF / float(len(x))
-
-
-def create_blurred_raw(y, psf, lambd, sigma_gauss):
-    y = copy.copy(y)
-    y = y * lambd
-    x_n, y_n = y.shape[0], y.shape[1]
-    ghx, ghy = psf.shape
-
-    big_v = np.zeros((x_n, y_n))
-    big_v[((x_n - ghx) / 2):((x_n - ghx) / 2 + ghx), ((y_n - ghy) / 2):((y_n - ghy) / 2 + ghy)] = psf
-
-    V = fft2(big_v)
-    y_blur = np.real(ifft2(V * fft2(y)))
-
-    mixed = np.random.poisson(y_blur * (y_blur > 0))
-
-    hx, hy = x_n / 2., y_n / 2.
-    raw = np.zeros((x_n, y_n))
-    raw[:np.floor(hx), :np.floor(hy)] = mixed[np.ceil(hx):, np.ceil(hy):]
-    raw[np.floor(hx):, :np.floor(hy)] = mixed[:np.ceil(hx), np.ceil(hy):]
-    raw[:np.floor(hx), np.floor(hy):] = mixed[np.ceil(hx):, :np.ceil(hy)]
-    raw[np.floor(hx):, np.floor(hy):] = mixed[:np.ceil(hx), :np.ceil(hy)]
-
-    raw = (raw - np.min(raw)) / np.max(raw)
-
-    raw = raw + sigma_gauss * np.random.normal(size=raw.shape)
-
-    return raw
+    return psf / np.sum(psf)
 
 
-def create_blurred_color(y, psf, lambd, sigma_gauss):
+def create_blurred(y, psf, lambd, sigma):
+    blurred = ndimage.convolve(y, psf)
+
+    if lambd > 0:
+        blurred = blurred * lambd
+        blurred = np.random.poisson(blurred * (blurred > 0))
+        blurred = blurred / float(lambd)
+
+    if sigma > 0:
+        blurred = blurred + sigma * np.random.normal(size=blurred.shape)
+
+    return blurred
+
+
+def create_blurred_color(y, psf, lambd, sigma):
     if len(y.shape) == 2:
-        return create_blurred_raw(y, psf, lambd, sigma_gauss)
+        return create_blurred(y, psf, lambd, sigma)
     elif len(y.shape) == 3:
         result = np.zeros(y.shape)
 
         for i in range(y.shape[2]):
-            result[:, :, i] = create_blurred_raw(y[:, :, i], psf, lambd, sigma_gauss)
+            result[:, :, i] = create_blurred(y[:, :, i], psf, lambd, sigma)
 
         return result
     else:
@@ -128,7 +115,7 @@ def create_blurred_color(y, psf, lambd, sigma_gauss):
 
 
 class MotionBlur(Noise):
-    def __init__(self, size=64, anxiety=0.005, exposure=1.0, lambd=2048, gaussian=0.05, scale=DEFAULT_SCALE):
+    def __init__(self, size=15, anxiety=0.001, exposure=10.0, lambd=0, gaussian=0.0, scale=DEFAULT_SCALE):
         Noise.__init__(self, scale)
 
         self.size = size
