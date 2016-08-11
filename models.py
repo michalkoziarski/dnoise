@@ -14,7 +14,7 @@ class Network:
         self.setup()
 
     def setup(self):
-        raise NotImplementedError('Must be subclassed')
+        raise NotImplementedError
 
     def add(self, layer):
         self.layers.append(layer)
