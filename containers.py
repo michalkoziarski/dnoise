@@ -1,6 +1,6 @@
+import numpy as np
 import matplotlib.pyplot as plt
 
-from noise import *
 from scipy import misc
 
 
@@ -31,6 +31,17 @@ class Image:
             return self.image
         else:
             return self.load_and_process()
+
+    def patch(self, size, coordinates=None):
+        image = self.get()
+
+        if coordinates:
+            x, y = coordinates
+        else:
+            x = np.random.randint(image.shape[0] - size + 1)
+            y = np.random.randint(image.shape[1] - size + 1)
+
+        return image[x:(x + size), y:(y + size)]
 
     def load_and_process(self, image=None):
         if image is None:
@@ -65,7 +76,7 @@ class Image:
 
         return image
 
-    def noisy(self, noise=GaussianNoise()):
+    def noisy(self, noise):
         return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True, normalize=self.normalize,
                      noise=noise, scale=self.scale, grayscale=self.grayscale)
 
@@ -109,47 +120,22 @@ class Label:
         return self.label
 
 
-class Batch:
-    def __init__(self, images, targets, noise=None):
-        if noise is not None:
-            self._images = np.array([image.noisy(noise) for image in images])
-        else:
-            self._images = np.array(images)
+class DataSet:
+    def __init__(self, images, targets=None, batch_size=50):
+        assert targets is None or len(images) == len(targets)
 
-        self._targets = np.array(targets)
-        self.noise = noise
-
-    def images(self):
-        return np.array([image.get() for image in self._images])
-
-    def targets(self):
-        return np.array([target.get() for target in self._targets])
-
-    def noisy(self, noise=GaussianNoise()):
-        return Batch(images=self._images, targets=self._targets, noise=noise)
-
-    def size(self):
-        return len(self._images)
-
-
-class DataSet(Batch):
-    def __init__(self, images, targets, batch_size=128, noise=None):
-        if len(images) != len(targets):
-            raise ValueError('Images and targets should have the same size')
-
+        self.images = images
+        self.targets = targets
         self.batch_size = batch_size
         self.length = len(images)
         self.epochs_completed = 0
         self.current_index = 0
 
-        Batch.__init__(self, images, targets, noise)
-
     def batch(self, size=None):
         if size is None:
             size = self.batch_size
 
-        batch_images = self._images[self.current_index:(self.current_index + size)]
-        batch_targets = self._targets[self.current_index:(self.current_index + size)]
+        images, targets = self._create_batch(size)
 
         self.current_index += size
 
@@ -159,52 +145,59 @@ class DataSet(Batch):
 
             perm = np.random.permutation(self.length)
 
-            self._images = self._images[perm]
-            self._targets = self._targets[perm]
+            self.images = self.images[perm]
+            self.targets = self.targets[perm]
 
-        return Batch(batch_images, batch_targets)
+        return images, targets
 
-    def noisy(self, noise=GaussianNoise()):
-        return DataSet(images=self._images, targets=self._targets, batch_size=self.batch_size, noise=noise)
+    def _create_batch(self, size):
+        raise NotImplementedError
 
 
-class DataSets:
-    def __init__(self, train, test, valid=None):
-        self.train = train
-        self.test = test
-        self.valid = valid
+class LabeledDataSet(DataSet):
+    def __init__(self, images, targets, batch_size=50):
+        DataSet.__init__(self, images, targets, batch_size)
 
-    @staticmethod
-    def split(images, targets, batch_size=128, split=(0.6, 0.2, 0.2), train_noise=None, valid_noise=None,
-                 test_noise=None):
-        if sum(split) != 1.0:
-            raise ValueError('Values of split should sum up to 1.0')
+    def _create_batch(self, size):
+        images = [image.get() for image in self.images[self.current_index:(self.current_index + size)]]
+        targets = [target.get() for target in self.targets[self.current_index:(self.current_index + size)]]
 
-        if len(images) != len(targets):
-            raise ValueError('Images and targets should have the same size')
+        return np.array(images), np.array(targets)
 
-        length = len(images)
 
-        train_len = int(length * split[0])
-        valid_len = int(length * split[1])
+class UnlabeledDataSet(DataSet):
+    def __init__(self, images, noise=None, patch=None, batch_size=50):
+        self.noise = noise
+        self.patch = patch
 
-        idxs = range(length)
+        DataSet.__init__(self, images, batch_size=batch_size)
 
-        train_idxs = np.random.choice(idxs, train_len, replace=False)
-        idxs = [idx for idx in idxs if idx not in train_idxs]
-        valid_idxs = np.random.choice(idxs, valid_len, replace=False)
-        test_idxs = [idx for idx in idxs if idx not in valid_idxs]
-        np.random.shuffle(test_idxs)
+    def _create_batch(self, size):
+        images = []
+        targets = []
 
-        train_images = np.array(images)[train_idxs]
-        train_targets = np.array(targets)[train_idxs]
-        valid_images = np.array(images)[valid_idxs]
-        valid_targets = np.array(targets)[valid_idxs]
-        test_images = np.array(images)[test_idxs]
-        test_targets = np.array(targets)[test_idxs]
+        for i in range(size):
+            if self.current_index + i >= self.length:
+                break
 
-        train = DataSet(train_images, train_targets, batch_size, train_noise)
-        valid = DataSet(valid_images, valid_targets, batch_size, valid_noise)
-        test = DataSet(test_images, test_targets, batch_size, test_noise)
+            target = self.images[self.current_index + i]
 
-        return DataSets(train, test, valid)
+            if self.noise:
+                image = target.noisy(self.noise)
+            else:
+                image = target
+
+            if self.patch:
+                x = np.random.randint(image.get().shape[0] - self.patch + 1)
+                y = np.random.randint(image.get().shape[1] - self.patch + 1)
+
+                image = image.patch(self.patch, coordinates=(x, y))
+                target = target.patch(self.patch, coordinates=(x, y))
+            else:
+                image = image.get()
+                target = target.get()
+
+            images.append(image)
+            targets.append(target)
+
+        return np.array(images), np.array(targets)
