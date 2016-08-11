@@ -80,8 +80,8 @@ def load_stl_labeled(batch_size=50, shape=None, grayscale=False):
 def load_stl_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, patch=None):
     _download_stl()
 
-    train_images = _load_stl_images('train_X.bin', shape, grayscale)
-    test_images = _load_stl_images('test_X.bin', shape, grayscale)
+    train_images = _load_stl_images('unlabeled_X.bin', shape, grayscale)
+    test_images = _load_stl_images('train_X.bin', shape, grayscale)
 
     train_set = UnlabeledDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size)
     test_set = UnlabeledDataSet(test_images, patch=patch, batch_size=batch_size)
