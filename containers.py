@@ -131,6 +131,7 @@ class DataSet:
         self.batches_completed = 0
         self.epochs_completed = 0
         self.current_index = 0
+        self.shuffle()
 
     def batch(self, size=None):
         if size is None:
@@ -145,16 +146,19 @@ class DataSet:
             self.current_index = 0
             self.epochs_completed += 1
 
-            perm = np.random.permutation(self.length)
-
-            self.images = self.images[perm]
-            self.targets = self.targets[perm]
+            self.shuffle()
 
             epoch_completed = True
         else:
             epoch_completed = False
 
         return images, targets, epoch_completed
+
+    def shuffle(self):
+        perm = np.random.permutation(self.length)
+
+        self.images = self.images[perm]
+        self.targets = self.targets[perm]
 
     def _create_batch(self, size):
         raise NotImplementedError
