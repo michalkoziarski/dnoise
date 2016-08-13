@@ -150,7 +150,11 @@ class DataSet:
             self.images = self.images[perm]
             self.targets = self.targets[perm]
 
-        return images, targets
+            epoch_completed = True
+        else:
+            epoch_completed = False
+
+        return images, targets, epoch_completed
 
     def _create_batch(self, size):
         raise NotImplementedError
