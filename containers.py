@@ -124,8 +124,8 @@ class DataSet:
     def __init__(self, images, targets=None, batch_size=50):
         assert targets is None or len(images) == len(targets)
 
-        self.images = images
-        self.targets = targets
+        self.images = np.array(images)
+        self.targets = np.array(targets) if targets else None
         self.batch_size = batch_size
         self.length = len(images)
         self.batches_completed = 0
@@ -158,7 +158,9 @@ class DataSet:
         perm = np.random.permutation(self.length)
 
         self.images = self.images[perm]
-        self.targets = self.targets[perm]
+
+        if self.targets:
+            self.targets = self.targets[perm]
 
     def _create_batch(self, size):
         raise NotImplementedError
