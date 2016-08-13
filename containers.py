@@ -128,6 +128,7 @@ class DataSet:
         self.targets = targets
         self.batch_size = batch_size
         self.length = len(images)
+        self.batches_completed = 0
         self.epochs_completed = 0
         self.current_index = 0
 
@@ -137,6 +138,7 @@ class DataSet:
 
         images, targets = self._create_batch(size)
 
+        self.batches_completed += 1
         self.current_index += size
 
         if self.current_index >= self.length:
