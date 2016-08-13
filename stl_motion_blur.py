@@ -83,7 +83,8 @@ tf.image_summary('images/cleaned', network.output())
 tf.scalar_summary('score/train', score)
 
 train_summary_step = tf.merge_all_summaries()
-test_summary_step = tf.scalar_summary('score/test', score)
+test_score = tf.placeholder(tf.float32)
+test_summary_step = tf.scalar_summary('score/test', test_score)
 
 summary_writer = tf.train.SummaryWriter(trial_path)
 saver = tf.train.Saver()
@@ -110,8 +111,16 @@ with tf.Session() as sess:
         if epoch_completed:
             saver.save(sess, model_path, global_step=global_step)
 
-            batch = test_set.batch()
-            epoch_completed = batch[2]
-            x, y_ = np.expand_dims(batch[0], 3), np.expand_dims(batch[1], 3)
-            summary = sess.run(test_summary_step, feed_dict={network.x: x, network.y_: y_})
+            test_scores = []
+
+            while True:
+                test_batch = test_set.batch()
+                test_epoch_completed = batch[2]
+                x, y_ = np.expand_dims(batch[0], 3), np.expand_dims(batch[1], 3)
+                test_scores.append(score.eval(feed_dict={network.x: x, network.y_: y_}))
+
+                if test_epoch_completed:
+                    break
+
+            summary = sess.run(test_summary_step, feed_dict={test_score: np.mean(test_scores)})
             summary_writer.add_summary(summary, tf.train.global_step(sess, global_step))
