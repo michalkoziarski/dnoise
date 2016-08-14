@@ -87,3 +87,32 @@ def load_stl_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, p
     test_set = UnlabeledDataSet(test_images, patch=patch, batch_size=batch_size)
 
     return train_set, test_set
+
+
+def _imagenet_path(dataset):
+    return 'data/ImageNet/ILSVRC2011_images_%s.tar' % dataset
+
+
+def _load_imagenet_images(dataset, shape, grayscale):
+    assert os.path.exists(_imagenet_path(dataset))
+
+    result = []
+    tar = tarfile.open(_imagenet_path(dataset))
+    members = tar.getmembers()[1:]
+
+    for member in members:
+        result.append(Image(path=member, shape=shape, keep_in_memory=False, grayscale=grayscale))
+
+    return result
+
+
+def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, patch=None):
+    train_images = _load_imagenet_images('train', shape, grayscale)
+    val_images = _load_imagenet_images('val', shape, grayscale)
+    test_images = _load_imagenet_images('test', shape, grayscale)
+
+    train_set = UnlabeledDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size)
+    val_set = UnlabeledDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size)
+    test_set = UnlabeledDataSet(test_images, noise=noise, patch=patch, batch_size=batch_size)
+
+    return train_set, val_set, test_set
