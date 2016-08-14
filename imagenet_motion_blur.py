@@ -45,8 +45,8 @@ if not os.path.exists(trial_path):
     os.mkdir(trial_path)
 
 
-train_set, test_set = loaders.load_imagenet_unlabeled(patch=256, noise=noise.MotionBlur(size=params['kernel_size']))
-test_set.batch_size = test_set.length
+train_set, val_set, test_set = loaders.load_imagenet_unlabeled(
+    patch=256, noise=noise.MotionBlur(size=params['kernel_size']))
 
 network = Network([256, 256, 3], [256, 256, 3])
 l2_loss = tf.reduce_mean(tf.pow(network.y_ - network.output(), 2))
@@ -74,6 +74,7 @@ tf.scalar_summary('score/train', score)
 
 train_summary_step = tf.merge_all_summaries()
 test_score = tf.placeholder(tf.float32)
+val_summary_step = tf.scalar_summary('score/test', test_score)
 test_summary_step = tf.scalar_summary('score/test', test_score)
 
 summary_writer = tf.train.SummaryWriter(trial_path)
@@ -107,12 +108,12 @@ with tf.Session() as sess:
             test_scores = []
 
             while True:
-                test_batch = test_set.batch()
-                test_epoch_completed = batch[2]
+                val_batch = val_set.batch()
+                val_epoch_completed = batch[2]
                 x, y_ = np.expand_dims(batch[0], 3), np.expand_dims(batch[1], 3)
                 test_scores.append(score.eval(feed_dict={network.x: x, network.y_: y_}))
 
-                if test_epoch_completed:
+                if val_epoch_completed:
                     break
 
             summary = sess.run(test_summary_step, feed_dict={test_score: np.mean(test_scores)})
