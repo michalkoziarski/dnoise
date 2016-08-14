@@ -98,7 +98,7 @@ with tf.Session() as sess:
     while tf.train.global_step(sess, global_step) * params['batch_size'] < train_set.length * params['epochs']:
         batch = train_set.batch()
         epoch_completed = batch[2]
-        x, y_ = np.expand_dims(batch[0], 3), np.expand_dims(batch[1], 3)
+        x, y_ = batch[0], batch[1]
         _, summary = sess.run([train_step, train_summary_step], feed_dict={network.x: x, network.y_: y_})
         summary_writer.add_summary(summary, tf.train.global_step(sess, global_step))
 
