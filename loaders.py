@@ -101,7 +101,8 @@ def _load_imagenet_images(dataset, shape, grayscale):
     members = tar.getmembers()[1:]
 
     for member in members:
-        result.append(Image(path=member, shape=shape, keep_in_memory=False, grayscale=grayscale))
+        f = tar.extractfile(member)
+        result.append(Image(path=f, shape=shape, keep_in_memory=False, grayscale=grayscale))
 
     return result
 
