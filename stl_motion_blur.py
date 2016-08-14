@@ -3,31 +3,18 @@ import numpy as np
 import loaders
 import noise
 import models
-import containers
 import os
 
 
 class Network(models.Network):
     def setup(self):
-        self.conv(5, 5, self.input_shape[2], 64, activation=tf.nn.tanh, W=0.001).\
-            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.001).\
-            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.001).\
-            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.001).\
-            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.001).\
-            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.001).\
-            conv(5, 5, 64, self.output_shape[2], activation=tf.nn.relu, W=0.001)
-
-
-def load_stl_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, patch=None):
-    loaders._download_stl()
-
-    train_images = loaders._load_stl_images('train_X.bin', shape, grayscale)
-    test_images = loaders._load_stl_images('test_X.bin', shape, grayscale)
-
-    train_set = containers.UnlabeledDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size)
-    test_set = containers.UnlabeledDataSet(test_images, patch=patch, batch_size=batch_size)
-
-    return train_set, test_set
+        self.conv(5, 5, self.input_shape[2], 64, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 64, self.output_shape[2], activation=tf.nn.relu, W=0.01)
 
 
 def psnr(x, y):
@@ -35,7 +22,7 @@ def psnr(x, y):
 
 
 params = {
-    'learning_rate': 0.001,
+    'learning_rate': 0.01,
     'momentum': 0.9,
     'weight_decay': 0.0002,
     'batch_size': 50,
@@ -48,6 +35,9 @@ params = {
 experiment_path = os.path.join('results', params['experiment'])
 trial_path = os.path.join(experiment_path, params['trial'])
 
+if not os.path.exists('results'):
+    os.mkdir('results')
+
 if not os.path.exists(experiment_path):
     os.mkdir(experiment_path)
 
@@ -55,7 +45,7 @@ if not os.path.exists(trial_path):
     os.mkdir(trial_path)
 
 
-train_set, test_set = load_stl_unlabeled(grayscale=True, noise=noise.MotionBlur(size=params['kernel_size']))
+train_set, test_set = loaders.load_stl_unlabeled(grayscale=True, noise=noise.MotionBlur(size=params['kernel_size']))
 test_set.batch_size = test_set.length
 
 network = Network([96, 96, 1], [96, 96, 1])
@@ -78,7 +68,7 @@ tf.scalar_summary('loss/total', total_loss)
 
 tf.image_summary('images/reference', network.y_)
 tf.image_summary('images/distorted', network.x)
-tf.image_summary('images/cleaned', network.output())
+tf.image_summary('images/cleaned', tf.minimum(network.output(), 1.))
 
 tf.scalar_summary('score/train', score)
 
@@ -87,19 +77,22 @@ test_score = tf.placeholder(tf.float32)
 test_summary_step = tf.scalar_summary('score/test', test_score)
 
 summary_writer = tf.train.SummaryWriter(trial_path)
-saver = tf.train.Saver()
 
 global_step = tf.Variable(0, trainable=False, name='global_step')
 train_step = tf.train.MomentumOptimizer(params['learning_rate'], params['momentum']).\
     minimize(total_loss, global_step=global_step)
 
+saver = tf.train.Saver()
+
 with tf.Session() as sess:
-    sess.run(tf.initialize_all_variables())
+    checkpoint_path = os.path.join('results', params['experiment'], params['trial'])
+    model_path = os.path.join(checkpoint_path, 'model.ckpt')
+    checkpoint = tf.train.get_checkpoint_state(checkpoint_path)
 
-    model_path = 'results/%s/%s/model.ckpt' % (params['experiment'], params['trial'])
-
-    if os.path.exists(model_path):
-        saver.restore(sess, model_path)
+    if checkpoint and checkpoint.model_checkpoint_path:
+        saver.restore(sess, checkpoint.model_checkpoint_path)
+    else:
+        sess.run(tf.initialize_all_variables())
 
     while tf.train.global_step(sess, global_step) * params['batch_size'] < train_set.length * params['epochs']:
         batch = train_set.batch()
