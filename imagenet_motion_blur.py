@@ -45,7 +45,7 @@ if not os.path.exists(trial_path):
     os.mkdir(trial_path)
 
 
-train_set, val_set, test_set = loaders.load_imagenet_unlabeled(
+train_set, val_set = loaders.load_imagenet_unlabeled(
     patch=256, noise=noise.MotionBlur(size=params['kernel_size']))
 
 network = Network([256, 256, 3], [256, 256, 3])

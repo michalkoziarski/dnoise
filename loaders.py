@@ -111,12 +111,12 @@ def _load_imagenet_images(dataset, shape, grayscale):
 
 
 def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, patch=None):
-    train_images = _load_imagenet_images('train', shape, grayscale)
+    #train_images = _load_imagenet_images('train', shape, grayscale)
     val_images = _load_imagenet_images('val', shape, grayscale)
     test_images = _load_imagenet_images('test', shape, grayscale)
 
-    train_set = UnlabeledDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size)
+    #train_set = UnlabeledDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size)
     val_set = UnlabeledDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size)
     test_set = UnlabeledDataSet(test_images, noise=noise, patch=patch, batch_size=batch_size)
 
-    return train_set, val_set, test_set
+    return val_set, test_set  # return train_set, val_set, test_set
