@@ -6,7 +6,7 @@ from scipy import misc
 
 class Image:
     def __init__(self, image=None, path=None, shape=None, keep_in_memory=True, preload=False, normalize=True,
-                 noise=None, scale=(0, 255), grayscale=False):
+                 noise=None, grayscale=False):
         if preload and not keep_in_memory:
             raise ValueError('Can\'t preload without keeping in memory')
 
@@ -19,7 +19,7 @@ class Image:
         self.preload = preload
         self.normalize = normalize
         self.noise = noise
-        self.scale = scale
+        self.scale = (0.0, 1.0) if normalize else (0, 255)
         self.grayscale = grayscale
         self.image = None
 
@@ -58,10 +58,7 @@ class Image:
         if self.shape is not None:
             image = self._resize(image, self.shape)
 
-        if self.normalize and self.scale[1] == 255:
-            if self.keep_in_memory:
-                self.scale = (0.0, 1.0)
-
+        if self.normalize and image.dtype == np.dtype('uint8'):
             image = image / 255.
 
         if self.grayscale and len(np.shape(image)) == 3 and np.shape(image)[2] >= 3:
@@ -81,7 +78,7 @@ class Image:
 
     def noisy(self, noise):
         return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True, normalize=self.normalize,
-                     noise=noise, scale=self.scale, grayscale=self.grayscale)
+                     noise=noise, grayscale=self.grayscale)
 
     def display(self, path=None, size=None):
         image = self.get()
@@ -104,7 +101,7 @@ class Image:
     def _resize(self, image, shape):
         image = misc.imresize(image, shape)
 
-        if self.normalize and self.scale[1] == 1.0:
+        if self.normalize and image.dtype == np.dtype('uint8'):
             image = image / 255.
 
         return image
