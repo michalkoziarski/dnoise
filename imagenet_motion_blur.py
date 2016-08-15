@@ -25,7 +25,7 @@ params = {
     'learning_rate': 0.001,
     'momentum': 0.9,
     'weight_decay': 0.0002,
-    'batch_size': 25,
+    'batch_size': 40,
     'kernel_size': 17,
     'epochs': 50,
     'experiment': 'ImageNet - motion blur removal',
@@ -47,7 +47,7 @@ if not os.path.exists(trial_path):
 
 
 train_set, val_set = loaders.load_imagenet_unlabeled(
-    patch=256, noise=noise.MotionBlur(size=params['kernel_size']))
+    patch=256, batch_size=params['batch_size'], noise=noise.MotionBlur(size=params['kernel_size']))
 
 network = Network([256, 256, 3], [256, 256, 3])
 l2_loss = tf.reduce_mean(tf.pow(network.y_ - network.output(), 2))
