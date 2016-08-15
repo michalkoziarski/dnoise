@@ -29,7 +29,8 @@ params = {
     'kernel_size': 17,
     'epochs': 50,
     'experiment': 'ImageNet - motion blur removal',
-    'trial': '17x17 kernel size'
+    'trial': '17x17 kernel size',
+    'summary_step': 50
 }
 
 experiment_path = os.path.join('results', params['experiment'])
@@ -99,8 +100,12 @@ with tf.Session() as sess:
         batch = train_set.batch()
         epoch_completed = batch[2]
         x, y_ = batch[0], batch[1]
-        _, summary = sess.run([train_step, train_summary_step], feed_dict={network.x: x, network.y_: y_})
-        summary_writer.add_summary(summary, tf.train.global_step(sess, global_step))
+        
+        if tf.train.global_step(sess, global_step) % params['summary_step'] == 0:
+            _, summary = sess.run([train_step, train_summary_step], feed_dict={network.x: x, network.y_: y_})
+            summary_writer.add_summary(summary, tf.train.global_step(sess, global_step))
+        else:
+            sess.run([train_step], feed_dict={network.x: x, network.y_: y_})
 
         if epoch_completed:
             saver.save(sess, model_path, global_step=global_step)
