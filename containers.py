@@ -41,7 +41,7 @@ class Image:
 
             image = self._resize(image, (x, y))
 
-        if coordinates:
+        if coordinates is not None:
             x, y = coordinates
         else:
             x = np.random.randint(image.shape[0] - size + 1)
