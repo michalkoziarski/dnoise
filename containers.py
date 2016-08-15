@@ -47,7 +47,7 @@ class Image:
             x = np.random.randint(image.shape[0] - size + 1)
             y = np.random.randint(image.shape[1] - size + 1)
 
-        return image[x:(x + size), y:(y + size)], coordinates
+        return image[x:(x + size), y:(y + size)], (x, y)
 
     def load_and_process(self, image=None):
         if image is None:
