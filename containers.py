@@ -35,6 +35,12 @@ class Image:
     def patch(self, size, coordinates=None):
         image = self.get()
 
+        if image.shape[0] < size or image.shape[1] < size:
+            x = image.shape[0] * size / np.min(image.shape[0:2])
+            y = image.shape[1] * size / np.min(image.shape[0:2])
+
+            image = self._resize(image, (x, y))
+
         if coordinates:
             x, y = coordinates
         else:
@@ -50,10 +56,7 @@ class Image:
             image = np.copy(image)
 
         if self.shape is not None:
-            image = misc.imresize(image, self.shape)
-
-            if self.normalize and self.scale[1] == 1.0:
-                image = image / 255.
+            image = self._resize(image, self.shape)
 
         if self.normalize and self.scale[1] == 255:
             if self.keep_in_memory:
@@ -97,6 +100,14 @@ class Image:
             plt.show()
         else:
             plt.imsave(path, image, cmap=color_map)
+
+    def _resize(self, image, shape):
+        image = misc.imresize(image, shape)
+
+        if self.normalize and self.scale[1] == 1.0:
+            image = image / 255.
+
+        return image
 
 
 class Label:
