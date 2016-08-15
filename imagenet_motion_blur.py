@@ -8,13 +8,13 @@ import os
 
 class Network(models.Network):
     def setup(self):
-        self.conv(5, 5, self.input_shape[2], 64, activation=tf.nn.tanh, W=0.01).\
-            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.01).\
-            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.01).\
-            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.01).\
-            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.01).\
-            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.01).\
-            conv(5, 5, 64, self.output_shape[2], activation=tf.nn.relu, W=0.01)
+        self.conv(5, 5, self.input_shape[2], 48, activation=tf.nn.tanh, W=0.005).\
+            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.005).\
+            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.005).\
+            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.005).\
+            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.005).\
+            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.005).\
+            conv(5, 5, 48, self.output_shape[2], activation=tf.nn.relu, W=0.005)
 
 
 def psnr(x, y):
@@ -22,7 +22,7 @@ def psnr(x, y):
 
 
 params = {
-    'learning_rate': 0.01,
+    'learning_rate': 0.001,
     'momentum': 0.9,
     'weight_decay': 0.0002,
     'batch_size': 50,
@@ -100,7 +100,7 @@ with tf.Session() as sess:
         batch = train_set.batch()
         epoch_completed = batch[2]
         x, y_ = batch[0], batch[1]
-        
+
         if tf.train.global_step(sess, global_step) % params['summary_step'] == 0:
             _, summary = sess.run([train_step, train_summary_step], feed_dict={network.x: x, network.y_: y_})
             summary_writer.add_summary(summary, tf.train.global_step(sess, global_step))
