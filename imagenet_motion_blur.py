@@ -4,6 +4,7 @@ import loaders
 import noise
 import models
 import os
+import argparse
 
 
 class Network(models.Network):
@@ -32,6 +33,20 @@ params = {
     'trial': '17x17 kernel size',
     'summary_step': 100
 }
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-lr', type=float)
+parser.add_argument('-kernel', type=int)
+
+args = vars(parser.parse_args())
+
+if args.get('lr'):
+    params['learning_rate'] = args.get('lr')
+
+if args.get('kernel'):
+    params['kernel_size'] = args.get('kernel')
+
+params['trial'] = 'kernel size = %s, learning rate = %s' % (params['kernel_size'], params['learning_rate'])
 
 experiment_path = os.path.join('results', params['experiment'])
 trial_path = os.path.join(experiment_path, params['trial'])
