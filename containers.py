@@ -51,7 +51,7 @@ class Image:
 
     def load_and_process(self, image=None):
         if image is None:
-            image = misc.imread(self.path)
+            image = misc.imread(self.path, mode='RGB')
         else:
             image = np.copy(image)
 
