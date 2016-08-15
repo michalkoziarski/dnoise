@@ -41,13 +41,13 @@ parser.add_argument('-wd', type=float)
 
 args = vars(parser.parse_args())
 
-if args.get('lr'):
+if args.get('lr') is not None:
     params['learning_rate'] = args.get('lr')
 
-if args.get('kernel'):
+if args.get('kernel') is not None:
     params['kernel_size'] = args.get('kernel')
 
-if args.get('wd'):
+if args.get('wd') is not None:
     params['weight_decay'] = args.get('wd')
 
 params['trial'] = 'kernel size = %s, learning rate = %s, weight decay = %s' % \
