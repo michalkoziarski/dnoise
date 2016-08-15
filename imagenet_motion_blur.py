@@ -25,12 +25,12 @@ params = {
     'learning_rate': 0.001,
     'momentum': 0.9,
     'weight_decay': 0.0002,
-    'batch_size': 50,
+    'batch_size': 25,
     'kernel_size': 17,
     'epochs': 50,
     'experiment': 'ImageNet - motion blur removal',
     'trial': '17x17 kernel size',
-    'summary_step': 50
+    'summary_step': 100
 }
 
 experiment_path = os.path.join('results', params['experiment'])
