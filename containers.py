@@ -47,7 +47,7 @@ class Image:
             x = np.random.randint(image.shape[0] - size + 1)
             y = np.random.randint(image.shape[1] - size + 1)
 
-        return image[x:(x + size), y:(y + size)]
+        return image[x:(x + size), y:(y + size)], coordinates
 
     def load_and_process(self, image=None):
         if image is None:
@@ -211,11 +211,8 @@ class UnlabeledDataSet(DataSet):
                 image = target
 
             if self.patch:
-                x = np.random.randint(image.get().shape[0] - self.patch + 1)
-                y = np.random.randint(image.get().shape[1] - self.patch + 1)
-
-                image = image.patch(self.patch, coordinates=(x, y))
-                target = target.patch(self.patch, coordinates=(x, y))
+                image, coordinates = image.patch(self.patch)
+                target, _ = target.patch(self.patch, coordinates=coordinates)
             else:
                 image = image.get()
                 target = target.get()
