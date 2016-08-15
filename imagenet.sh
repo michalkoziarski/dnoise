@@ -8,4 +8,4 @@
 module add plgrid/tools/python/2.7.9
 module add plgrid/apps/cuda/7.0
 
-python imagenet_motion_blur.py -lr=$1 -kernel=$2
+python imagenet_motion_blur.py -lr=$1 -kernel=$2 -wd=$3
