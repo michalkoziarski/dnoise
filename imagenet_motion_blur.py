@@ -35,16 +35,16 @@ params = {
 }
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-lr', type=float)
-parser.add_argument('-kernel', type=int)
+parser.add_argument('-lr')
+parser.add_argument('-kernel')
 
 args = vars(parser.parse_args())
 
 if args.get('lr'):
-    params['learning_rate'] = args.get('lr')
+    params['learning_rate'] = float(args.get('lr'))
 
 if args.get('kernel'):
-    params['kernel_size'] = args.get('kernel')
+    params['kernel_size'] = int(args.get('kernel'))
 
 params['trial'] = 'kernel size = %s, learning rate = %s' % (params['kernel_size'], params['learning_rate'])
 
