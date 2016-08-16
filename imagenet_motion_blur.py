@@ -135,7 +135,7 @@ with tf.Session() as sess:
             while True:
                 val_batch = val_set.batch()
                 val_epoch_completed = batch[2]
-                x, y_ = np.expand_dims(batch[0], 3), np.expand_dims(batch[1], 3)
+                x, y_ = batch[0], batch[1]
                 test_scores.append(score.eval(feed_dict={network.x: x, network.y_: y_}))
 
                 if val_epoch_completed:
