@@ -9,13 +9,13 @@ import argparse
 
 class Network(models.Network):
     def setup(self):
-        self.conv(5, 5, self.input_shape[2], 48, activation=tf.nn.tanh, W=0.005).\
-            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.005).\
-            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.005).\
-            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.005).\
-            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.005).\
-            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.005).\
-            conv(5, 5, 48, self.output_shape[2], activation=tf.nn.relu, W=0.005)
+        self.conv(5, 5, self.input_shape[2], 48, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 48, self.output_shape[2], activation=tf.nn.relu, W=0.01)
 
 
 def psnr(x, y):
