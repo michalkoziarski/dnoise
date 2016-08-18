@@ -4,17 +4,18 @@ import loaders
 import noise
 import models
 import os
+import argparse
 
 
 class Network(models.Network):
     def setup(self):
-        self.conv(5, 5, self.input_shape[2], 64, activation=tf.nn.tanh, W=0.01).\
-            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.01).\
-            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.01).\
-            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.01).\
-            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.01).\
-            conv(5, 5, 64, 64, activation=tf.nn.tanh, W=0.01).\
-            conv(5, 5, 64, self.output_shape[2], activation=tf.nn.relu, W=0.01)
+        self.conv(5, 5, self.input_shape[2], 48, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 48, 48, activation=tf.nn.tanh, W=0.01).\
+            conv(5, 5, 48, self.output_shape[2], activation=tf.nn.relu, W=0.01)
 
 
 def psnr(x, y):
@@ -22,15 +23,35 @@ def psnr(x, y):
 
 
 params = {
-    'learning_rate': 0.01,
+    'learning_rate': 0.001,
     'momentum': 0.9,
     'weight_decay': 0.0002,
-    'batch_size': 50,
+    'batch_size': 40,
     'kernel_size': 11,
     'epochs': 50,
-    'experiment': 'Motion blur removal',
-    'trial': '11x11 kernel size'
+    'experiment': 'STL-10 - motion blur removal',
+    'trial': '11x11 kernel size',
+    'summary_step': 100
 }
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-lr', type=float)
+parser.add_argument('-kernel', type=int)
+parser.add_argument('-wd', type=float)
+
+args = vars(parser.parse_args())
+
+if args.get('lr') is not None:
+    params['learning_rate'] = args.get('lr')
+
+if args.get('kernel') is not None:
+    params['kernel_size'] = args.get('kernel')
+
+if args.get('wd') is not None:
+    params['weight_decay'] = args.get('wd')
+
+params['trial'] = 'kernel size = %s, learning rate = %s, weight decay = %s' % \
+                  (params['kernel_size'], params['learning_rate'], params['weight_decay'])
 
 experiment_path = os.path.join('results', params['experiment'])
 trial_path = os.path.join(experiment_path, params['trial'])
@@ -98,8 +119,12 @@ with tf.Session() as sess:
         batch = train_set.batch()
         epoch_completed = batch[2]
         x, y_ = np.expand_dims(batch[0], 3), np.expand_dims(batch[1], 3)
-        _, summary = sess.run([train_step, train_summary_step], feed_dict={network.x: x, network.y_: y_})
-        summary_writer.add_summary(summary, tf.train.global_step(sess, global_step))
+
+        if tf.train.global_step(sess, global_step) % params['summary_step'] == 0:
+            _, summary = sess.run([train_step, train_summary_step], feed_dict={network.x: x, network.y_: y_})
+            summary_writer.add_summary(summary, tf.train.global_step(sess, global_step))
+        else:
+            sess.run([train_step], feed_dict={network.x: x, network.y_: y_})
 
         if epoch_completed:
             saver.save(sess, model_path, global_step=global_step)
