@@ -156,11 +156,7 @@ class DataSet:
 
             self.shuffle()
 
-            epoch_completed = True
-        else:
-            epoch_completed = False
-
-        return images, targets, epoch_completed
+        return images, targets
 
     def shuffle(self):
         perm = np.random.permutation(self.length)
