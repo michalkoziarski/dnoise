@@ -90,7 +90,7 @@ def load_stl_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, p
 
 
 def _imagenet_path(dataset):
-    return 'data/ImageNet/ILSVRC2011_images_%s.tar' % dataset
+    return os.path.join(ROOT_PATH, 'ImageNet/ILSVRC2011_images_%s.tar' % dataset)
 
 
 def _load_imagenet_images(dataset, shape, grayscale):
