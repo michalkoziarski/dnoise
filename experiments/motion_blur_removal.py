@@ -45,7 +45,7 @@ for k in params.keys():
 args = vars(parser.parse_args())
 
 for k, v in params.iteritems():
-    if args.get(k) is not None:
+    if args.get(k) is not None and args.get(k) is not '':
         params[k] = type(v)(args.get(k))
 
 params['trial'] = ', '.join(map(lambda (k, v): '%s = %s' % (k, v), params.iteritems()))
