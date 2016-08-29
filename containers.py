@@ -214,3 +214,43 @@ class UnlabeledDataSet(DataSet):
             targets.append(target)
 
         return np.array(images), np.array(targets)
+
+
+class KernelEstimationDataSet(DataSet):
+    def __init__(self, images, noise, patch=None, kernel_size=None, batch_size=50):
+        self.noise = noise
+        self.patch = patch
+        self.kernel_size = kernel_size
+
+        DataSet.__init__(self, images, batch_size=batch_size)
+
+    def _create_batch(self, size):
+        images = []
+        targets = []
+
+        for i in range(size):
+            if self.current_index + i >= self.length:
+                break
+
+            image = self.images[self.current_index + i].noisy(self.noise)
+
+            if self.patch:
+                tensor, _ = image.patch(self.patch)
+            else:
+                tensor = image.get()
+
+            kernel = image.noise.kernel
+
+            if self.kernel_size is not None:
+                assert self.kernel_size <= kernel.shape[0] == kernel.shape[1]
+
+                padded_kernel = np.zeros((self.kernel_size, self.kernel_size))
+                start = (self.kernel_size - kernel.shape[0]) / 2
+                end = (self.kernel_size + kernel.shape[0]) / 2
+                padded_kernel[start:end, start:end] = kernel
+                kernel = padded_kernel
+
+            images.append(tensor)
+            targets.append(kernel)
+
+        return np.array(images), np.array(targets)
