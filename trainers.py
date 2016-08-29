@@ -11,13 +11,15 @@ class Trainer:
         self.score = score
         self.optimizer = optimizer
 
-        self.experiment_path = os.path.join('results', params['experiment'])
+        self.root_path = os.path.dirname(os.path.realpath(__file__))
+        self.results_path = os.path.join(self.root_path, 'results')
+        self.experiment_path = os.path.join(self.results_path, params['experiment'])
         self.trial_path = os.path.join(self.experiment_path, params['trial'])
-        self.checkpoint_path = os.path.join('results', self.params['experiment'], self.params['trial'])
+        self.checkpoint_path = os.path.join(self.results_path, self.params['experiment'], self.params['trial'])
         self.model_path = os.path.join(self.checkpoint_path, 'model.ckpt')
 
-        if not os.path.exists('results'):
-            os.mkdir('results')
+        if not os.path.exists(self.results_path):
+            os.mkdir(self.results_path)
 
         if not os.path.exists(self.experiment_path):
             os.mkdir(self.experiment_path)
