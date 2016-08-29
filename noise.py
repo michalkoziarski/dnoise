@@ -103,11 +103,14 @@ class MotionBlur(Noise):
         self.exposure = exposure
         self.lambd = lambd
         self.gaussian = gaussian
+        self.kernel = None
 
     def _apply(self, image):
         trajectory = MotionBlur.create_trajectory(trajectory_size=self.size, anxiety=self.anxiety, max_length=self.size)
         psf = MotionBlur.create_psf(trajectory, size=self.size, exposure=self.exposure)
         blurred = MotionBlur.create_blurred_color(image, psf, self.lambd, self.gaussian)
+
+        self.kernel = psf
 
         return blurred
 
