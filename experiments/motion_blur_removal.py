@@ -39,14 +39,14 @@ params = {
 
 parser = argparse.ArgumentParser()
 
-for k, v in params.iteritems():
-    parser.add_argument('-%s' % k, type=type(v))
+for k in params.keys():
+    parser.add_argument('-%s' % k)
 
 args = vars(parser.parse_args())
 
-for k in params.keys():
+for k, v in params.iteritems():
     if args.get(k) is not None:
-        params[k] = args.get(k)
+        params[k] = type(v)(args.get(k))
 
 params['trial'] = ', '.join(map(lambda (k, v): '%s = %s' % (k, v), params.iteritems()))
 
