@@ -73,3 +73,8 @@ class Network:
         self.add(dropout)
 
         return self
+
+    def reshape(self, shape):
+        self.add(tf.reshape(self.output(), [-1] + shape))
+
+        return self
