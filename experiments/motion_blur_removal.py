@@ -57,7 +57,7 @@ optimizer = tf.train.MomentumOptimizer(params['learning_rate'], params['momentum
 
 trainer = trainers.Trainer(params, network, loss, score, optimizer)
 
-train_set, val_set = loaders.load_imagenet_unlabeled(
+train_set, val_set, test_set = loaders.load_imagenet_unlabeled(
     patch=256, batch_size=params['batch_size'], noise=noise.MotionBlur(size=params['kernel_size']))
 
-trainer.train(train_set, val_set=val_set)
+trainer.train(train_set, val_set=val_set, test_set=test_set)
