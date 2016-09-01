@@ -90,33 +90,29 @@ def load_stl_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, p
 
 
 def _imagenet_path(dataset):
-    return os.path.join(ROOT_PATH, 'ImageNet/ILSVRC2011_images_%s.tar' % dataset)
+    return os.path.join(ROOT_PATH, 'ImageNet', dataset)
 
 
 def _load_imagenet_images(dataset, shape, grayscale):
     assert os.path.exists(_imagenet_path(dataset))
 
     result = []
-    tar = tarfile.open(_imagenet_path(dataset))
-    members = tar.getmembers()
 
-    for member in members:
-        if member.isdir():
-            continue
-
-        f = tar.extractfile(member)
-        result.append(Image(path=f, shape=shape, keep_in_memory=False, grayscale=grayscale))
+    for (dirpath, _, filenames) in os.walk(_imagenet_path(dataset)):
+        for filename in filenames:
+            path = os.path.join(ROOT_PATH, 'ImageNet', dirpath, filename)
+            result.append(Image(path=path, shape=shape, keep_in_memory=False, grayscale=grayscale))
 
     return result
 
 
 def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, patch=None):
-    #train_images = _load_imagenet_images('train', shape, grayscale)
+    train_images = _load_imagenet_images('train', shape, grayscale)
     val_images = _load_imagenet_images('val', shape, grayscale)
     test_images = _load_imagenet_images('test', shape, grayscale)
 
-    #train_set = UnlabeledDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size)
+    train_set = UnlabeledDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size)
     val_set = UnlabeledDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size)
     test_set = UnlabeledDataSet(test_images, noise=noise, patch=patch, batch_size=batch_size)
 
-    return val_set, test_set  # return train_set, val_set, test_set
+    return train_set, val_set, test_set
