@@ -81,8 +81,8 @@ class Trainer:
                     sess.run([self.train_step], feed_dict={self.network.x: x, self.network.y_: y_})
 
                 global_step = tf.train.global_step(sess, self.global_step)
-                epoch_before_train_step = (global_step - 1) / train_set.length
-                epoch_after_train_step = global_step / train_set.length
+                epoch_before_train_step = (global_step - 1) * self.params['batch_size'] / train_set.length
+                epoch_after_train_step = global_step * self.params['batch_size'] / train_set.length
                 epoch_completed = (epoch_before_train_step != epoch_after_train_step)
 
                 if epoch_completed:
@@ -95,7 +95,7 @@ class Trainer:
 
             if test_set is not None:
                 global_step = tf.train.global_step(sess, self.global_step)
-                epoch_after_train_step = global_step / train_set.length
+                epoch_after_train_step = global_step * self.params['batch_size'] / train_set.length
                 score = self._score(val_set)
                 summary = sess.run(self.test_summary_step, feed_dict={self.score_placeholder: score})
                 self.summary_writer.add_summary(summary, epoch_after_train_step)
