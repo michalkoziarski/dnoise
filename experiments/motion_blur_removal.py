@@ -27,7 +27,7 @@ def psnr(x, y):
 
 
 params = {
-    'learning_rate': 0.001,
+    'learning_rate': 0.01,
     'momentum': 0.9,
     'weight_decay': 0.0002,
     'batch_size': 25,
