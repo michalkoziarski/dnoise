@@ -118,13 +118,13 @@ def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=No
     return train_set, val_set, test_set
 
 
-def load_imagenet_kernel_estimation(batch_size=50, shape=None, grayscale=False, noise=None, patch=None):
+def load_imagenet_kernel_estimation(batch_size=50, shape=None, grayscale=False, noise=None, patch=None, kernel_size=33):
     train_images = _load_imagenet_images('train', shape, grayscale)
     val_images = _load_imagenet_images('val', shape, grayscale)
     test_images = _load_imagenet_images('test', shape, grayscale)
 
-    train_set = KernelEstimationDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size)
-    val_set = KernelEstimationDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size)
-    test_set = KernelEstimationDataSet(test_images, noise=noise, patch=patch, batch_size=batch_size)
+    train_set = KernelEstimationDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size, kernel_size=kernel_size)
+    val_set = KernelEstimationDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size, kernel_size=kernel_size)
+    test_set = KernelEstimationDataSet(test_images, noise=noise, patch=patch, batch_size=batch_size, kernel_size=kernel_size)
 
     return train_set, val_set, test_set
