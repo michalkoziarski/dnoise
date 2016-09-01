@@ -3,7 +3,7 @@ import urllib
 import tarfile
 import numpy as np
 
-from containers import Image, Label, LabeledDataSet, UnlabeledDataSet
+from containers import Image, Label, LabeledDataSet, UnlabeledDataSet, KernelEstimationDataSet
 
 ROOT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
@@ -114,5 +114,17 @@ def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=No
     train_set = UnlabeledDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size)
     val_set = UnlabeledDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size)
     test_set = UnlabeledDataSet(test_images, noise=noise, patch=patch, batch_size=batch_size)
+
+    return train_set, val_set, test_set
+
+
+def load_imagenet_kernel_estimation(batch_size=50, shape=None, grayscale=False, noise=None, patch=None):
+    train_images = _load_imagenet_images('train', shape, grayscale)
+    val_images = _load_imagenet_images('val', shape, grayscale)
+    test_images = _load_imagenet_images('test', shape, grayscale)
+
+    train_set = KernelEstimationDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size)
+    val_set = KernelEstimationDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size)
+    test_set = KernelEstimationDataSet(test_images, noise=noise, patch=patch, batch_size=batch_size)
 
     return train_set, val_set, test_set
