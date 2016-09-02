@@ -27,7 +27,7 @@ class Trainer:
         if not os.path.exists(self.trial_path):
             os.mkdir(self.trial_path)
 
-        for i in range(len(self.network.weigths)):
+        for i in range(len(self.network.weights)):
             tf.add_to_collection('losses', tf.mul(tf.nn.l2_loss(self.network.weights[i]), self.params['weight_decay']))
 
             tf.histogram_summary('weights/layer #%d' % i, self.network.weights[i])
