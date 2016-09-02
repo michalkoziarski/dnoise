@@ -95,7 +95,7 @@ class MotionBlur(Noise):
     # Giacomo Boracchi and Alessandro Foi, Image Processing, IEEE Transactions on. vol. 20, no. 2, pp. 592-598,
     # Feb. 2011, doi: 10.1109/TIP.2010.2062196
 
-    def __init__(self, size=15, anxiety=0.001, exposure=10.0, lambd=0, gaussian=0.0, scale=DEFAULT_SCALE):
+    def __init__(self, size=15, anxiety=0.005, exposure=10.0, lambd=0, gaussian=0.0, scale=DEFAULT_SCALE):
         Noise.__init__(self, scale)
 
         self.size = size
