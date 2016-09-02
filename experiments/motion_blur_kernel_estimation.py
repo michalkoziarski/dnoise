@@ -14,8 +14,8 @@ class Network(models.Network):
     def setup(self):
         self.conv(3, 3, self.input_shape[2], 32, activation=tf.nn.tanh, W=0.01).\
             conv(3, 3, 32, 32, activation=tf.nn.tanh, W=0.01).\
-            fully(128, activation=tf.nn.tanh, W=0.01).\
-            fully(128, activation=tf.nn.tanh, W=0.01).\
+            fully(2048, activation=tf.nn.tanh, W=0.01).\
+            fully(1089, activation=tf.nn.tanh, W=0.01).\
             reshape(self.output_shape)
 
 
