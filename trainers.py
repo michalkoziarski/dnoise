@@ -50,7 +50,7 @@ class Trainer:
         self.train_summary_step = tf.merge_all_summaries()
         self.score_placeholder = tf.placeholder(tf.float32)
 
-        self.val_summary_step = tf.scalar_summary('score/test', self.score_placeholder)
+        self.val_summary_step = tf.scalar_summary('score/validation', self.score_placeholder)
         self.test_summary_step = tf.scalar_summary('score/test', self.score_placeholder)
 
         self.summary_writer = tf.train.SummaryWriter(self.trial_path)
