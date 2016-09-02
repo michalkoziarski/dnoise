@@ -27,7 +27,7 @@ params = {
     'weight_decay': 0.0002,
     'batch_size': 25,
     'kernel_size': 17,
-    'epochs': 50,
+    'epochs': 10,
     'experiment': 'ImageNet - motion blur kernel estimation',
     'summary_step': 2000
 }
