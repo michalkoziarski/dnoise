@@ -43,7 +43,7 @@ for k, v in params.iteritems():
 
 params['trial'] = ', '.join(map(lambda (k, v): '%s = %s' % (k, v), params.iteritems()))
 
-network = Network([256, 256, 3], [33, 33])
+network = Network([256, 256, 3], [33, 33, 1])
 loss = tf.reduce_mean(tf.pow(network.y_ - network.output(), 2))
 score = tf.reduce_mean(tf.pow(network.y_ - network.output(), 2))
 optimizer = tf.train.MomentumOptimizer(params['learning_rate'], params['momentum'])
