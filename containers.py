@@ -244,11 +244,11 @@ class KernelEstimationDataSet(DataSet):
             if self.kernel_size is not None:
                 assert self.kernel_size >= kernel.shape[0] == kernel.shape[1]
 
-                padded_kernel = np.zeros((self.kernel_size, self.kernel_size, 1))
+                padded_kernel = np.zeros((self.kernel_size, self.kernel_size))
                 start = (self.kernel_size - kernel.shape[0]) / 2
                 end = (self.kernel_size + kernel.shape[0]) / 2
                 padded_kernel[start:end, start:end] = kernel
-                kernel = padded_kernel
+                kernel = np.expand_dims(padded_kernel, 2)
 
             images.append(tensor)
             targets.append(kernel)
