@@ -30,8 +30,8 @@ class Trainer:
         for i in range(len(self.network.weigths)):
             tf.add_to_collection('losses', tf.mul(tf.nn.l2_loss(self.network.weights[i]), self.params['weight_decay']))
 
-            tf.histogram_summary('weights/layer #%d' % (i + 1), self.network.weights[i])
-            tf.histogram_summary('biases/layer #%d' % (i + 1), self.network.biases[i])
+            tf.histogram_summary('weights/layer #%d' % i, self.network.weights[i])
+            tf.histogram_summary('biases/layer #%d' % i, self.network.biases[i])
 
         weight_loss = tf.add_n(tf.get_collection('losses'))
         tf.add_to_collection('losses', self.loss)
