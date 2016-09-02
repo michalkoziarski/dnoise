@@ -12,12 +12,10 @@ import argparse
 
 class Network(models.Network):
     def setup(self):
-        self.conv(3, 3, self.input_shape[2], 48, activation=tf.nn.tanh, W=0.01).\
-            conv(3, 3, 48, 48, activation=tf.nn.tanh, W=0.01).\
-            conv(3, 3, 48, 48, activation=tf.nn.tanh, W=0.01).\
-            conv(3, 3, 48, 48, activation=tf.nn.tanh, W=0.01).\
-            fully(256, activation=tf.nn.tanh, W=0.01).\
-            fully(256, activation=tf.nn.tanh, W=0.01).\
+        self.conv(3, 3, self.input_shape[2], 32, activation=tf.nn.tanh, W=0.01).\
+            conv(3, 3, 32, 32, activation=tf.nn.tanh, W=0.01).\
+            fully(128, activation=tf.nn.tanh, W=0.01).\
+            fully(128, activation=tf.nn.tanh, W=0.01).\
             reshape(self.output_shape)
 
 
