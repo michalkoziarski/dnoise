@@ -242,7 +242,7 @@ class KernelEstimationDataSet(DataSet):
             kernel = image.noise.kernel
 
             if self.kernel_size is not None:
-                assert self.kernel_size <= kernel.shape[0] == kernel.shape[1]
+                assert self.kernel_size >= kernel.shape[0] == kernel.shape[1]
 
                 padded_kernel = np.zeros((self.kernel_size, self.kernel_size))
                 start = (self.kernel_size - kernel.shape[0]) / 2
