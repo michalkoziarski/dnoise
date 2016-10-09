@@ -2,6 +2,7 @@ import os
 import urllib
 import tarfile
 import numpy as np
+import pandas as pd
 
 from containers import Image, Label, LabeledDataSet, UnlabeledDataSet, KernelEstimationDataSet
 
@@ -89,8 +90,11 @@ def load_stl_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, p
     return train_set, test_set
 
 
-def _imagenet_path(dataset):
-    return os.path.join(ROOT_PATH, 'ImageNet', dataset)
+def _imagenet_path(element=None):
+    if element is not None:
+        return os.path.join(ROOT_PATH, 'ImageNet', element)
+    else:
+        return os.path.join(ROOT_PATH, 'ImageNet')
 
 
 def _load_imagenet_images(dataset, shape, grayscale):
@@ -104,6 +108,39 @@ def _load_imagenet_images(dataset, shape, grayscale):
             result.append(Image(path=path, shape=shape, keep_in_memory=False, grayscale=grayscale))
 
     return result
+
+
+def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None):
+    assert os.path.exists(_imagenet_path())
+
+    for f in ['synsets.csv', 'val_ground_truth.csv']:
+        if not os.path.exists(_imagenet_path(f)):
+            url = 'https://raw.githubusercontent.com/michalkoziarski/datasets/master/ImageNet/%s' % f
+            urllib.urlretrieve(url, f)
+
+    synsets = pd.read_csv(_imagenet_path('synsets.csv'))
+    val_ground_truth = pd.read_csv(_imagenet_path('val_ground_truth.csv'))
+
+    train_images = _load_imagenet_images('train', shape, grayscale)
+    val_images = _load_imagenet_images('val', shape, grayscale)
+
+    train_targets = []
+    val_targets = []
+
+    for image in train_images:
+        wnid = os.path.split(image.path).split('_')[0]
+        label = int(synsets[synsets['WNID'] == wnid]['LABEL'])
+        train_targets.append(Label(label - 1, length=1000))
+
+    for image in val_images:
+        id = int(os.path.split(image.path).split('.')[0].split('_')[-1])
+        label = int(val_ground_truth[val_ground_truth['ID'] == id]['LABEL'])
+        val_targets.append(Label(label - 1, length=1000))
+
+    train_set = LabeledDataSet(train_images, train_targets, patch=patch, batch_size=batch_size)
+    val_set = LabeledDataSet(val_images, val_targets, patch=patch, batch_size=batch_size)
+
+    return train_set, val_set
 
 
 def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, patch=None):
