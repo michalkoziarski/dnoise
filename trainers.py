@@ -4,7 +4,7 @@ import tensorflow as tf
 
 
 class Trainer:
-    def __init__(self, params, network, loss, score, optimizer):
+    def __init__(self, params, network, loss, score, optimizer, image_summary=True):
         self.params = params
         self.network = network
         self.loss = loss
@@ -41,9 +41,10 @@ class Trainer:
         tf.scalar_summary('loss/weights', weight_loss)
         tf.scalar_summary('loss/total', total_loss)
 
-        tf.image_summary('images/reference', self.network.y_)
-        tf.image_summary('images/distorted', self.network.x)
-        tf.image_summary('images/cleaned', tf.minimum(self.network.output(), 1.))
+        if image_summary:
+            tf.image_summary('images/reference', self.network.y_)
+            tf.image_summary('images/distorted', self.network.x)
+            tf.image_summary('images/cleaned', tf.minimum(self.network.output(), 1.))
 
         tf.scalar_summary('score/train', self.score)
 
