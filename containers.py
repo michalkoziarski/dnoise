@@ -168,7 +168,7 @@ class DataSet:
 
         self.images = self.images[perm]
 
-        if self.targets:
+        if self.targets is not None:
             self.targets = self.targets[perm]
 
     def _create_batch(self, size):
