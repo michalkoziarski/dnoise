@@ -32,21 +32,27 @@ class Image:
         else:
             return self.load_and_process()
 
-    def patch(self, size, coordinates=None):
+    def patch(self, size=None, coordinates=None, return_coordinates=False):
         image = self.get()
 
-        x = image.shape[0] * size / np.min(image.shape[0:2])
-        y = image.shape[1] * size / np.min(image.shape[0:2])
+        if size is not None:
+            x = image.shape[0] * size / np.min(image.shape[0:2])
+            y = image.shape[1] * size / np.min(image.shape[0:2])
 
-        image = self._resize(image, (x, y))
+            image = self._resize(image, (x, y))
 
-        if coordinates is not None:
-            x, y = coordinates
+            if coordinates is not None:
+                x, y = coordinates
+            else:
+                x = np.random.randint(image.shape[0] - size + 1)
+                y = np.random.randint(image.shape[1] - size + 1)
+
+            if return_coordinates:
+                return image[x:(x + size), y:(y + size)], (x, y)
+            else:
+                return image[x:(x + size), y:(y + size)]
         else:
-            x = np.random.randint(image.shape[0] - size + 1)
-            y = np.random.randint(image.shape[1] - size + 1)
-
-        return image[x:(x + size), y:(y + size)], (x, y)
+            return image
 
     def load_and_process(self, image=None):
         if image is None:
@@ -170,11 +176,13 @@ class DataSet:
 
 
 class LabeledDataSet(DataSet):
-    def __init__(self, images, targets, batch_size=50):
+    def __init__(self, images, targets, patch=None, batch_size=50):
+        self.patch = patch
+
         DataSet.__init__(self, images, targets, batch_size)
 
     def _create_batch(self, size):
-        images = [image.get() for image in self.images[self.current_index:(self.current_index + size)]]
+        images = [image.patch(self.patch) for image in self.images[self.current_index:(self.current_index + size)]]
         targets = [target.get() for target in self.targets[self.current_index:(self.current_index + size)]]
 
         return np.array(images), np.array(targets)
@@ -203,8 +211,8 @@ class UnlabeledDataSet(DataSet):
                 image = target
 
             if self.patch:
-                image, coordinates = image.patch(self.patch)
-                target, _ = target.patch(self.patch, coordinates=coordinates)
+                image, coordinates = image.patch(self.patch, return_coordinates=True)
+                target = target.patch(self.patch, coordinates=coordinates)
             else:
                 image = image.get()
                 target = target.get()
@@ -234,7 +242,7 @@ class KernelEstimationDataSet(DataSet):
             image = self.images[self.current_index + i].noisy(self.noise)
 
             if self.patch:
-                tensor, _ = image.patch(self.patch)
+                tensor = image.patch(self.patch)
             else:
                 tensor = image.get()
 
