@@ -35,11 +35,10 @@ class Image:
     def patch(self, size, coordinates=None):
         image = self.get()
 
-        if image.shape[0] < size or image.shape[1] < size:
-            x = image.shape[0] * size / np.min(image.shape[0:2])
-            y = image.shape[1] * size / np.min(image.shape[0:2])
+        x = image.shape[0] * size / np.min(image.shape[0:2])
+        y = image.shape[1] * size / np.min(image.shape[0:2])
 
-            image = self._resize(image, (x, y))
+        image = self._resize(image, (x, y))
 
         if coordinates is not None:
             x, y = coordinates
