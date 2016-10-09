@@ -116,7 +116,7 @@ def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None
     for f in ['synsets.csv', 'val_ground_truth.csv']:
         if not os.path.exists(_imagenet_path(f)):
             url = 'https://raw.githubusercontent.com/michalkoziarski/datasets/master/ImageNet/%s' % f
-            urllib.urlretrieve(url, f)
+            urllib.urlretrieve(url, _imagenet_path(f))
 
     synsets = pd.read_csv(_imagenet_path('synsets.csv'))
     val_ground_truth = pd.read_csv(_imagenet_path('val_ground_truth.csv'))
