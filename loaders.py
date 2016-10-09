@@ -128,12 +128,12 @@ def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None
     val_targets = []
 
     for image in train_images:
-        wnid = os.path.split(image.path).split('_')[0]
+        wnid = os.path.split(image.path)[-1].split('_')[0]
         label = int(synsets[synsets['WNID'] == wnid]['LABEL'])
         train_targets.append(Label(label - 1, length=1000))
 
     for image in val_images:
-        id = int(os.path.split(image.path).split('.')[0].split('_')[-1])
+        id = int(os.path.split(image.path)[-1].split('.')[0].split('_')[-1])
         label = int(val_ground_truth[val_ground_truth['ID'] == id]['LABEL'])
         val_targets.append(Label(label - 1, length=1000))
 
