@@ -14,7 +14,11 @@ class Network(models.Network):
     def setup(self):
         self.conv(3, 3, self.input_shape[2], 32, activation=tf.nn.tanh, W=0.01).\
             conv(3, 3, 32, 32, activation=tf.nn.tanh, W=0.01).\
-            fully(2048, activation=tf.nn.tanh, W=0.01).\
+            pool().\
+            conv(3, 3, 32, 32, activation=tf.nn.tanh, W=0.01).\
+            conv(3, 3, 32, 32, activation=tf.nn.tanh, W=0.01).\
+            pool().\
+            fully(512, activation=tf.nn.tanh, W=0.01).\
             fully(1089, activation=tf.nn.tanh, W=0.01).\
             reshape(self.output_shape)
 
@@ -23,7 +27,7 @@ params = {
     'learning_rate': 0.01,
     'momentum': 0.9,
     'weight_decay': 0.0002,
-    'batch_size': 25,
+    'batch_size': 15,
     'kernel_size': 17,
     'epochs': 10,
     'experiment': 'ImageNet - motion blur kernel estimation',
