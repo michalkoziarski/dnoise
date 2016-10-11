@@ -4,12 +4,15 @@ import tensorflow as tf
 
 
 class Trainer:
-    def __init__(self, params, network, loss, score, optimizer, image_summary=True, train_score_summary=True):
+    def __init__(self, params, network, loss, score, optimizer):
         self.params = params
         self.network = network
         self.loss = loss
         self.score = score
         self.optimizer = optimizer
+
+        image_summary = params.get('image_summary', True)
+        train_score_summary = params.get('train_score_summary', True)
 
         self.root_path = os.path.dirname(os.path.realpath(__file__))
         self.results_path = os.path.join(self.root_path, 'results')

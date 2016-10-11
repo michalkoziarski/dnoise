@@ -37,7 +37,9 @@ params = {
     'batch_size': 50,
     'epochs': 100,
     'experiment': 'ImageNet - classification',
-    'summary_step': 10000
+    'summary_step': 10000,
+    'image_summary': False,
+    'train_score_summary': False
 }
 
 parser = argparse.ArgumentParser()
@@ -59,7 +61,7 @@ correct_prediction = tf.equal(tf.argmax(network.y_, 1), tf.argmax(network.output
 score = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 optimizer = tf.train.MomentumOptimizer(params['learning_rate'], params['momentum'])
 
-trainer = trainers.Trainer(params, network, loss, score, optimizer, image_summary=False, train_score_summary=False)
+trainer = trainers.Trainer(params, network, loss, score, optimizer)
 
 train_set, test_set = loaders.load_imagenet_labeled(batch_size=params['batch_size'], patch=224)
 
