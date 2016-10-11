@@ -31,7 +31,9 @@ params = {
     'kernel_size': 17,
     'epochs': 10,
     'experiment': 'ImageNet - motion blur kernel estimation',
-    'summary_step': 2000
+    'summary_step': 2000,
+    'save_step': 50000,
+    'train_score_summary': False
 }
 
 parser = argparse.ArgumentParser()

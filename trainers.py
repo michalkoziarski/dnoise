@@ -90,13 +90,16 @@ class Trainer:
                 epoch_after_train_step = global_step * self.params['batch_size'] / train_set.length
                 epoch_completed = (epoch_before_train_step != epoch_after_train_step)
 
-                if epoch_completed:
+                save_step = self.params.get('save_step')
+                save_now = save_step is not None and (global_step % save_step) == 0
+
+                if epoch_completed or save_now:
                     self.saver.save(sess, self.model_path, global_step=self.global_step)
 
-                    if val_set is not None:
-                        score = self._score(val_set)
-                        summary = sess.run(self.val_summary_step, feed_dict={self.score_placeholder: score})
-                        self.summary_writer.add_summary(summary, epoch_after_train_step)
+                if epoch_completed and val_set is not None:
+                    score = self._score(val_set)
+                    summary = sess.run(self.val_summary_step, feed_dict={self.score_placeholder: score})
+                    self.summary_writer.add_summary(summary, epoch_after_train_step)
 
             if test_set is not None:
                 global_step = tf.train.global_step(sess, self.global_step)
