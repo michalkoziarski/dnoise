@@ -11,6 +11,7 @@ class Network:
         self.weights = []
         self.biases = []
         self.logits = None
+        self.keep_prob = tf.placeholder(tf.float32)
         self.setup()
 
     def setup(self):
@@ -68,8 +69,8 @@ class Network:
     def softmax(self):
         return self.fully(size=self.output_shape[0], activation=tf.nn.softmax)
 
-    def dropout(self, p):
-        dropout = tf.nn.dropout(self.output(), p)
+    def dropout(self):
+        dropout = tf.nn.dropout(self.output(), self.keep_prob)
         self.add(dropout)
 
         return self

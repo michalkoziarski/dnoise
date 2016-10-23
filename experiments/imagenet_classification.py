@@ -25,16 +25,18 @@ class Network(models.Network):
             conv(3, 3, 512, 512).\
             pool().\
             fully(4096).\
+            dropout().\
             fully(4096).\
-            fully(1000).\
+            dropout().\
             softmax()
 
 
 params = {
-    'learning_rate': 0.01,
+    'learning_rate': 0.001,
     'momentum': 0.9,
-    'weight_decay': 0.0002,
-    'batch_size': 50,
+    'weight_decay': 0.0005,
+    'dropout': 0.5,
+    'batch_size': 250,
     'epochs': 100,
     'experiment': 'ImageNet - classification',
     'summary_step': 10000,

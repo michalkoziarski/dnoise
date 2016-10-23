@@ -10,6 +10,7 @@ class Trainer:
         self.loss = loss
         self.score = score
         self.optimizer = optimizer
+        self.keep_prob = params.get('dropout', 1.0)
 
         image_summary = params.get('image_summary', True)
         train_score_summary = params.get('train_score_summary', True)
@@ -79,11 +80,13 @@ class Trainer:
 
                 if tf.train.global_step(sess, self.global_step) % self.params['summary_step'] == 0:
                     _, summary = sess.run([self.train_step, self.train_summary_step],
-                                          feed_dict={self.network.x: x, self.network.y_: y_})
+                                          feed_dict={self.network.x: x, self.network.y_: y_,
+                                                     self.network.keep_prob: self.keep_prob})
 
                     self.summary_writer.add_summary(summary, tf.train.global_step(sess, self.global_step) * self.params['batch_size'])
                 else:
-                    sess.run([self.train_step], feed_dict={self.network.x: x, self.network.y_: y_})
+                    sess.run([self.train_step], feed_dict={self.network.x: x, self.network.y_: y_,
+                                                           self.network.keep_prob: self.keep_prob})
 
                 global_step = tf.train.global_step(sess, self.global_step)
                 epoch_before_train_step = (global_step - 1) * self.params['batch_size'] / train_set.length
@@ -114,6 +117,7 @@ class Trainer:
 
         while initial_epoch == dataset.epochs_completed:
             x, y_ = dataset.batch()
-            scores.append(self.score.eval(feed_dict={self.network.x: x, self.network.y_: y_}))
+            scores.append(self.score.eval(feed_dict={self.network.x: x, self.network.y_: y_,
+                                                     self.network.keep_prob: 1.0}))
 
         return np.mean(scores)
