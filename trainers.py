@@ -1,6 +1,8 @@
 import os
 import numpy as np
 import tensorflow as tf
+import hashlib
+import json
 
 
 class Trainer:
@@ -16,12 +18,17 @@ class Trainer:
         prediction_summary = params.get('prediction_summary', False)
         train_score_summary = params.get('train_score_summary', True)
 
+        self.params['trial'] = hashlib.md5(str(params)).hexdigest()
+
         self.root_path = os.path.dirname(os.path.realpath(__file__))
         self.results_path = os.path.join(self.root_path, 'results')
         self.experiment_path = os.path.join(self.results_path, params['experiment'])
         self.trial_path = os.path.join(self.experiment_path, params['trial'])
         self.checkpoint_path = os.path.join(self.results_path, self.params['experiment'], self.params['trial'])
         self.model_path = os.path.join(self.checkpoint_path, 'model.ckpt')
+
+        with open(os.path.join(self.trial_path, 'params.json'), 'w') as f:
+            json.dump(self.params, f)
 
         if not os.path.exists(self.results_path):
             os.mkdir(self.results_path)
