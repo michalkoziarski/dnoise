@@ -27,9 +27,6 @@ class Trainer:
         self.checkpoint_path = os.path.join(self.results_path, self.params['experiment'], self.params['trial'])
         self.model_path = os.path.join(self.checkpoint_path, 'model.ckpt')
 
-        with open(os.path.join(self.trial_path, 'params.json'), 'w') as f:
-            json.dump(self.params, f)
-
         if not os.path.exists(self.results_path):
             os.mkdir(self.results_path)
 
@@ -38,6 +35,9 @@ class Trainer:
 
         if not os.path.exists(self.trial_path):
             os.mkdir(self.trial_path)
+
+        with open(os.path.join(self.trial_path, 'params.json'), 'w') as f:
+            json.dump(self.params, f)
 
         for i in range(len(self.network.weights)):
             tf.add_to_collection('losses', tf.mul(tf.nn.l2_loss(self.network.weights[i]), self.params['weight_decay']))
