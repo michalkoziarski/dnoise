@@ -97,7 +97,7 @@ def _imagenet_path(element=None):
         return os.path.join(ROOT_PATH, 'ImageNet')
 
 
-def _load_imagenet_images(dataset, shape, grayscale):
+def _load_imagenet_images(dataset, shape, grayscale, normalize=True):
     assert os.path.exists(_imagenet_path(dataset))
 
     result = []
@@ -105,12 +105,12 @@ def _load_imagenet_images(dataset, shape, grayscale):
     for (dirpath, _, filenames) in os.walk(_imagenet_path(dataset)):
         for filename in filenames:
             path = os.path.join(ROOT_PATH, 'ImageNet', dirpath, filename)
-            result.append(Image(path=path, shape=shape, keep_in_memory=False, grayscale=grayscale))
+            result.append(Image(path=path, shape=shape, keep_in_memory=False, grayscale=grayscale, normalize=normalize))
 
     return result
 
 
-def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None):
+def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None, normalize=True):
     assert os.path.exists(_imagenet_path())
 
     for f in ['synsets.csv', 'val_ground_truth.csv']:
@@ -121,8 +121,8 @@ def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None
     synsets = pd.read_csv(_imagenet_path('synsets.csv'))
     val_ground_truth = pd.read_csv(_imagenet_path('val_ground_truth.csv'))
 
-    train_images = _load_imagenet_images('train', shape, grayscale)
-    val_images = _load_imagenet_images('val', shape, grayscale)
+    train_images = _load_imagenet_images('train', shape, grayscale, normalize=normalize)
+    val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize)
 
     train_targets = []
     val_targets = []
@@ -143,10 +143,10 @@ def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None
     return train_set, val_set
 
 
-def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, patch=None):
-    train_images = _load_imagenet_images('train', shape, grayscale)
-    val_images = _load_imagenet_images('val', shape, grayscale)
-    test_images = _load_imagenet_images('test', shape, grayscale)
+def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, patch=None, normalize=True):
+    train_images = _load_imagenet_images('train', shape, grayscale, normalize=normalize)
+    val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize)
+    test_images = _load_imagenet_images('test', shape, grayscale, normalize=normalize)
 
     train_set = UnlabeledDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size)
     val_set = UnlabeledDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size)
@@ -155,13 +155,17 @@ def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=No
     return train_set, val_set, test_set
 
 
-def load_imagenet_kernel_estimation(batch_size=50, shape=None, grayscale=False, noise=None, patch=None, kernel_size=33):
-    train_images = _load_imagenet_images('train', shape, grayscale)
-    val_images = _load_imagenet_images('val', shape, grayscale)
-    test_images = _load_imagenet_images('test', shape, grayscale)
+def load_imagenet_kernel_estimation(batch_size=50, shape=None, grayscale=False, noise=None, patch=None, kernel_size=33,
+                                    normalize=True):
+    train_images = _load_imagenet_images('train', shape, grayscale, normalize=normalize)
+    val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize)
+    test_images = _load_imagenet_images('test', shape, grayscale, normalize=normalize)
 
-    train_set = KernelEstimationDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size, kernel_size=kernel_size)
-    val_set = KernelEstimationDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size, kernel_size=kernel_size)
-    test_set = KernelEstimationDataSet(test_images, noise=noise, patch=patch, batch_size=batch_size, kernel_size=kernel_size)
+    train_set = KernelEstimationDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size,
+                                        kernel_size=kernel_size)
+    val_set = KernelEstimationDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size,
+                                      kernel_size=kernel_size)
+    test_set = KernelEstimationDataSet(test_images, noise=noise, patch=patch, batch_size=batch_size,
+                                       kernel_size=kernel_size)
 
     return train_set, val_set, test_set
