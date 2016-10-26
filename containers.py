@@ -138,7 +138,7 @@ class Label:
 
 
 class DataSet:
-    def __init__(self, images, targets=None, batch_size=50):
+    def __init__(self, images, targets=None, batch_size=50, cutoff=True):
         assert targets is None or len(images) == len(targets)
 
         self.images = np.array(images)
@@ -149,6 +149,13 @@ class DataSet:
         self.epochs_completed = 0
         self.current_index = 0
         self.shuffle()
+
+        if cutoff:
+            self.length -= self.length % self.batch_size
+            self.images = self.images[:self.length]
+
+            if self.targets is not None:
+                self.targets = self.targets[:self.length]
 
     def batch(self, size=None):
         if size is None:
@@ -180,10 +187,10 @@ class DataSet:
 
 
 class LabeledDataSet(DataSet):
-    def __init__(self, images, targets, patch=None, batch_size=50):
+    def __init__(self, images, targets, patch=None, batch_size=50, cutoff=True):
         self.patch = patch
 
-        DataSet.__init__(self, images, targets, batch_size)
+        DataSet.__init__(self, images, targets, batch_size=batch_size, cutoff=cutoff)
 
     def _create_batch(self, size):
         images = [image.patch(self.patch) for image in self.images[self.current_index:(self.current_index + size)]]
@@ -193,11 +200,11 @@ class LabeledDataSet(DataSet):
 
 
 class UnlabeledDataSet(DataSet):
-    def __init__(self, images, noise=None, patch=None, batch_size=50):
+    def __init__(self, images, noise=None, patch=None, batch_size=50, cutoff=True):
         self.noise = noise
         self.patch = patch
 
-        DataSet.__init__(self, images, batch_size=batch_size)
+        DataSet.__init__(self, images, batch_size=batch_size, cutoff=cutoff)
 
     def _create_batch(self, size):
         images = []
@@ -228,12 +235,12 @@ class UnlabeledDataSet(DataSet):
 
 
 class KernelEstimationDataSet(DataSet):
-    def __init__(self, images, noise, patch=None, kernel_size=None, batch_size=50):
+    def __init__(self, images, noise, patch=None, kernel_size=None, batch_size=50, cutoff=True):
         self.noise = noise
         self.patch = patch
         self.kernel_size = kernel_size
 
-        DataSet.__init__(self, images, batch_size=batch_size)
+        DataSet.__init__(self, images, batch_size=batch_size, cutoff=cutoff)
 
     def _create_batch(self, size):
         images = []
