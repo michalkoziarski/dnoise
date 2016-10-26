@@ -21,7 +21,8 @@ params = {
     'image_summary': False,
     'prediction_summary': True,
     'train_score_summary': False,
-    'normalize': False
+    'normalize': False,
+    'offset': [103, 116, 123]
 }
 
 parser = argparse.ArgumentParser()
@@ -68,6 +69,6 @@ optimizer = tf.train.MomentumOptimizer(params['learning_rate'], params['momentum
 trainer = trainers.Trainer(params, network, loss, score, optimizer)
 
 train_set, test_set = loaders.load_imagenet_labeled(batch_size=params['batch_size'], patch=224,
-                                                    normalize=params['normalize'])
+                                                    normalize=params['normalize'], offset=params['offset'])
 
 trainer.train(train_set, val_set=test_set, test_set=test_set)

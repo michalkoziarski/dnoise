@@ -6,7 +6,7 @@ from scipy import misc
 
 class Image:
     def __init__(self, image=None, path=None, shape=None, keep_in_memory=True, preload=False, normalize=True,
-                 noise=None, grayscale=False):
+                 noise=None, grayscale=False, offset=None):
         if preload and not keep_in_memory:
             raise ValueError('Can\'t preload without keeping in memory')
 
@@ -21,6 +21,7 @@ class Image:
         self.noise = noise
         self.scale = (0.0, 1.0) if normalize else (0, 255)
         self.grayscale = grayscale
+        self.offset = offset
         self.image = None
 
         if preload or image is not None:
@@ -75,6 +76,9 @@ class Image:
             self.noise.set_scale(self.scale)
 
             image = self.noise.apply(image)
+
+        if self.offset is not None:
+            image -= self.offset
 
         if self.keep_in_memory:
             self.image = image
