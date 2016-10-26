@@ -78,7 +78,7 @@ class Image:
             image = self.noise.apply(image)
 
         if self.offset is not None:
-            image -= self.offset
+            image -= np.array(self.offset, ndmin=1).astype(image.dtype)
 
         if self.keep_in_memory:
             self.image = image
