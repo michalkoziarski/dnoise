@@ -14,7 +14,7 @@ params = {
     'momentum': 0.9,
     'weight_decay': 0.0005,
     'dropout': 0.5,
-    'batch_size': 250,
+    'batch_size': 50,
     'epochs': 100,
     'experiment': 'ImageNet - classification',
     'summary_step': 10000,
