@@ -12,7 +12,8 @@ class Trainer:
         self.optimizer = optimizer
         self.keep_prob = params.get('dropout', 1.0)
 
-        image_summary = params.get('image_summary', True)
+        image_summary = params.get('image_summary', False)
+        prediction_summary = params.get('prediction_summary', False)
         train_score_summary = params.get('train_score_summary', True)
 
         self.root_path = os.path.dirname(os.path.realpath(__file__))
@@ -49,6 +50,25 @@ class Trainer:
             tf.image_summary('images/reference', self.network.y_)
             tf.image_summary('images/distorted', self.network.x)
             tf.image_summary('images/cleaned', tf.minimum(self.network.output(), 1.))
+
+        if prediction_summary:
+            length = network.output_shape[0]
+            divisors = []
+
+            while length > 1:
+                for i in range(2, length + 1):
+                    if length % i == 0:
+                        divisors.append(i)
+                        length /= i
+                        break
+
+            shape = [1, 1]
+
+            for i in range(len(divisors)):
+                shape[i % 2] *= divisors[i]
+
+            tf.image_summary('images/reference', tf.reshape(self.network.y_, (-1, shape[0], shape[1], 1)))
+            tf.image_summary('images/prediction', tf.reshape(self.network.output(), (-1, shape[0], shape[1], 1)))
 
         if train_score_summary:
             tf.scalar_summary('score/train', self.score)
