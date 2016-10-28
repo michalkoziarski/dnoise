@@ -105,38 +105,37 @@ class Trainer:
             while tf.train.global_step(sess, self.global_step) * self.params['batch_size'] < train_set.length * self.params['epochs']:
                 x, y_ = train_set.batch()
 
-                if tf.train.global_step(sess, self.global_step) % self.params['summary_step'] == 0:
+                train_summary_step = int(self.params.get('train_summary_step', 1.0) * train_set.length) / self.params['batch_size']
+                val_summary_step = int(self.params.get('val_summary_step', 1.0) * train_set.length) / self.params['batch_size']
+                save_step = int(self.params.get('save_step', 1.0) * train_set.length) / self.params['batch_size']
+
+                batch = tf.train.global_step(sess, self.global_step)
+                epoch = batch * self.params['batch_size'] / float(train_set.length)
+
+                if batch % train_summary_step == 0:
                     _, summary = sess.run([self.train_step, self.train_summary_step],
                                           feed_dict={self.network.x: x, self.network.y_: y_,
                                                      self.network.keep_prob: self.keep_prob})
 
-                    self.summary_writer.add_summary(summary, tf.train.global_step(sess, self.global_step) * self.params['batch_size'])
+                    self.summary_writer.add_summary(summary, epoch)
                 else:
                     sess.run([self.train_step], feed_dict={self.network.x: x, self.network.y_: y_,
                                                            self.network.keep_prob: self.keep_prob})
 
-                global_step = tf.train.global_step(sess, self.global_step)
-                epoch_before_train_step = (global_step - 1) * self.params['batch_size'] / train_set.length
-                epoch_after_train_step = global_step * self.params['batch_size'] / train_set.length
-                epoch_completed = (epoch_before_train_step != epoch_after_train_step)
-
-                save_step = self.params.get('save_step')
-                save_now = save_step is not None and (global_step % save_step) == 0
-
-                if epoch_completed or save_now:
+                if batch % save_step == 0:
                     self.saver.save(sess, self.model_path, global_step=self.global_step)
 
-                if epoch_completed and val_set is not None:
+                if batch % val_summary_step == 0 and val_set is not None:
                     score = self._score(val_set)
                     summary = sess.run(self.val_summary_step, feed_dict={self.score_placeholder: score})
-                    self.summary_writer.add_summary(summary, epoch_after_train_step)
+                    self.summary_writer.add_summary(summary, epoch)
 
             if test_set is not None:
-                global_step = tf.train.global_step(sess, self.global_step)
-                epoch_after_train_step = global_step * self.params['batch_size'] / train_set.length
+                batch = tf.train.global_step(sess, self.global_step)
+                epoch = batch * self.params['batch_size'] / float(train_set.length)
                 score = self._score(val_set)
                 summary = sess.run(self.test_summary_step, feed_dict={self.score_placeholder: score})
-                self.summary_writer.add_summary(summary, epoch_after_train_step)
+                self.summary_writer.add_summary(summary, epoch)
 
     def _score(self, dataset):
         scores = []
