@@ -24,7 +24,7 @@ class Network:
         return self.layers[-1]
 
     def conv(self, width, height, in_depth, out_depth, stride=1, W=0.01, b=0.0, activation=tf.nn.relu, padding='SAME'):
-        W = tf.Variable(tf.truncated_normal([width, height, in_depth, out_depth], stddev=W))
+        W = tf.Variable(tf.random_normal([width, height, in_depth, out_depth], stddev=W))
         b = tf.Variable(tf.constant(b, shape=[out_depth]))
         conv = tf.nn.conv2d(self.output(), W, strides=[stride] * 4, padding=padding)
 
@@ -52,7 +52,7 @@ class Network:
         for d in self.output().get_shape()[1:].as_list():
             dim *= d
 
-        W = tf.Variable(tf.truncated_normal([dim, size], stddev=W))
+        W = tf.Variable(tf.random_normal([dim, size], stddev=W))
         b = tf.Variable(tf.constant(b, shape=[size]))
         flat = tf.reshape(self.output(), [-1, dim])
         fully = activation(tf.matmul(flat, W) + b)
