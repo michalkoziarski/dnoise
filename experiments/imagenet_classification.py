@@ -9,6 +9,8 @@ import loaders
 import tensorflow as tf
 import argparse
 
+from noise import GaussianNoise, QuantizationNoise, SaltAndPepperNoise
+
 
 params = {
     'learning_rate': 0.001,
@@ -24,7 +26,9 @@ params = {
     'prediction_summary': True,
     'train_score_summary': False,
     'normalize': False,
-    'offset': [103, 116, 123]
+    'offset': [103, 116, 123],
+    'train_noise': None,
+    'test_noise': None
 }
 
 parser = argparse.ArgumentParser()
@@ -68,7 +72,10 @@ optimizer = tf.train.MomentumOptimizer(params['learning_rate'], params['momentum
 
 trainer = trainers.Trainer(params, network, loss, score, optimizer)
 
+train_noise, test_noise = eval(params['train_noise']), eval(params['test_noise'])
+
 train_set, test_set = loaders.load_imagenet_labeled(batch_size=params['batch_size'], patch=224,
-                                                    normalize=params['normalize'], offset=params['offset'])
+                                                    normalize=params['normalize'], offset=params['offset'],
+                                                    train_noise=train_noise, test_noise=test_noise)
 
 trainer.train(train_set, val_set=test_set, test_set=test_set)
