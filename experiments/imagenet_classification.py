@@ -1,6 +1,7 @@
 import sys
+import os
 
-sys.path.append('..')
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 import models
 import trainers
@@ -17,7 +18,8 @@ params = {
     'batch_size': 50,
     'epochs': 100,
     'experiment': 'ImageNet - classification',
-    'summary_step': 10000,
+    'train_summary_step': 1.0,
+    'val_summary_step': 5.0,
     'image_summary': False,
     'prediction_summary': True,
     'train_score_summary': False,
