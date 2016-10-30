@@ -9,7 +9,7 @@ import loaders
 import tensorflow as tf
 import argparse
 
-from noise import GaussianNoise, QuantizationNoise, SaltAndPepperNoise
+from noise import GaussianNoise, QuantizationNoise, SaltAndPepperNoise, RandomNoise
 
 
 params = {
