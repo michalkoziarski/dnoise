@@ -87,7 +87,7 @@ class Image:
 
     def noisy(self, noise):
         return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True, normalize=self.normalize,
-                     noise=noise, grayscale=self.grayscale)
+                     noise=noise, grayscale=self.grayscale, offset=self.offset)
 
     def display(self, path=None, size=None):
         image = self.get()
