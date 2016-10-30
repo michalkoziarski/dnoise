@@ -111,7 +111,8 @@ def _load_imagenet_images(dataset, shape, grayscale, normalize=True, offset=None
     return result
 
 
-def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None, normalize=True, offset=None):
+def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None, normalize=True, offset=None,
+                          train_noise=None, test_noise=None):
     assert os.path.exists(_imagenet_path())
 
     for f in ['synsets.csv', 'val_ground_truth.csv']:
@@ -138,8 +139,8 @@ def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None
         label = int(val_ground_truth[val_ground_truth['ID'] == id]['LABEL'])
         val_targets.append(Label(label - 1, length=1000))
 
-    train_set = LabeledDataSet(train_images, train_targets, patch=patch, batch_size=batch_size)
-    val_set = LabeledDataSet(val_images, val_targets, patch=patch, batch_size=batch_size)
+    train_set = LabeledDataSet(train_images, train_targets, patch=patch, batch_size=batch_size, noise=train_noise)
+    val_set = LabeledDataSet(val_images, val_targets, patch=patch, batch_size=batch_size, noise=test_noise)
 
     return train_set, val_set
 

@@ -187,13 +187,21 @@ class DataSet:
 
 
 class LabeledDataSet(DataSet):
-    def __init__(self, images, targets, patch=None, batch_size=50, cutoff=True):
+    def __init__(self, images, targets, noise=None, patch=None, batch_size=50, cutoff=True):
+        self.noise = noise
         self.patch = patch
 
         DataSet.__init__(self, images, targets, batch_size=batch_size, cutoff=cutoff)
 
     def _create_batch(self, size):
-        images = [image.patch(self.patch) for image in self.images[self.current_index:(self.current_index + size)]]
+        if self.noise is not None:
+            images = []
+
+            for image in self.images[self.current_index:(self.current_index + size)]:
+                images.append(image.noisy(self.noise).patch(self.patch))
+        else:
+            images = [image.patch(self.patch) for image in self.images[self.current_index:(self.current_index + size)]]
+
         targets = [target.get() for target in self.targets[self.current_index:(self.current_index + size)]]
 
         return np.array(images), np.array(targets)
