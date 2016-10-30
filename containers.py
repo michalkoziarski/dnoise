@@ -6,7 +6,7 @@ from scipy import misc
 
 class Image:
     def __init__(self, image=None, path=None, shape=None, keep_in_memory=True, preload=False, normalize=True,
-                 noise=None, grayscale=False, offset=None):
+                 noise=None, grayscale=False):
         if preload and not keep_in_memory:
             raise ValueError('Can\'t preload without keeping in memory')
 
@@ -21,7 +21,6 @@ class Image:
         self.noise = noise
         self.scale = (0.0, 1.0) if normalize else (0, 255)
         self.grayscale = grayscale
-        self.offset = offset
         self.image = None
 
         if preload or image is not None:
@@ -77,9 +76,6 @@ class Image:
 
             image = self.noise.apply(image)
 
-        if self.offset is not None:
-            image -= np.array(self.offset, ndmin=1).astype(image.dtype)
-
         if self.keep_in_memory:
             self.image = image
 
@@ -87,7 +83,7 @@ class Image:
 
     def noisy(self, noise):
         return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True, normalize=self.normalize,
-                     noise=noise, grayscale=self.grayscale, offset=self.offset)
+                     noise=noise, grayscale=self.grayscale)
 
     def display(self, path=None, size=None):
         image = self.get()
@@ -138,12 +134,13 @@ class Label:
 
 
 class DataSet:
-    def __init__(self, images, targets=None, batch_size=50, cutoff=True):
+    def __init__(self, images, targets=None, batch_size=50, cutoff=True, offset=None):
         assert targets is None or len(images) == len(targets)
 
         self.images = np.array(images)
         self.targets = np.array(targets) if targets else None
         self.batch_size = batch_size
+        self.offset = offset
         self.length = len(images)
         self.batches_completed = 0
         self.epochs_completed = 0
@@ -187,11 +184,11 @@ class DataSet:
 
 
 class LabeledDataSet(DataSet):
-    def __init__(self, images, targets, noise=None, patch=None, batch_size=50, cutoff=True):
+    def __init__(self, images, targets, noise=None, patch=None, batch_size=50, cutoff=True, offset=None):
         self.noise = noise
         self.patch = patch
 
-        DataSet.__init__(self, images, targets, batch_size=batch_size, cutoff=cutoff)
+        DataSet.__init__(self, images, targets, batch_size=batch_size, cutoff=cutoff, offset=offset)
 
     def _create_batch(self, size):
         if self.noise is not None:
@@ -204,15 +201,20 @@ class LabeledDataSet(DataSet):
 
         targets = [target.get() for target in self.targets[self.current_index:(self.current_index + size)]]
 
-        return np.array(images), np.array(targets)
+        images, targets = np.array(images), np.array(targets)
+
+        if self.offset is not None:
+            images -= np.array(self.offset, ndmin=1).astype(images.dtype)
+
+        return images, targets
 
 
 class UnlabeledDataSet(DataSet):
-    def __init__(self, images, noise=None, patch=None, batch_size=50, cutoff=True):
+    def __init__(self, images, noise=None, patch=None, batch_size=50, cutoff=True, offset=None):
         self.noise = noise
         self.patch = patch
 
-        DataSet.__init__(self, images, batch_size=batch_size, cutoff=cutoff)
+        DataSet.__init__(self, images, batch_size=batch_size, cutoff=cutoff, offset=offset)
 
     def _create_batch(self, size):
         images = []
@@ -239,16 +241,22 @@ class UnlabeledDataSet(DataSet):
             images.append(image)
             targets.append(target)
 
-        return np.array(images), np.array(targets)
+        images, targets = np.array(images), np.array(targets)
+
+        if self.offset is not None:
+            images -= np.array(self.offset, ndmin=1).astype(images.dtype)
+            targets -= np.array(self.offset, ndmin=1).astype(targets.dtype)
+
+        return images, targets
 
 
 class KernelEstimationDataSet(DataSet):
-    def __init__(self, images, noise, patch=None, kernel_size=None, batch_size=50, cutoff=True):
+    def __init__(self, images, noise, patch=None, kernel_size=None, batch_size=50, cutoff=True, offset=None):
         self.noise = noise
         self.patch = patch
         self.kernel_size = kernel_size
 
-        DataSet.__init__(self, images, batch_size=batch_size, cutoff=cutoff)
+        DataSet.__init__(self, images, batch_size=batch_size, cutoff=cutoff, offset=offset)
 
     def _create_batch(self, size):
         images = []
@@ -279,4 +287,9 @@ class KernelEstimationDataSet(DataSet):
             images.append(tensor)
             targets.append(kernel)
 
-        return np.array(images), np.array(targets)
+        images, targets = np.array(images), np.array(targets)
+
+        if self.offset is not None:
+            images -= np.array(self.offset, ndmin=1).astype(images.dtype)
+
+        return images, targets

@@ -33,7 +33,7 @@ class GaussianNoise(Noise):
         self.mean = mean
 
     def _apply(self, image):
-        return image + np.random.normal(self.mean, self.std, image.shape)
+        return image + np.random.normal(self.mean, self.std, image.shape) * self.scale[1]
 
 
 class SaltAndPepperNoise(Noise):
@@ -60,7 +60,7 @@ class QuantizationNoise(Noise):
         self.q = q
 
     def _apply(self, image):
-        return image + self.q * np.random.random(image.shape)
+        return image + self.q * np.random.random(image.shape) * self.scale[1]
 
 
 class RandomNoise(Noise):

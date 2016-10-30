@@ -19,7 +19,7 @@ params = {
     'dropout': 0.5,
     'batch_size': 50,
     'epochs': 100,
-    'experiment': 'ImageNet - classification',
+    'experiment': 'ImageNet classification',
     'train_summary_step': 1.0,
     'val_summary_step': 5.0,
     'image_summary': False,

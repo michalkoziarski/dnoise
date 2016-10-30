@@ -97,7 +97,7 @@ def _imagenet_path(element=None):
         return os.path.join(ROOT_PATH, 'ImageNet')
 
 
-def _load_imagenet_images(dataset, shape, grayscale, normalize=True, offset=None):
+def _load_imagenet_images(dataset, shape, grayscale, normalize=True):
     assert os.path.exists(_imagenet_path(dataset))
 
     result = []
@@ -105,8 +105,7 @@ def _load_imagenet_images(dataset, shape, grayscale, normalize=True, offset=None
     for (dirpath, _, filenames) in os.walk(_imagenet_path(dataset)):
         for filename in filenames:
             path = os.path.join(ROOT_PATH, 'ImageNet', dirpath, filename)
-            result.append(Image(path=path, shape=shape, keep_in_memory=False, grayscale=grayscale, normalize=normalize,
-                                offset=offset))
+            result.append(Image(path=path, shape=shape, keep_in_memory=False, grayscale=grayscale, normalize=normalize))
 
     return result
 
@@ -123,8 +122,8 @@ def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None
     synsets = pd.read_csv(_imagenet_path('synsets.csv'))
     val_ground_truth = pd.read_csv(_imagenet_path('val_ground_truth.csv'))
 
-    train_images = _load_imagenet_images('train', shape, grayscale, normalize=normalize, offset=offset)
-    val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize, offset=offset)
+    train_images = _load_imagenet_images('train', shape, grayscale, normalize=normalize)
+    val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize)
 
     train_targets = []
     val_targets = []
@@ -139,36 +138,38 @@ def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None
         label = int(val_ground_truth[val_ground_truth['ID'] == id]['LABEL'])
         val_targets.append(Label(label - 1, length=1000))
 
-    train_set = LabeledDataSet(train_images, train_targets, patch=patch, batch_size=batch_size, noise=train_noise)
-    val_set = LabeledDataSet(val_images, val_targets, patch=patch, batch_size=batch_size, noise=test_noise)
+    train_set = LabeledDataSet(train_images, train_targets, patch=patch, batch_size=batch_size, noise=train_noise,
+                               offset=offset)
+    val_set = LabeledDataSet(val_images, val_targets, patch=patch, batch_size=batch_size, noise=test_noise,
+                             offset=offset)
 
     return train_set, val_set
 
 
 def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, patch=None, normalize=True,
                             offset=None):
-    train_images = _load_imagenet_images('train', shape, grayscale, normalize=normalize, offset=offset)
-    val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize, offset=offset)
-    test_images = _load_imagenet_images('test', shape, grayscale, normalize=normalize, offset=offset)
+    train_images = _load_imagenet_images('train', shape, grayscale, normalize=normalize)
+    val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize)
+    test_images = _load_imagenet_images('test', shape, grayscale, normalize=normalize)
 
-    train_set = UnlabeledDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size)
-    val_set = UnlabeledDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size)
-    test_set = UnlabeledDataSet(test_images, noise=noise, patch=patch, batch_size=batch_size)
+    train_set = UnlabeledDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size, offset=offset)
+    val_set = UnlabeledDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size, offset=offset)
+    test_set = UnlabeledDataSet(test_images, noise=noise, patch=patch, batch_size=batch_size, offset=offset)
 
     return train_set, val_set, test_set
 
 
 def load_imagenet_kernel_estimation(batch_size=50, shape=None, grayscale=False, noise=None, patch=None, kernel_size=33,
                                     normalize=True, offset=None):
-    train_images = _load_imagenet_images('train', shape, grayscale, normalize=normalize, offset=offset)
-    val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize, offset=offset)
-    test_images = _load_imagenet_images('test', shape, grayscale, normalize=normalize, offset=offset)
+    train_images = _load_imagenet_images('train', shape, grayscale, normalize=normalize)
+    val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize)
+    test_images = _load_imagenet_images('test', shape, grayscale, normalize=normalize)
 
     train_set = KernelEstimationDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size,
-                                        kernel_size=kernel_size)
+                                        kernel_size=kernel_size, offset=offset)
     val_set = KernelEstimationDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size,
-                                      kernel_size=kernel_size)
+                                      kernel_size=kernel_size, offset=offset)
     test_set = KernelEstimationDataSet(test_images, noise=noise, patch=patch, batch_size=batch_size,
-                                       kernel_size=kernel_size)
+                                       kernel_size=kernel_size, offset=offset)
 
     return train_set, val_set, test_set
