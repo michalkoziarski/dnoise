@@ -27,8 +27,8 @@ params = {
     'train_score_summary': False,
     'normalize': False,
     'offset': [103, 116, 123],
-    'train_noise': None,
-    'test_noise': None
+    'train_noise': 'None',
+    'test_noise': 'None'
 }
 
 parser = argparse.ArgumentParser()
