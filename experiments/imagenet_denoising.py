@@ -27,6 +27,7 @@ params = {
     'train_score_summary': False,
     'normalize': False,
     'offset': [103, 116, 123],
+    'scale': [0, 255],
     'noise': 'None'
 }
 

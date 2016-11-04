@@ -54,9 +54,12 @@ class Trainer:
         tf.scalar_summary('loss/total', total_loss)
 
         if image_summary:
-            tf.image_summary('images/reference', self.network.y_)
-            tf.image_summary('images/distorted', self.network.x)
-            tf.image_summary('images/cleaned', tf.minimum(self.network.output(), 1.))
+            offset = params.get('offset', [0, 0, 0])
+            maximum = params.get('scale', [0.0, 1.0])[1]
+            
+            tf.image_summary('images/reference', tf.add(self.network.y_, offset))
+            tf.image_summary('images/distorted', tf.add(self.network.x, offset))
+            tf.image_summary('images/cleaned', tf.add(tf.minimum(self.network.output(), maximum), offset))
 
         if prediction_summary:
             length = network.output_shape[0]
