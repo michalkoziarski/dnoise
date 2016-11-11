@@ -56,7 +56,7 @@ class Trainer:
         if image_summary:
             offset = params.get('offset', [0, 0, 0])
             maximum = params.get('scale', [0.0, 1.0])[1]
-            
+
             tf.image_summary('images/reference', tf.add(self.network.y_, offset))
             tf.image_summary('images/distorted', tf.add(self.network.x, offset))
             tf.image_summary('images/cleaned', tf.add(tf.minimum(self.network.output(), maximum), offset))
@@ -126,7 +126,7 @@ class Trainer:
                                                            self.network.keep_prob: self.keep_prob})
 
                 if batch % save_step == 0:
-                    self.saver.save(sess, self.model_path, global_step=self.global_step)
+                    self.saver.save(sess, self.model_path)
 
                 if batch % val_summary_step == 0 and val_set is not None:
                     score = self._score(val_set)
