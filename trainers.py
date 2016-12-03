@@ -57,9 +57,18 @@ class Trainer:
             offset = params.get('offset', [0, 0, 0])
             maximum = params.get('scale', [0.0, 1.0])[1]
 
-            tf.image_summary('images/reference', tf.add(self.network.y_, offset))
-            tf.image_summary('images/distorted', tf.add(self.network.x, offset))
-            tf.image_summary('images/cleaned', tf.add(tf.minimum(self.network.output(), maximum), offset))
+            reference = tf.add(self.network.y_, offset)
+            distorted = tf.add(self.network.x, offset)
+            cleaned = tf.add(tf.minimum(self.network.output(), maximum), offset)
+
+            if maximum == 255:
+                reference = tf.cast(reference, tf.uint8)
+                distorted = tf.cast(distorted, tf.uint8)
+                cleaned = tf.cast(cleaned, tf.uint8)
+
+            tf.image_summary('images/reference', reference)
+            tf.image_summary('images/distorted', distorted)
+            tf.image_summary('images/cleaned', cleaned)
 
         if prediction_summary:
             length = network.output_shape[0]
