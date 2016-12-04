@@ -53,8 +53,10 @@ class Network(models.Network):
             conv(5, 5, 48, 48, activation=tf.nn.tanh).\
             conv(5, 5, 48, self.output_shape[2], activation=None)
 
+
 def psnr(x, y):
     return 20 * np.log(params['scale'][1]) - 10 * tf.log(tf.maximum(tf.reduce_mean(tf.pow(x - y, 2)), 1e-20)) / np.log(10)
+
 
 network = Network([224, 224, 3], [224, 224, 3])
 loss = tf.reduce_mean(tf.pow(network.y_ - network.output(), 2))
