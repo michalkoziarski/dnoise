@@ -71,4 +71,4 @@ train_set, val_set, test_set = loaders.load_imagenet_unlabeled(batch_size=params
                                                                normalize=params['normalize'], offset=params['offset'],
                                                                noise=noise)
 
-trainer.train(train_set, val_set=val_set, test_set=test_set)
+trainer.train(test_set, val_set=val_set, test_set=val_set)
