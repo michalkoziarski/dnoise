@@ -40,7 +40,10 @@ args = vars(parser.parse_args())
 
 for k, v in params.iteritems():
     if args.get(k) is not None and args.get(k) is not '':
-        params[k] = type(v)(args.get(k))
+        if type(v) == list:
+            params[k] = eval(args.get(k))
+        else:
+            params[k] = type(v)(args.get(k))
 
 
 class Network(models.Network):
