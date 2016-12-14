@@ -7,6 +7,6 @@
 #SBATCH --mem=40000
 
 module add plgrid/tools/python/2.7.9
-module add plgrid/apps/cuda/7.0
+module add plgrid/apps/cuda/7.5
 
 python ${1} ${@:2}
