@@ -55,11 +55,13 @@ class Trainer:
 
         if image_summary:
             offset = params.get('offset', [0, 0, 0])
-            maximum = params.get('scale', [0.0, 1.0])[1]
+            scale = params.get('scale', [0.0, 1.0])
+            minimum = scale[0]
+            maximum = scale[1]
 
             reference = tf.add(self.network.y_, offset)
             distorted = tf.add(self.network.x, offset)
-            cleaned = tf.add(tf.minimum(self.network.output(), maximum), offset)
+            cleaned = tf.add(tf.clip_by_value(self.network.output(), minimum, maximum), offset)
 
             if maximum == 255:
                 reference = tf.cast(reference, tf.uint8)
