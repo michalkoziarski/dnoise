@@ -75,6 +75,12 @@ class Network:
 
         return self
 
+    def linearity(self, slope=1.0, offset=0):
+        linearity = tf.add(tf.scalar_mul(slope, self.output()), offset)
+        self.add(linearity)
+
+        return self
+
     def reshape(self, shape):
         self.add(tf.reshape(self.output(), [-1] + shape))
 
