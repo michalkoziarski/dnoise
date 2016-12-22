@@ -31,47 +31,48 @@ params = {
     'noise': 'None'
 }
 
-parser = argparse.ArgumentParser()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
 
-for k in params.keys():
-    parser.add_argument('-%s' % k)
+    for k in params.keys():
+        parser.add_argument('-%s' % k)
 
-args = vars(parser.parse_args())
+    args = vars(parser.parse_args())
 
-for k, v in params.iteritems():
-    if args.get(k) is not None and args.get(k) is not '':
-        if type(v) == list:
-            params[k] = eval(args.get(k))
-        else:
-            params[k] = type(v)(args.get(k))
-
-
-class Network(models.Network):
-    def setup(self):
-        self.conv(5, 5, self.input_shape[2], 48, activation=tf.nn.tanh).\
-            conv(5, 5, 48, 48, activation=tf.nn.tanh).\
-            conv(5, 5, 48, 48, activation=tf.nn.tanh).\
-            conv(5, 5, 48, 48, activation=tf.nn.tanh).\
-            conv(5, 5, 48, 48, activation=tf.nn.tanh).\
-            conv(5, 5, 48, 48, activation=tf.nn.tanh).\
-            conv(5, 5, 48, self.output_shape[2], activation=None)
+    for k, v in params.iteritems():
+        if args.get(k) is not None and args.get(k) is not '':
+            if type(v) == list:
+                params[k] = eval(args.get(k))
+            else:
+                params[k] = type(v)(args.get(k))
 
 
-def psnr(x, y):
-    return 20 * np.log10(params['scale'][1]) - 10 * tf.log(tf.maximum(tf.reduce_mean(tf.pow(x - y, 2)), 1e-20)) / np.log(10)
+    class Network(models.Network):
+        def setup(self):
+            self.conv(5, 5, self.input_shape[2], 48, activation=tf.nn.tanh).\
+                conv(5, 5, 48, 48, activation=tf.nn.tanh).\
+                conv(5, 5, 48, 48, activation=tf.nn.tanh).\
+                conv(5, 5, 48, 48, activation=tf.nn.tanh).\
+                conv(5, 5, 48, 48, activation=tf.nn.tanh).\
+                conv(5, 5, 48, 48, activation=tf.nn.tanh).\
+                conv(5, 5, 48, self.output_shape[2], activation=None)
 
 
-network = Network([224, 224, 3], [224, 224, 3])
-loss = tf.reduce_mean(tf.pow(network.y_ - network.output(), 2))
-score = tf.reduce_mean(psnr(network.y_, network.output()))
-optimizer = tf.train.MomentumOptimizer(params['learning_rate'], params['momentum'])
+    def psnr(x, y):
+        return 20 * np.log10(params['scale'][1]) - 10 * tf.log(tf.maximum(tf.reduce_mean(tf.pow(x - y, 2)), 1e-20)) / np.log(10)
 
-trainer = trainers.Trainer(params, network, loss, score, optimizer)
 
-noise = eval(params['noise'])
+    network = Network([224, 224, 3], [224, 224, 3])
+    loss = tf.reduce_mean(tf.pow(network.y_ - network.output(), 2))
+    score = tf.reduce_mean(psnr(network.y_, network.output()))
+    optimizer = tf.train.MomentumOptimizer(params['learning_rate'], params['momentum'])
 
-train_set, val_set, test_set = loaders.load_imagenet_unlabeled(batch_size=params['batch_size'], patch=224,
-                                                               normalize=params['normalize'], offset=params['offset'],
-                                                               noise=noise)
+    trainer = trainers.Trainer(params, network, loss, score, optimizer)
 
-trainer.train(test_set, val_set=val_set, test_set=val_set)
+    noise = eval(params['noise'])
+
+    train_set, val_set, test_set = loaders.load_imagenet_unlabeled(batch_size=params['batch_size'], patch=224,
+                                                                   normalize=params['normalize'], offset=params['offset'],
+                                                                   noise=noise)
+
+    trainer.train(test_set, val_set=val_set, test_set=val_set)
