@@ -118,6 +118,8 @@ if not os.path.exists(model_path):
     experiments['classification']['params'] = classification_params
 
     with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        
         for i in ['denoising', 'classification']:
             experiments[i]['saver'] = tf.train.Saver(experiments[i]['variables'])
             experiments[i]['trial'] = hashlib.md5(str(experiments[i]['params'])).hexdigest()
