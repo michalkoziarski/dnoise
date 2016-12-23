@@ -123,7 +123,8 @@ if not os.path.exists(model_path):
         for i in ['denoising', 'classification']:
             experiments[i]['saver'] = tf.train.Saver(experiments[i]['variables'])
             experiments[i]['trial'] = hashlib.md5(str(experiments[i]['params'])).hexdigest()
-            experiments[i]['checkpoint_path'] = os.path.join(results_path, 'ImageNet %s' % i, experiments[i]['trial'])
+            experiments[i]['checkpoint_path'] = os.path.join(results_path, experiments[i]['params']['experiment'],
+                                                             experiments[i]['trial'])
             experiments[i]['model_path'] = os.path.join(experiments[i]['checkpoint_path'], 'model.ckpt')
             experiments[i]['checkpoint'] = tf.train.get_checkpoint_state(experiments[i]['checkpoint_path'])
             experiments[i]['saver'].restore(sess, experiments[i]['checkpoint'].model_checkpoint_path)
