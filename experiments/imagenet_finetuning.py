@@ -89,7 +89,7 @@ model_path = os.path.join(trial_path, 'model.ckpt')
 
 if not os.path.exists(model_path):
     if not os.path.exists(experiment_path):
-        os.mkdir(model_path)
+        os.mkdir(experiment_path)
 
     if not os.path.exists(trial_path):
         os.mkdir(trial_path)
