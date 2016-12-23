@@ -78,6 +78,18 @@ class Network(models.Network):
 
 network = Network([224, 224, 3], [1000])
 
+loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(network.logits, network.y_))
+correct_prediction = tf.equal(tf.argmax(network.y_, 1), tf.argmax(network.output(), 1))
+score = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+optimizer = tf.train.MomentumOptimizer(params['learning_rate'], params['momentum'])
+
+trainer = trainers.Trainer(params, network, loss, score, optimizer)
+
+noise = eval(params['noise'])
+
+train_set, val_set = loaders.load_imagenet_labeled(batch_size=params['batch_size'], patch=224,
+                                                   normalize=params['normalize'], test_noise=noise)
+
 # try to merge models from previous experiments
 
 root_path = os.path.dirname(os.path.realpath(__file__))
@@ -130,17 +142,5 @@ if not os.path.exists(model_path):
             experiments[i]['saver'].restore(sess, experiments[i]['checkpoint'].model_checkpoint_path)
 
         saver.save(sess, model_path)
-
-loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(network.logits, network.y_))
-correct_prediction = tf.equal(tf.argmax(network.y_, 1), tf.argmax(network.output(), 1))
-score = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-optimizer = tf.train.MomentumOptimizer(params['learning_rate'], params['momentum'])
-
-trainer = trainers.Trainer(params, network, loss, score, optimizer)
-
-noise = eval(params['noise'])
-
-train_set, val_set = loaders.load_imagenet_labeled(batch_size=params['batch_size'], patch=224,
-                                                   normalize=params['normalize'], test_noise=noise)
 
 trainer.train(train_set, val_set=val_set, test_set=val_set)
