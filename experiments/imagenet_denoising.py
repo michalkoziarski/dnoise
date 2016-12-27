@@ -17,7 +17,7 @@ params = {
     'learning_rate': 0.001,
     'momentum': 0.9,
     'weight_decay': 0.0005,
-    'batch_size': 50,
+    'batch_size': 1,
     'epochs': 20,
     'experiment': 'ImageNet denoising',
     'train_summary_step': 1.0,
@@ -25,9 +25,9 @@ params = {
     'image_summary': True,
     'prediction_summary': False,
     'train_score_summary': False,
-    'normalize': False,
-    'offset': [103, 116, 123],
-    'scale': [0, 255],
+    'normalize': True,
+    'offset': [0, 0, 0],
+    'scale': [0.0, 1.0],
     'noise': 'None'
 }
 
@@ -75,4 +75,4 @@ if __name__ == '__main__':
                                                                    normalize=params['normalize'], offset=params['offset'],
                                                                    noise=noise)
 
-    trainer.train(test_set, val_set=val_set, test_set=val_set)
+    trainer.train(train_set, val_set=val_set, test_set=val_set)
