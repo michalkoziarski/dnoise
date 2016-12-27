@@ -7,7 +7,7 @@ import json
 
 class Trainer:
     def __init__(self, params, network, loss, score, optimizer):
-        self.params = params
+        self.params = params.copy()
         self.network = network
         self.loss = loss
         self.score = score
@@ -22,8 +22,8 @@ class Trainer:
 
         self.root_path = os.path.dirname(os.path.realpath(__file__))
         self.results_path = os.path.join(self.root_path, 'results')
-        self.experiment_path = os.path.join(self.results_path, params['experiment'])
-        self.trial_path = os.path.join(self.experiment_path, params['trial'])
+        self.experiment_path = os.path.join(self.results_path, self.params['experiment'])
+        self.trial_path = os.path.join(self.experiment_path, self.params['trial'])
         self.checkpoint_path = os.path.join(self.results_path, self.params['experiment'], self.params['trial'])
         self.model_path = os.path.join(self.checkpoint_path, 'model.ckpt')
 
