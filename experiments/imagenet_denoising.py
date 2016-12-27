@@ -22,6 +22,7 @@ params = {
     'experiment': 'ImageNet denoising',
     'train_summary_step': 1.0,
     'val_summary_step': 5.0,
+    'save_step': 0.05,
     'image_summary': True,
     'prediction_summary': False,
     'train_score_summary': False,
