@@ -16,9 +16,9 @@ from noise import GaussianNoise, QuantizationNoise, SaltAndPepperNoise, RandomNo
 params = {
     'learning_rate': 0.001,
     'momentum': 0.9,
-    'weight_decay': 0.0005,
-    'batch_size': 1,
-    'epochs': 20,
+    'weight_decay': 0.0,
+    'batch_size': 50,
+    'epochs': 10,
     'experiment': 'ImageNet denoising',
     'train_summary_step': 1.0,
     'val_summary_step': 5.0,
@@ -48,7 +48,15 @@ if __name__ == '__main__':
                 params[k] = type(v)(args.get(k))
 
 
-    class Network(models.Network):
+    class SingleChannelNetwork(models.Network):
+        def __init__(self, input_shape, output_shape):
+            self.input_shape = input_shape
+            self.output_shape = output_shape
+            self.x = None
+            self.y_ = None
+            self.weights = []
+            self.biases = []
+
         def setup(self):
             self.conv(5, 5, self.input_shape[2], 48, activation=tf.nn.tanh).\
                 conv(5, 5, 48, 48, activation=tf.nn.tanh).\
@@ -59,11 +67,34 @@ if __name__ == '__main__':
                 conv(5, 5, 48, self.output_shape[2], activation=None)
 
 
+    class RGBNetwork:
+        def __init__(self, input_shape, output_shape):
+            self.input_shape = input_shape
+            self.output_shape = output_shape
+            self.networks = [SingleChannelNetwork(input_shape[:2] + [1], output_shape[:2] + [1]) for _ in range(3)]
+            self.x = tf.placeholder(tf.float32, shape=[None] + input_shape)
+            self.y_ = tf.placeholder(tf.float32, shape=[None] + output_shape)
+            self.keep_prob = tf.placeholder(tf.float32)
+            self.weights = []
+            self.biases = []
+
+            for i in range(3):
+                self.networks[i].x = tf.slice(self.x, [0, 0, 0, i], [-1, -1, -1, 1])
+                self.networks[i].y_ = tf.slice(self.y_, [0, 0, 0, i], [-1, -1, -1, 1])
+                self.networks[i].layers = [self.networks[i].x]
+                self.networks[i].setup()
+                self.weights += self.networks[i].weights
+                self.biases += self.networks[i].biases
+
+        def output(self):
+            return tf.concat(3, [network.output() for network in self.networks])
+
+
     def psnr(x, y):
         return 20 * np.log10(params['scale'][1]) - 10 * tf.log(tf.maximum(tf.reduce_mean(tf.pow(x - y, 2)), 1e-20)) / np.log(10)
 
 
-    network = Network([224, 224, 3], [224, 224, 3])
+    network = RGBNetwork([224, 224, 3], [224, 224, 3])
     loss = tf.reduce_mean(tf.pow(network.y_ - network.output(), 2))
     score = tf.reduce_mean(psnr(network.y_, network.output()))
     optimizer = tf.train.MomentumOptimizer(params['learning_rate'], params['momentum'])
