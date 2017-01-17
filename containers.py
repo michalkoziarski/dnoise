@@ -6,7 +6,7 @@ from scipy import misc
 
 class Image:
     def __init__(self, image=None, path=None, shape=None, keep_in_memory=True, preload=False, normalize=True,
-                 noise=None, grayscale=False):
+                 noise=None, grayscale=False, patch_size=None, coordinates=None):
         if preload and not keep_in_memory:
             raise ValueError('Can\'t preload without keeping in memory')
 
@@ -21,6 +21,8 @@ class Image:
         self.noise = noise
         self.scale = (0.0, 1.0) if normalize else (0, 255)
         self.grayscale = grayscale
+        self.patch_size = patch_size
+        self.coordinates = coordinates
         self.image = None
 
         if preload or image is not None:
@@ -33,26 +35,14 @@ class Image:
             return self.load_and_process()
 
     def patch(self, size=None, coordinates=None, return_coordinates=False):
-        image = self.get()
+        image = Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True, normalize=self.normalize,
+                      noise=self.noise, grayscale=self.grayscale, patch_size=size, coordinates=coordinates)
+        patch = image.get()
 
-        if size is not None:
-            x = image.shape[0] * size / np.min(image.shape[0:2])
-            y = image.shape[1] * size / np.min(image.shape[0:2])
-
-            image = self._resize(image, (x, y))
-
-            if coordinates is not None:
-                x, y = coordinates
-            else:
-                x = np.random.randint(image.shape[0] - size + 1)
-                y = np.random.randint(image.shape[1] - size + 1)
-
-            if return_coordinates:
-                return image[x:(x + size), y:(y + size)], (x, y)
-            else:
-                return image[x:(x + size), y:(y + size)]
+        if return_coordinates:
+            return patch, image.coordinates
         else:
-            return image
+            return patch
 
     def load_and_process(self, image=None):
         if image is None:
@@ -62,6 +52,22 @@ class Image:
 
         if self.shape is not None:
             image = self._resize(image, self.shape)
+
+        if self.patch_size is not None:
+            x = image.shape[0] * self.patch_size / np.min(image.shape[0:2])
+            y = image.shape[1] * self.patch_size / np.min(image.shape[0:2])
+
+            image = self._resize(image, (x, y))
+
+            if self.coordinates is not None:
+                x, y = self.coordinates
+            else:
+                x = np.random.randint(image.shape[0] - self.patch_size + 1)
+                y = np.random.randint(image.shape[1] - self.patch_size + 1)
+
+                self.coordinates = (x, y)
+
+            image = image[x:(x + self.patch_size), y:(y + self.patch_size)]
 
         if self.normalize and image.dtype == np.dtype('uint8'):
             image = image / 255.
@@ -83,7 +89,7 @@ class Image:
 
     def noisy(self, noise):
         return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True, normalize=self.normalize,
-                     noise=noise, grayscale=self.grayscale)
+                     noise=noise, grayscale=self.grayscale, patch_size=self.patch_size, coordinates=self.coordinates)
 
     def display(self, path=None, size=None):
         image = self.get()
