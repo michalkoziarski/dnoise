@@ -2,16 +2,26 @@ import tensorflow as tf
 
 
 class Network:
-    def __init__(self, input_shape, output_shape):
+    def __init__(self, input_shape, output_shape, x=None, keep_prob=None):
         self.input_shape = input_shape
         self.output_shape = output_shape
-        self.x = tf.placeholder(tf.float32, shape=[None] + input_shape)
+
+        if x is None:
+            self.x = tf.placeholder(tf.float32, shape=[None] + input_shape)
+        else:
+            self.x = x
+
         self.y_ = tf.placeholder(tf.float32, shape=[None] + output_shape)
         self.layers = [self.x]
         self.weights = []
         self.biases = []
         self.logits = None
-        self.keep_prob = tf.placeholder(tf.float32)
+
+        if keep_prob is None:
+            self.keep_prob = tf.placeholder(tf.float32)
+        else:
+            self.keep_prob = keep_prob
+
         self.setup()
 
     def setup(self):

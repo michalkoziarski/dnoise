@@ -13,7 +13,9 @@ import hashlib
 from noise import GaussianNoise, QuantizationNoise, SaltAndPepperNoise, RandomNoise
 
 from imagenet_denoising import params as denoising_params
+from imagenet_denoising import RGBNetwork as DenoisingNetwork
 from imagenet_classification import params as classification_params
+from imagenet_classification import Network as ClassificationNetwork
 
 
 params = {
@@ -47,34 +49,23 @@ for k, v in params.items():
         params[k] = type(v)(args.get(k))
 
 
-class Network(models.Network):
-    def setup(self):
-        self.conv(5, 5, self.input_shape[2], 48, activation=tf.nn.tanh).\
-            conv(5, 5, 48, 48, activation=tf.nn.tanh).\
-            conv(5, 5, 48, 48, activation=tf.nn.tanh).\
-            conv(5, 5, 48, 48, activation=tf.nn.tanh).\
-            conv(5, 5, 48, 48, activation=tf.nn.tanh).\
-            conv(5, 5, 48, 48, activation=tf.nn.tanh).\
-            conv(5, 5, 48, self.input_shape[2], activation=None).\
-            linearity(255, [-103, -116, -123]).\
-            conv(3, 3, self.input_shape[2], 64).\
-            pool().\
-            conv(3, 3, 64, 128).\
-            pool().\
-            conv(3, 3, 128, 256).\
-            conv(3, 3, 256, 256).\
-            pool().\
-            conv(3, 3, 256, 512).\
-            conv(3, 3, 512, 512).\
-            pool().\
-            conv(3, 3, 512, 512).\
-            conv(3, 3, 512, 512).\
-            pool().\
-            fully(4096).\
-            dropout().\
-            fully(4096).\
-            dropout().\
-            softmax()
+class Network:
+    def __init__(self, input_shape, output_shape):
+        self.input_shape = input_shape
+        self.output_shape = output_shape
+        self.x = tf.placeholder(tf.float32, shape=[None] + input_shape)
+        self.keep_prob = tf.placeholder(tf.float32)
+        self.denoising = DenoisingNetwork(input_shape, input_shape, x=self.x)
+        self.denoising_output = tf.add(tf.scalar_mul(255.0, self.denoising.output()), [-103.0, -116.0, -123.0])
+        self.classification = ClassificationNetwork(input_shape, output_shape, x=self.denoising_output,
+                                                    keep_prob=self.keep_prob)
+        self.y_ = self.classification.y_
+        self.logits = self.classification.logits
+        self.weights = self.denoising.weights + self.classification.weights
+        self.biases = self.denoising.biases + self.classification.biases
+
+    def output(self):
+        return self.classification.output()
 
 network = Network([224, 224, 3], [1000])
 
@@ -113,7 +104,7 @@ if not os.path.exists(model_path):
     experiments['denoising']['variables'] = {}
     experiments['classification']['variables'] = {}
 
-    for i in range(7):
+    for i in range(21):
         suffix = '' if i == 0 else '_%d' % (2 * i)
         experiments['denoising']['variables']['Variable%s' % suffix] = network.weights[i]
         suffix = '_%d' % (2 * i + 1)
@@ -121,9 +112,9 @@ if not os.path.exists(model_path):
 
     for i in range(11):
         suffix = '' if i == 0 else '_%d' % (2 * i)
-        experiments['classification']['variables']['Variable%s' % suffix] = network.weights[i + 7]
+        experiments['classification']['variables']['Variable%s' % suffix] = network.weights[i + 21]
         suffix = '_%d' % (2 * i + 1)
-        experiments['classification']['variables']['Variable%s' % suffix] = network.biases[i + 7]
+        experiments['classification']['variables']['Variable%s' % suffix] = network.biases[i + 21]
 
     experiments['denoising']['params'] = denoising_params
     experiments['denoising']['params']['noise'] = params['noise']

@@ -68,11 +68,16 @@ if __name__ == '__main__':
 
 
     class RGBNetwork:
-        def __init__(self, input_shape, output_shape):
+        def __init__(self, input_shape, output_shape, x=None):
             self.input_shape = input_shape
             self.output_shape = output_shape
             self.networks = [SingleChannelNetwork(input_shape[:2] + [1], output_shape[:2] + [1]) for _ in range(3)]
-            self.x = tf.placeholder(tf.float32, shape=[None] + input_shape)
+
+            if x is None:
+                self.x = tf.placeholder(tf.float32, shape=[None] + input_shape)
+            else:
+                self.x = x
+
             self.y_ = tf.placeholder(tf.float32, shape=[None] + output_shape)
             self.keep_prob = tf.placeholder(tf.float32)
             self.weights = []
