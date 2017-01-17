@@ -78,9 +78,6 @@ trainer = trainers.Trainer(params, network, loss, score, optimizer)
 
 noise = eval(params['noise'])
 
-train_set, val_set = loaders.load_imagenet_labeled(batch_size=params['batch_size'], patch=224,
-                                                   normalize=params['normalize'], test_noise=noise)
-
 # try to merge models from previous experiments
 
 root_path = os.path.dirname(os.path.realpath(__file__))
@@ -133,5 +130,9 @@ if not os.path.exists(model_path):
             experiments[i]['saver'].restore(sess, experiments[i]['checkpoint'].model_checkpoint_path)
 
         saver.save(sess, model_path)
+
+
+train_set, val_set = loaders.load_imagenet_labeled(batch_size=params['batch_size'], patch=224,
+                                                   normalize=params['normalize'], test_noise=noise)
 
 trainer.train(train_set, val_set=val_set, test_set=val_set)
