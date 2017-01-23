@@ -163,7 +163,7 @@ def load_imagenet_labeled_validation(batch_size=50, shape=None, grayscale=False,
         id = int(os.path.split(image.path)[-1].split('.')[0].split('_')[-1])
         label = int(val_ground_truth[val_ground_truth['ID'] == id]['LABEL'])
         val_targets.append(Label(label - 1, length=1000))
-        
+
     val_set = LabeledDataSet(val_images, val_targets, patch=patch, batch_size=batch_size, noise=noise, offset=offset)
 
     return val_set
