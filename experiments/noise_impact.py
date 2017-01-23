@@ -7,11 +7,11 @@ import tensorflow as tf
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+import models
+
 from noise import GaussianNoise, QuantizationNoise, SaltAndPepperNoise
 from loaders import load_imagenet_labeled_validation
-
 from imagenet_classification import params
-from imagenet_classification import Network
 
 
 values = {
@@ -25,6 +25,29 @@ results = {
     'Quantization': [],
     'SaltAndPepper': []
 }
+
+
+class Network(models.Network):
+    def setup(self):
+        self.conv(3, 3, self.input_shape[2], 64). \
+            pool(). \
+            conv(3, 3, 64, 128). \
+            pool(). \
+            conv(3, 3, 128, 256). \
+            conv(3, 3, 256, 256). \
+            pool(). \
+            conv(3, 3, 256, 512). \
+            conv(3, 3, 512, 512). \
+            pool(). \
+            conv(3, 3, 512, 512). \
+            conv(3, 3, 512, 512). \
+            pool(). \
+            fully(4096). \
+            dropout(). \
+            fully(4096). \
+            dropout(). \
+            softmax()
+
 
 network = Network([224, 224, 3], [1000])
 correct_prediction = tf.equal(tf.argmax(network.y_, 1), tf.argmax(network.output(), 1))
