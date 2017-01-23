@@ -146,6 +146,29 @@ def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None
     return train_set, val_set
 
 
+def load_imagenet_labeled_validation(batch_size=50, shape=None, grayscale=False, patch=None, normalize=True,
+                                     offset=None, noise=None):
+    assert os.path.exists(_imagenet_path())
+
+    if not os.path.exists(_imagenet_path('val_ground_truth.csv')):
+        url = 'https://raw.githubusercontent.com/michalkoziarski/datasets/master/ImageNet/val_ground_truth.csv'
+        urllib.urlretrieve(url, _imagenet_path('val_ground_truth.csv'))
+
+    val_ground_truth = pd.read_csv(_imagenet_path('val_ground_truth.csv'))
+
+    val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize)
+    val_targets = []
+
+    for image in val_images:
+        id = int(os.path.split(image.path)[-1].split('.')[0].split('_')[-1])
+        label = int(val_ground_truth[val_ground_truth['ID'] == id]['LABEL'])
+        val_targets.append(Label(label - 1, length=1000))
+        
+    val_set = LabeledDataSet(val_images, val_targets, patch=patch, batch_size=batch_size, noise=noise, offset=offset)
+
+    return val_set
+
+
 def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, patch=None, normalize=True,
                             offset=None):
     train_images = _load_imagenet_images('train', shape, grayscale, normalize=normalize)
