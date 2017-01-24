@@ -109,9 +109,9 @@ for noise in ['Gaussian', 'Quantization', 'SaltAndPepper']:
             noisy = image.noisy(eval('%sNoise(%s)' % (noise, value)))
             noisy.display(os.path.join(os.path.dirname(__file__), 'lena.jpg'))
 
-            denoised = network.output().eval(feed_dict={network.x: noisy.get()})
+            denoised = network.output().eval(feed_dict={network.x: [noisy.get()]})[0]
 
-            results[noise].append(np.round(psnr(image.get(), denoised), 4))
+            results[noise].append(np.round(psnr(image.get(), denoised).eval(), 4))
 
             Image(image=denoised).display(os.path.join(results_path, '%sNoise(%s).jpg' % (noise, value)))
 
