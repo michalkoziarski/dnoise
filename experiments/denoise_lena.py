@@ -87,6 +87,10 @@ for noise in ['Gaussian', 'Quantization', 'SaltAndPepper']:
             current_params['noise'] = '%sNoise(%s)' % (noise, value)
             checkpoint_path = os.path.join(os.path.dirname(__file__), '..', 'results', params['experiment'],
                                            hashlib.md5(str(current_params)).hexdigest())
+
+            print('Trying to load model...')
+            print('Path: %s' % checkpoint_path)
+            
             checkpoint = tf.train.get_checkpoint_state(checkpoint_path)
             tf.train.Saver().restore(sess, checkpoint.model_checkpoint_path)
 
