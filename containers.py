@@ -53,6 +53,9 @@ class Image:
             image = np.copy(image)
 
         if self.noise is not None and self.noise_before_resize:
+            if self.normalize and image.dtype == np.dtype('uint8'):
+                image = image / 255.
+
             self.noise.set_scale(self.scale)
 
             image = self.noise.apply(image)
