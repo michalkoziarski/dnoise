@@ -11,7 +11,7 @@ import models
 
 from noise import GaussianNoise, QuantizationNoise, SaltAndPepperNoise
 from containers import Image
-from imagenet_classification import params
+from imagenet_denoising import params
 
 
 results = {
@@ -90,7 +90,7 @@ for noise in ['Gaussian', 'Quantization', 'SaltAndPepper']:
 
             print('Trying to load model...')
             print('Path: %s' % checkpoint_path)
-            
+
             checkpoint = tf.train.get_checkpoint_state(checkpoint_path)
             tf.train.Saver().restore(sess, checkpoint.model_checkpoint_path)
 
