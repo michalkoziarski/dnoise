@@ -6,7 +6,7 @@ from scipy import misc
 
 class Image:
     def __init__(self, image=None, path=None, shape=None, keep_in_memory=True, preload=False, normalize=True,
-                 noise=None, grayscale=False, patch_size=None, coordinates=None):
+                 noise=None, grayscale=False, patch_size=None, coordinates=None, noise_before_resize=True):
         if preload and not keep_in_memory:
             raise ValueError('Can\'t preload without keeping in memory')
 
@@ -23,6 +23,7 @@ class Image:
         self.grayscale = grayscale
         self.patch_size = patch_size
         self.coordinates = coordinates
+        self.noise_before_resize = noise_before_resize
         self.image = None
 
         if preload or image is not None:
@@ -36,7 +37,8 @@ class Image:
 
     def patch(self, size=None, coordinates=None, return_coordinates=False):
         image = Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True, normalize=self.normalize,
-                      noise=self.noise, grayscale=self.grayscale, patch_size=size, coordinates=coordinates)
+                      noise=self.noise, grayscale=self.grayscale, patch_size=size, coordinates=coordinates,
+                      noise_before_resize=self.noise_before_resize)
         patch = image.get()
 
         if return_coordinates:
@@ -49,6 +51,11 @@ class Image:
             image = misc.imread(self.path, mode='RGB')
         else:
             image = np.copy(image)
+
+        if self.noise is not None and self.noise_before_resize:
+            self.noise.set_scale(self.scale)
+
+            image = self.noise.apply(image)
 
         if self.shape is not None:
             image = self._resize(image, self.shape)
@@ -77,7 +84,7 @@ class Image:
 
             image = 0.2989 * r + 0.5870 * g + 0.1140 * b
 
-        if self.noise is not None:
+        if self.noise is not None and not self.noise_before_resize:
             self.noise.set_scale(self.scale)
 
             image = self.noise.apply(image)
@@ -87,9 +94,10 @@ class Image:
 
         return image
 
-    def noisy(self, noise):
+    def noisy(self, noise, noise_before_resize=True):
         return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True, normalize=self.normalize,
-                     noise=noise, grayscale=self.grayscale, patch_size=self.patch_size, coordinates=self.coordinates)
+                     noise=noise, grayscale=self.grayscale, patch_size=self.patch_size, coordinates=self.coordinates,
+                     noise_before_resize=noise_before_resize)
 
     def display(self, path=None, size=None):
         image = self.get()
@@ -190,9 +198,11 @@ class DataSet:
 
 
 class LabeledDataSet(DataSet):
-    def __init__(self, images, targets, noise=None, patch=None, batch_size=50, cutoff=True, offset=None):
+    def __init__(self, images, targets, noise=None, patch=None, batch_size=50, cutoff=True, offset=None,
+                 noise_before_resize=True):
         self.noise = noise
         self.patch = patch
+        self.noise_before_resize = noise_before_resize
 
         DataSet.__init__(self, images, targets, batch_size=batch_size, cutoff=cutoff, offset=offset)
 
@@ -201,7 +211,7 @@ class LabeledDataSet(DataSet):
             images = []
 
             for image in self.images[self.current_index:(self.current_index + size)]:
-                images.append(image.noisy(self.noise).patch(self.patch))
+                images.append(image.noisy(self.noise, self.noise_before_resize).patch(self.patch))
         else:
             images = [image.patch(self.patch) for image in self.images[self.current_index:(self.current_index + size)]]
 
@@ -216,9 +226,11 @@ class LabeledDataSet(DataSet):
 
 
 class UnlabeledDataSet(DataSet):
-    def __init__(self, images, noise=None, patch=None, batch_size=50, cutoff=True, offset=None):
+    def __init__(self, images, noise=None, patch=None, batch_size=50, cutoff=True, offset=None,
+                 noise_before_resize=True):
         self.noise = noise
         self.patch = patch
+        self.noise_before_resize = noise_before_resize
 
         DataSet.__init__(self, images, batch_size=batch_size, cutoff=cutoff, offset=offset)
 
@@ -233,7 +245,7 @@ class UnlabeledDataSet(DataSet):
             target = self.images[self.current_index + i]
 
             if self.noise:
-                image = target.noisy(self.noise)
+                image = target.noisy(self.noise, self.noise_before_resize)
             else:
                 image = target
 

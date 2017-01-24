@@ -111,7 +111,7 @@ def _load_imagenet_images(dataset, shape, grayscale, normalize=True):
 
 
 def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None, normalize=True, offset=None,
-                          train_noise=None, test_noise=None):
+                          train_noise=None, test_noise=None, noise_before_resize=True):
     assert os.path.exists(_imagenet_path())
 
     for f in ['synsets.csv', 'val_ground_truth.csv']:
@@ -139,15 +139,15 @@ def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None
         val_targets.append(Label(label - 1, length=1000))
 
     train_set = LabeledDataSet(train_images, train_targets, patch=patch, batch_size=batch_size, noise=train_noise,
-                               offset=offset)
+                               offset=offset, noise_before_resize=noise_before_resize)
     val_set = LabeledDataSet(val_images, val_targets, patch=patch, batch_size=batch_size, noise=test_noise,
-                             offset=offset)
+                             offset=offset, noise_before_resize=noise_before_resize)
 
     return train_set, val_set
 
 
 def load_imagenet_labeled_validation(batch_size=50, shape=None, grayscale=False, patch=None, normalize=True,
-                                     offset=None, noise=None):
+                                     offset=None, noise=None, noise_before_resize=True):
     assert os.path.exists(_imagenet_path())
 
     if not os.path.exists(_imagenet_path('val_ground_truth.csv')):
@@ -164,20 +164,24 @@ def load_imagenet_labeled_validation(batch_size=50, shape=None, grayscale=False,
         label = int(val_ground_truth[val_ground_truth['ID'] == id]['LABEL'])
         val_targets.append(Label(label - 1, length=1000))
 
-    val_set = LabeledDataSet(val_images, val_targets, patch=patch, batch_size=batch_size, noise=noise, offset=offset)
+    val_set = LabeledDataSet(val_images, val_targets, patch=patch, batch_size=batch_size, noise=noise, offset=offset,
+                             noise_before_resize=noise_before_resize)
 
     return val_set
 
 
 def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, patch=None, normalize=True,
-                            offset=None):
+                            offset=None, noise_before_resize=True):
     train_images = _load_imagenet_images('train', shape, grayscale, normalize=normalize)
     val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize)
     test_images = _load_imagenet_images('test', shape, grayscale, normalize=normalize)
 
-    train_set = UnlabeledDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size, offset=offset)
-    val_set = UnlabeledDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size, offset=offset)
-    test_set = UnlabeledDataSet(test_images, noise=noise, patch=patch, batch_size=batch_size, offset=offset)
+    train_set = UnlabeledDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size, offset=offset,
+                                 noise_before_resize=noise_before_resize)
+    val_set = UnlabeledDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size, offset=offset,
+                               noise_before_resize=noise_before_resize)
+    test_set = UnlabeledDataSet(test_images, noise=noise, patch=patch, batch_size=batch_size, offset=offset,
+                                noise_before_resize=noise_before_resize)
 
     return train_set, val_set, test_set
 
