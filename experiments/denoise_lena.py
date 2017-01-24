@@ -118,5 +118,5 @@ for noise in ['Gaussian', 'Quantization', 'SaltAndPepper']:
             print('Noise: %s, value: %s, PSNR: %s' % (noise, value,results[noise][-1]))
 
 
-with open(os.path.join(os.path.dirname(__file__), '..', 'results', 'denoise_lena.json'), 'w') as fp:
+with open(os.path.join(os.path.dirname(__file__), '..', 'results', 'Lena', 'PSNR.json'), 'w') as fp:
     json.dump(results, fp)
