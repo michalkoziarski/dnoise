@@ -94,8 +94,8 @@ class Image:
 
         if self.sample_size is not None:
             if image.shape[0] < self.sample_size or image.shape[1] < self.sample_size:
-                x = image.shape[0] * self.patch_size / np.min(image.shape[0:2])
-                y = image.shape[1] * self.patch_size / np.min(image.shape[0:2])
+                x = image.shape[0] * self.sample_size / np.min(image.shape[0:2])
+                y = image.shape[1] * self.sample_size / np.min(image.shape[0:2])
 
                 image = self._resize(image, (x, y))
 
