@@ -21,16 +21,9 @@ values = {
 }
 
 results = {
-    True: {
-        'Gaussian': [],
-        'Quantization': [],
-        'SaltAndPepper': []
-    },
-    False: {
-        'Gaussian': [],
-        'Quantization': [],
-        'SaltAndPepper': []
-    }
+    'Gaussian': [],
+    'Quantization': [],
+    'SaltAndPepper': []
 }
 
 
@@ -67,26 +60,23 @@ checkpoint = tf.train.get_checkpoint_state(checkpoint_path)
 with tf.Session() as sess:
     tf.train.Saver().restore(sess, checkpoint.model_checkpoint_path)
 
-    for noise_before_resize in [True, False]:
-        print('Noise before resize: %s' % noise_before_resize)
+    for noise in ['Gaussian', 'Quantization', 'SaltAndPepper']:
+        for value in values[noise]:
+            val_set = load_imagenet_labeled_validation(batch_size=params['batch_size'], patch=224,
+                                                       normalize=params['normalize'], offset=params['offset'],
+                                                       noise=eval('%sNoise(%f)' % (noise, value)),
+                                                       noise_before_resize=True)
 
-        for noise in ['Gaussian', 'Quantization', 'SaltAndPepper']:
-            for value in values[noise]:
-                val_set = load_imagenet_labeled_validation(batch_size=params['batch_size'], patch=224,
-                                                           normalize=params['normalize'], offset=params['offset'],
-                                                           noise=eval('%sNoise(%f)' % (noise, value)),
-                                                           noise_before_resize=noise_before_resize)
+            scores = []
+            initial_epoch = val_set.epochs_completed
 
-                scores = []
-                initial_epoch = val_set.epochs_completed
+            while initial_epoch == val_set.epochs_completed:
+                x, y_ = val_set.batch()
+                scores.append(score.eval(feed_dict={network.x: x, network.y_: y_, network.keep_prob: 1.0}))
 
-                while initial_epoch == val_set.epochs_completed:
-                    x, y_ = val_set.batch()
-                    scores.append(score.eval(feed_dict={network.x: x, network.y_: y_, network.keep_prob: 1.0}))
+            results[noise].append(np.round(np.mean(scores), 2))
 
-                results[noise_before_resize][noise].append(np.round(np.mean(scores), 4))
-
-                print('Noise: %s, value: %s, score: %s' % (noise, value, np.round(np.mean(scores), 4)))
+            print('Noise: %s, value: %s, score: %s' % (noise, value, np.round(np.mean(scores), 2)))
 
 
 with open(os.path.join(os.path.dirname(__file__), '..', 'results', 'noise_impact.json'), 'w') as fp:
