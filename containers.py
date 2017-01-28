@@ -6,7 +6,8 @@ from scipy import misc
 
 class Image:
     def __init__(self, image=None, path=None, shape=None, keep_in_memory=True, preload=False, normalize=True,
-                 noise=None, grayscale=False, patch_size=None, coordinates=None, noise_before_resize=True):
+                 noise=None, grayscale=False, patch_size=None, sample_size=None, coordinates=None,
+                 noise_before_resize=True):
         if preload and not keep_in_memory:
             raise ValueError('Can\'t preload without keeping in memory')
 
@@ -22,6 +23,7 @@ class Image:
         self.scale = (0.0, 1.0) if normalize else (0, 255)
         self.grayscale = grayscale
         self.patch_size = patch_size
+        self.sample_size = sample_size
         self.coordinates = coordinates
         self.noise_before_resize = noise_before_resize
         self.image = None
@@ -37,14 +39,25 @@ class Image:
 
     def patch(self, size=None, coordinates=None, return_coordinates=False):
         image = Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True, normalize=self.normalize,
-                      noise=self.noise, grayscale=self.grayscale, patch_size=size, coordinates=coordinates,
-                      noise_before_resize=self.noise_before_resize)
+                      noise=self.noise, grayscale=self.grayscale, patch_size=size, sample_size=self.sample_size,
+                      coordinates=coordinates, noise_before_resize=self.noise_before_resize)
         patch = image.get()
 
         if return_coordinates:
             return patch, image.coordinates
         else:
             return patch
+
+    def sample(self, size=None, coordinates=None, return_coordinates=False):
+        image = Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True, normalize=self.normalize,
+                      noise=self.noise, grayscale=self.grayscale, patch_size=self.patch_size, sample_size=size,
+                      coordinates=coordinates, noise_before_resize=self.noise_before_resize)
+        sample = image.get()
+
+        if return_coordinates:
+            return sample, image.coordinates
+        else:
+            return sample
 
     def load_and_process(self, image=None):
         if image is None:
@@ -79,6 +92,17 @@ class Image:
 
             image = image[x:(x + self.patch_size), y:(y + self.patch_size)]
 
+        if self.sample_size is not None:
+            if self.coordinates is not None:
+                x, y = self.coordinates
+            else:
+                x = np.random.randint(image.shape[0] - self.sample_size + 1)
+                y = np.random.randint(image.shape[1] - self.sample_size + 1)
+
+                self.coordinates = (x, y)
+
+            image = image[x:(x + self.sample_size), y:(y + self.sample_size)]
+
         if self.normalize and image.dtype == np.dtype('uint8'):
             image = image / 255.
 
@@ -99,8 +123,8 @@ class Image:
 
     def noisy(self, noise, noise_before_resize=True):
         return Image(image=self.image, path=self.path, shape=self.shape, keep_in_memory=True, normalize=self.normalize,
-                     noise=noise, grayscale=self.grayscale, patch_size=self.patch_size, coordinates=self.coordinates,
-                     noise_before_resize=noise_before_resize)
+                     noise=noise, grayscale=self.grayscale, patch_size=self.patch_size, sample_size=self.sample_size,
+                     coordinates=self.coordinates, noise_before_resize=noise_before_resize)
 
     def display(self, path=None, size=None):
         image = self.get()
@@ -229,10 +253,11 @@ class LabeledDataSet(DataSet):
 
 
 class UnlabeledDataSet(DataSet):
-    def __init__(self, images, noise=None, patch=None, batch_size=50, cutoff=True, offset=None,
+    def __init__(self, images, noise=None, patch=None, sample=None, batch_size=50, cutoff=True, offset=None,
                  noise_before_resize=True):
         self.noise = noise
         self.patch = patch
+        self.sample = sample
         self.noise_before_resize = noise_before_resize
 
         DataSet.__init__(self, images, batch_size=batch_size, cutoff=cutoff, offset=offset)
@@ -255,6 +280,9 @@ class UnlabeledDataSet(DataSet):
             if self.patch:
                 image, coordinates = image.patch(self.patch, return_coordinates=True)
                 target = target.patch(self.patch, coordinates=coordinates)
+            elif self.sample:
+                image, coordinates = image.sample(self.sample, return_coordinates=True)
+                target = target.sample(self.sample, coordinates=coordinates)
             else:
                 image = image.get()
                 target = target.get()
