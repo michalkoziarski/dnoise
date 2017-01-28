@@ -4,7 +4,7 @@ import tarfile
 import numpy as np
 import pandas as pd
 
-from containers import Image, Label, LabeledDataSet, UnlabeledDataSet, KernelEstimationDataSet
+from containers import Image, Label, LabeledDataSet, UnlabeledDataSet
 
 ROOT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
