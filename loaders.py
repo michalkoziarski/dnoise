@@ -170,14 +170,14 @@ def load_imagenet_labeled_validation(batch_size=50, shape=None, grayscale=False,
     return val_set
 
 
-def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, patch=None, normalize=True,
-                            offset=None, noise_before_resize=True):
+def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=None, patch=None, sample=None,
+                            normalize=True, offset=None, noise_before_resize=True):
     train_images = _load_imagenet_images('train', shape, grayscale, normalize=normalize)
     val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize)
 
-    train_set = UnlabeledDataSet(train_images, noise=noise, patch=patch, batch_size=batch_size, offset=offset,
-                                 noise_before_resize=noise_before_resize)
-    val_set = UnlabeledDataSet(val_images, noise=noise, patch=patch, batch_size=batch_size, offset=offset,
-                               noise_before_resize=noise_before_resize)
+    train_set = UnlabeledDataSet(train_images, noise=noise, patch=patch, sample=sample, batch_size=batch_size,
+                                 offset=offset, noise_before_resize=noise_before_resize)
+    val_set = UnlabeledDataSet(val_images, noise=noise, patch=patch, sample=sample, batch_size=batch_size,
+                               offset=offset, noise_before_resize=noise_before_resize)
 
     return train_set, val_set
