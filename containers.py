@@ -181,7 +181,7 @@ class Label:
 
 
 class DataSet:
-    def __init__(self, images, targets=None, batch_size=50, cutoff=True, offset=None):
+    def __init__(self, images, targets=None, batch_size=50, cutoff=True, offset=None, shuffle=True):
         assert targets is None or len(images) == len(targets)
 
         self.images = np.array(images)
@@ -192,7 +192,9 @@ class DataSet:
         self.batches_completed = 0
         self.epochs_completed = 0
         self.current_index = 0
-        self.shuffle()
+
+        if shuffle:
+            self.shuffle()
 
         if cutoff:
             self.length -= self.length % self.batch_size
@@ -232,12 +234,12 @@ class DataSet:
 
 class LabeledDataSet(DataSet):
     def __init__(self, images, targets, noise=None, patch=None, batch_size=50, cutoff=True, offset=None,
-                 noise_before_resize=True):
+                 noise_before_resize=True, shuffle=True):
         self.noise = noise
         self.patch = patch
         self.noise_before_resize = noise_before_resize
 
-        DataSet.__init__(self, images, targets, batch_size=batch_size, cutoff=cutoff, offset=offset)
+        DataSet.__init__(self, images, targets, batch_size=batch_size, cutoff=cutoff, offset=offset, shuffle=shuffle)
 
     def _create_batch(self, size):
         if self.noise is not None:
@@ -260,13 +262,13 @@ class LabeledDataSet(DataSet):
 
 class UnlabeledDataSet(DataSet):
     def __init__(self, images, noise=None, patch=None, sample=None, batch_size=50, cutoff=True, offset=None,
-                 noise_before_resize=True):
+                 noise_before_resize=True, shuffle=True):
         self.noise = noise
         self.patch = patch
         self.sample = sample
         self.noise_before_resize = noise_before_resize
 
-        DataSet.__init__(self, images, batch_size=batch_size, cutoff=cutoff, offset=offset)
+        DataSet.__init__(self, images, batch_size=batch_size, cutoff=cutoff, offset=offset, shuffle=shuffle)
 
     def _create_batch(self, size):
         images = []

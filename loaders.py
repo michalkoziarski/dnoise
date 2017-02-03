@@ -182,3 +182,13 @@ def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=No
                                offset=offset, noise_before_resize=noise_before_resize)
 
     return train_set, val_set
+
+
+def load_imagenet_unlabeled_validation(batch_size=50, shape=None, grayscale=False, noise=None, patch=None, sample=None,
+                                       normalize=True, offset=None, noise_before_resize=True, shuffle=False):
+    val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize)
+
+    val_set = UnlabeledDataSet(val_images, noise=noise, patch=patch, sample=sample, batch_size=batch_size,
+                               offset=offset, noise_before_resize=noise_before_resize, shuffle=shuffle)
+
+    return val_set
