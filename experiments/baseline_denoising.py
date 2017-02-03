@@ -60,13 +60,13 @@ def evaluate(noise, images, path):
 
                 result[method][value].append(psnr(clean, denoised))
 
-    result['input'] = np.mean(result['input'])
+    result['input'] = str(np.round(np.mean(result['input']), 2))
 
     for method in methods.keys():
         for value in methods[method]:
             result[method][value] = np.mean(result[method][value])
 
-        result[method] = np.max(result[method].values())
+        result[method] = str(np.round(np.max(result[method].values()), 2))
 
     return result
 
