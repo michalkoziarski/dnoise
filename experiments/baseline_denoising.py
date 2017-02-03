@@ -21,7 +21,7 @@ def evaluate(noise, images, path):
     methods = {
         'bm3d': [0.05, 0.1, 0.2, 0.3, 0.4, 0.5],
         'median': [3, 5, 7, 9, 11, 13],
-        'bilateral': [(x, y) for x in [0.05, 0.1, 0.2, 0.3, 0.4, 0.5] for y in [5, 15, 25]]
+        'bilateral': [(x, y) for x in [0.05, 0.1, 0.2, 0.3, 0.4, 0.5] for y in [3, 5, 7]]
     }
 
     result = {
@@ -77,7 +77,7 @@ if not os.path.exists(results_path):
     os.mkdir(results_path)
 
 results = {}
-images = load_imagenet_unlabeled_validation(batch_size=1).images[:100]
+images = load_imagenet_unlabeled_validation(batch_size=1).images[:25]
 
 for noise_type in ['Gaussian', 'Quantization', 'SaltAndPepper']:
     for value in [0.05, 0.1, 0.2, 0.5]:
