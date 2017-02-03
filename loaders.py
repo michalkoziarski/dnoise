@@ -98,7 +98,7 @@ def _imagenet_path(element=None):
         return os.path.join(ROOT_PATH, 'ImageNet')
 
 
-def _load_imagenet_images(dataset, shape, grayscale, normalize=True):
+def _load_imagenet_images(dataset, shape, grayscale, normalize=True, n=None):
     assert os.path.exists(_imagenet_path(dataset))
 
     result = []
@@ -107,6 +107,9 @@ def _load_imagenet_images(dataset, shape, grayscale, normalize=True):
         for filename in filenames:
             path = os.path.join(ROOT_PATH, 'ImageNet', dirpath, filename)
             result.append(Image(path=path, shape=shape, keep_in_memory=False, grayscale=grayscale, normalize=normalize))
+
+            if n is not None and len(result) >= n:
+                return result
 
     return result
 
@@ -185,8 +188,8 @@ def load_imagenet_unlabeled(batch_size=50, shape=None, grayscale=False, noise=No
 
 
 def load_imagenet_unlabeled_validation(batch_size=50, shape=None, grayscale=False, noise=None, patch=None, sample=None,
-                                       normalize=True, offset=None, noise_before_resize=True, shuffle=False):
-    val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize)
+                                       normalize=True, offset=None, noise_before_resize=True, shuffle=False, n=None):
+    val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize, n=n)
 
     val_set = UnlabeledDataSet(val_images, noise=noise, patch=patch, sample=sample, batch_size=batch_size,
                                offset=offset, noise_before_resize=noise_before_resize, shuffle=shuffle)
