@@ -16,7 +16,7 @@ def psnr(x, y, maximum=1.0):
     return 20 * np.log10(maximum) - 10 * np.log10(np.mean(np.power(x - y, 2)))
 
 
-def evaluate(noise, dataset):
+def evaluate(noise, images):
     methods = {
         'bm3d': [0.05, 0.1, 0.2, 0.3, 0.4, 0.5],
         'median': [3, 5, 7, 9, 11, 13],
@@ -36,9 +36,9 @@ def evaluate(noise, dataset):
         for value in methods[method]:
             result[method][value] = []
 
-    for image in dataset.images:
+    for image in images:
         clean = image.get()
-        noisy = image.noisy(noise).get()
+        noisy = image.noisy(noise).get().astype(np.float32)
 
         result['input'].append(psnr(clean, noisy))
 
@@ -67,17 +67,17 @@ def evaluate(noise, dataset):
 
 
 results = {}
-dataset = load_imagenet_unlabeled_validation(batch_size=1, shuffle=False, n=100)
+images = load_imagenet_unlabeled_validation(batch_size=1).images[:100]
 
 for noise_type in ['Gaussian', 'Quantization', 'SaltAndPepper']:
     for value in [0.05, 0.1, 0.2, 0.5]:
         noise = '%sNoise(%s)' % (noise_type, value)
-        results[noise] = evaluate(eval(noise), dataset)
+        results[noise] = evaluate(eval(noise), images)
 
     noise = 'RandomNoise(%sNoise)' % noise_type
-    results[noise] = evaluate(eval(noise), dataset)
+    results[noise] = evaluate(eval(noise), images)
 
 noise = 'RandomNoise()'
-results[noise] = evaluate(eval(noise), dataset)
+results[noise] = evaluate(eval(noise), images)
 
 print(results)
