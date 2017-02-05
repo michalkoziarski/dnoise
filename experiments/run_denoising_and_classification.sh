@@ -21,6 +21,6 @@ noises=(
 
 for noise in "${noises[@]}"
 do
-    sbatch script.sh imagenet_classification.py -train_noise "$noise" -test_noise "$noise"
-    sbatch script.sh imagenet_classification.py -train_noise "$noise" -test_noise None
+    sbatch script.sh denoising_and_classification.py -train_noise "$noise" -test_noise "$noise"
+    sbatch script.sh denoising_and_classification.py -train_noise "$noise" -test_noise None
 done
