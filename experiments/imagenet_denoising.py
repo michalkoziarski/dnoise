@@ -32,6 +32,54 @@ params = {
     'noise': 'None'
 }
 
+
+class SingleChannelNetwork(models.Network):
+    def __init__(self, input_shape, output_shape):
+        self.input_shape = input_shape
+        self.output_shape = output_shape
+        self.x = None
+        self.y_ = None
+        self.weights = []
+        self.biases = []
+
+    def setup(self):
+        self.conv(5, 5, self.input_shape[2], 48, activation=tf.nn.tanh). \
+            conv(5, 5, 48, 48, activation=tf.nn.tanh). \
+            conv(5, 5, 48, 48, activation=tf.nn.tanh). \
+            conv(5, 5, 48, 48, activation=tf.nn.tanh). \
+            conv(5, 5, 48, 48, activation=tf.nn.tanh). \
+            conv(5, 5, 48, 48, activation=tf.nn.tanh). \
+            conv(5, 5, 48, self.output_shape[2], activation=None)
+
+
+class RGBNetwork:
+    def __init__(self, input_shape, output_shape, x=None):
+        self.input_shape = input_shape
+        self.output_shape = output_shape
+        self.networks = [SingleChannelNetwork(input_shape[:2] + [1], output_shape[:2] + [1]) for _ in range(3)]
+
+        if x is None:
+            self.x = tf.placeholder(tf.float32, shape=[None] + input_shape)
+        else:
+            self.x = x
+
+        self.y_ = tf.placeholder(tf.float32, shape=[None] + output_shape)
+        self.keep_prob = tf.placeholder(tf.float32)
+        self.weights = []
+        self.biases = []
+
+        for i in range(3):
+            self.networks[i].x = tf.slice(self.x, [0, 0, 0, i], [-1, -1, -1, 1])
+            self.networks[i].y_ = tf.slice(self.y_, [0, 0, 0, i], [-1, -1, -1, 1])
+            self.networks[i].layers = [self.networks[i].x]
+            self.networks[i].setup()
+            self.weights += self.networks[i].weights
+            self.biases += self.networks[i].biases
+
+    def output(self):
+        return tf.concat(3, [network.output() for network in self.networks])
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
@@ -46,53 +94,6 @@ if __name__ == '__main__':
                 params[k] = eval(args.get(k))
             else:
                 params[k] = type(v)(args.get(k))
-
-
-    class SingleChannelNetwork(models.Network):
-        def __init__(self, input_shape, output_shape):
-            self.input_shape = input_shape
-            self.output_shape = output_shape
-            self.x = None
-            self.y_ = None
-            self.weights = []
-            self.biases = []
-
-        def setup(self):
-            self.conv(5, 5, self.input_shape[2], 48, activation=tf.nn.tanh).\
-                conv(5, 5, 48, 48, activation=tf.nn.tanh).\
-                conv(5, 5, 48, 48, activation=tf.nn.tanh).\
-                conv(5, 5, 48, 48, activation=tf.nn.tanh).\
-                conv(5, 5, 48, 48, activation=tf.nn.tanh).\
-                conv(5, 5, 48, 48, activation=tf.nn.tanh).\
-                conv(5, 5, 48, self.output_shape[2], activation=None)
-
-
-    class RGBNetwork:
-        def __init__(self, input_shape, output_shape, x=None):
-            self.input_shape = input_shape
-            self.output_shape = output_shape
-            self.networks = [SingleChannelNetwork(input_shape[:2] + [1], output_shape[:2] + [1]) for _ in range(3)]
-
-            if x is None:
-                self.x = tf.placeholder(tf.float32, shape=[None] + input_shape)
-            else:
-                self.x = x
-
-            self.y_ = tf.placeholder(tf.float32, shape=[None] + output_shape)
-            self.keep_prob = tf.placeholder(tf.float32)
-            self.weights = []
-            self.biases = []
-
-            for i in range(3):
-                self.networks[i].x = tf.slice(self.x, [0, 0, 0, i], [-1, -1, -1, 1])
-                self.networks[i].y_ = tf.slice(self.y_, [0, 0, 0, i], [-1, -1, -1, 1])
-                self.networks[i].layers = [self.networks[i].x]
-                self.networks[i].setup()
-                self.weights += self.networks[i].weights
-                self.biases += self.networks[i].biases
-
-        def output(self):
-            return tf.concat(3, [network.output() for network in self.networks])
 
 
     def psnr(x, y):

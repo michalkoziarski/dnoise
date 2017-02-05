@@ -31,6 +31,29 @@ params = {
     'test_noise': 'None'
 }
 
+
+class Network(models.Network):
+    def setup(self):
+        self.conv(3, 3, self.input_shape[2], 64). \
+            pool(). \
+            conv(3, 3, 64, 128). \
+            pool(). \
+            conv(3, 3, 128, 256). \
+            conv(3, 3, 256, 256). \
+            pool(). \
+            conv(3, 3, 256, 512). \
+            conv(3, 3, 512, 512). \
+            pool(). \
+            conv(3, 3, 512, 512). \
+            conv(3, 3, 512, 512). \
+            pool(). \
+            fully(4096). \
+            dropout(). \
+            fully(4096). \
+            dropout(). \
+            softmax()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
@@ -42,28 +65,6 @@ if __name__ == '__main__':
     for k, v in params.iteritems():
         if args.get(k) is not None and args.get(k) is not '':
             params[k] = type(v)(args.get(k))
-
-
-    class Network(models.Network):
-        def setup(self):
-            self.conv(3, 3, self.input_shape[2], 64).\
-                pool().\
-                conv(3, 3, 64, 128).\
-                pool().\
-                conv(3, 3, 128, 256).\
-                conv(3, 3, 256, 256).\
-                pool().\
-                conv(3, 3, 256, 512).\
-                conv(3, 3, 512, 512).\
-                pool().\
-                conv(3, 3, 512, 512).\
-                conv(3, 3, 512, 512).\
-                pool().\
-                fully(4096).\
-                dropout().\
-                fully(4096).\
-                dropout().\
-                softmax()
 
     network = Network([224, 224, 3], [1000])
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(network.logits, network.y_))
