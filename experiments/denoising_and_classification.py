@@ -18,9 +18,21 @@ from imagenet_classification import params as classification_params
 from imagenet_classification import Network as ClassificationNetwork
 
 
+params = {
+    'train_noise': 'None',
+    'test_noise': 'None'
+}
+
 parser = argparse.ArgumentParser()
-parser.add_argument('-noise')
-noise = vars(parser.parse_args()).get('noise')
+
+for k in params.keys():
+    parser.add_argument('-%s' % k)
+
+args = vars(parser.parse_args())
+
+for k, v in params.iteritems():
+    if args.get(k) is not None and args.get(k) is not '':
+        params[k] = type(v)(args.get(k))
 
 
 class Network:
@@ -72,7 +84,7 @@ for i in range(11):
     experiments['classification']['variables']['Variable%s' % suffix] = network.biases[i + 21]
 
 experiments['denoising']['params'] = denoising_params
-experiments['denoising']['params']['noise'] = noise
+experiments['denoising']['params']['noise'] = params['train_noise']
 experiments['classification']['params'] = classification_params
 
 with tf.Session() as sess:
@@ -85,7 +97,8 @@ with tf.Session() as sess:
         experiments[i]['checkpoint'] = tf.train.get_checkpoint_state(experiments[i]['checkpoint_path'])
         experiments[i]['saver'].restore(sess, experiments[i]['checkpoint'].model_checkpoint_path)
 
-    val_set = loaders.load_imagenet_labeled_validation(batch_size=50, patch=224, normalize=True, noise=eval(noise))
+    val_set = loaders.load_imagenet_labeled_validation(batch_size=50, patch=224, normalize=True,
+                                                       noise=eval(params['test_noise']))
 
     scores = []
     initial_epoch = val_set.epochs_completed
@@ -94,9 +107,11 @@ with tf.Session() as sess:
         x, y_ = val_set.batch()
         scores.append(score.eval(feed_dict={network.x: x, network.y_: y_, network.keep_prob: 1.0}))
 
+    case = '%s2%s' % (params['train_noise'], params['test_noise'])
+
     results = {
-        noise: str(np.round(np.mean(scores), 4))
+        case: str(np.round(np.mean(scores), 4))
     }
 
-    with open(os.path.join(results_path, '%s.json' % noise), 'w') as fp:
+    with open(os.path.join(results_path, '%s.json' % case), 'w') as fp:
         json.dump(results, fp)
