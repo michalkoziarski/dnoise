@@ -115,7 +115,7 @@ for noise in ['Gaussian', 'Quantization', 'SaltAndPepper']:
 
             Image(image=denoised).display(os.path.join(results_path, '%sNoise(%s)_denoised.jpg' % (noise, value)))
 
-            print('Noise: %s, value: %s, PSNR: %s' % (noise, value,results[noise][-1]))
+            print('Noise: %s, value: %s, PSNR: %s' % (noise, value, results[noise][-1]))
 
 
 with open(os.path.join(results_path, 'PSNR.json'), 'w') as fp:
