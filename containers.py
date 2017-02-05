@@ -234,10 +234,11 @@ class DataSet:
 
 class LabeledDataSet(DataSet):
     def __init__(self, images, targets, noise=None, patch=None, batch_size=50, cutoff=True, offset=None,
-                 noise_before_resize=True, shuffle=True):
+                 noise_before_resize=True, shuffle=True, network=None):
         self.noise = noise
         self.patch = patch
         self.noise_before_resize = noise_before_resize
+        self.network = network
 
         DataSet.__init__(self, images, targets, batch_size=batch_size, cutoff=cutoff, offset=offset, shuffle=shuffle)
 
@@ -246,7 +247,13 @@ class LabeledDataSet(DataSet):
             images = []
 
             for image in self.images[self.current_index:(self.current_index + size)]:
-                images.append(image.noisy(self.noise, self.noise_before_resize).patch(self.patch))
+                if self.network is None:
+                    images.append(image.noisy(self.noise, self.noise_before_resize).patch(self.patch))
+                else:
+                    noisy = image.noisy(self.noise, self.noise_before_resize)
+                    denoised = self.network.output().eval(feed_dict={self.network.x: [noisy.get()]})[0]
+                    images.append(Image(image=denoised, normalize=image.normalize, grayscale=image.grayscale,
+                                        noise_before_resize=image.noise_before_resize).patch(self.patch))
         else:
             images = [image.patch(self.patch) for image in self.images[self.current_index:(self.current_index + size)]]
 
