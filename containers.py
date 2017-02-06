@@ -246,20 +246,27 @@ class LabeledDataSet(DataSet):
         if self.noise is not None:
             images = []
 
-            for image in self.images[self.current_index:(self.current_index + size)]:
-                if self.network is None:
+            if self.network is None:
+                for image in self.images[self.current_index:(self.current_index + size)]:
                     images.append(image.noisy(self.noise, self.noise_before_resize).patch(self.patch))
-                else:
+            else:
+                denoisable = []
+
+                for image in self.images[self.current_index:(self.current_index + size)]:
                     noisy = image.noisy(self.noise, self.noise_before_resize)
 
                     if image.normalize:
-                        denoised = self.network.output().eval(feed_dict={self.network.x: [noisy.get()]})[0]
+                        denoisable.append(noisy.get())
                     else:
-                        denoisable = noisy.get().astype(np.float) / 255.0
-                        denoised = self.network.output().eval(feed_dict={self.network.x: [denoisable]})[0]
-                        denoised = np.clip(denoised * 255, 0, 255).astype(np.uint8)
+                        denoisable.append(noisy.get().astype(np.float) / 255.0)
 
-                    images.append(Image(image=denoised, normalize=image.normalize, grayscale=image.grayscale).patch(self.patch))
+                denoised = self.network.output().eval(feed_dict={self.network.x: denoisable})
+
+                if image.normalize:
+                    denoised = np.clip(denoised * 255, 0, 255).astype(np.uint8)
+
+                for d in denoised:
+                    images.append(Image(image=d, normalize=image.normalize, grayscale=image.grayscale).patch(self.patch))
         else:
             images = [image.patch(self.patch) for image in self.images[self.current_index:(self.current_index + size)]]
 
