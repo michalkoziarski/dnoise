@@ -77,7 +77,7 @@ class RGBNetwork:
             self.biases += self.networks[i].biases
 
     def output(self):
-        return tf.concat(3, [network.output() for network in self.networks])
+        return tf.clip_by_value(tf.concat(3, [network.output() for network in self.networks]), 0.0, 1.0)
 
 
 if __name__ == '__main__':
