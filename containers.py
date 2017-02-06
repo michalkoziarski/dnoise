@@ -251,9 +251,15 @@ class LabeledDataSet(DataSet):
                     images.append(image.noisy(self.noise, self.noise_before_resize).patch(self.patch))
                 else:
                     noisy = image.noisy(self.noise, self.noise_before_resize)
-                    denoised = self.network.output().eval(feed_dict={self.network.x: [noisy.get()]})[0]
-                    images.append(Image(image=denoised, normalize=image.normalize, grayscale=image.grayscale,
-                                        noise_before_resize=image.noise_before_resize).patch(self.patch))
+
+                    if image.normalize:
+                        denoised = self.network.output().eval(feed_dict={self.network.x: [noisy.get()]})[0]
+                    else:
+                        denoisable = noisy.get().astype(np.float) / 255.0
+                        denoised = self.network.output().eval(feed_dict={self.network.x: [denoisable]})[0]
+                        denoised = (denoised * 255).astype(np.int8)
+
+                    images.append(Image(image=denoised, normalize=image.normalize, grayscale=image.grayscale).patch(self.patch))
         else:
             images = [image.patch(self.patch) for image in self.images[self.current_index:(self.current_index + size)]]
 
