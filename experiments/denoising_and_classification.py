@@ -35,27 +35,10 @@ for k, v in params.iteritems():
         params[k] = type(v)(args.get(k))
 
 
-class Network:
-    def __init__(self, input_shape, output_shape):
-        self.input_shape = input_shape
-        self.output_shape = output_shape
-        self.x = tf.placeholder(tf.float32, shape=[None] + input_shape)
-        self.keep_prob = tf.placeholder(tf.float32)
-        self.denoising = DenoisingNetwork(x=self.x)
-        self.denoising_output = tf.add(tf.scalar_mul(255.0, self.denoising.output()), [-103.0, -116.0, -123.0])
-        self.classification = ClassificationNetwork(input_shape, output_shape, x=self.denoising_output,
-                                                    keep_prob=self.keep_prob)
-        self.y_ = self.classification.y_
-        self.logits = self.classification.logits
-        self.weights = self.denoising.weights + self.classification.weights
-        self.biases = self.denoising.biases + self.classification.biases
+denoising_network = DenoisingNetwork()
+classification_network = ClassificationNetwork([224, 224, 3], [1000])
 
-    def output(self):
-        return self.classification.output()
-
-network = Network([224, 224, 3], [1000])
-
-correct_prediction = tf.equal(tf.argmax(network.y_, 1), tf.argmax(network.output(), 1))
+correct_prediction = tf.equal(tf.argmax(classification_network.y_, 1), tf.argmax(classification_network.output(), 1))
 score = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 # load models from previous experiments
@@ -73,15 +56,15 @@ experiments['classification']['variables'] = {}
 
 for i in range(21):
     suffix = '' if i == 0 else '_%d' % (2 * i)
-    experiments['denoising']['variables']['Variable%s' % suffix] = network.weights[i]
+    experiments['denoising']['variables']['Variable%s' % suffix] = denoising_network.weights[i]
     suffix = '_%d' % (2 * i + 1)
-    experiments['denoising']['variables']['Variable%s' % suffix] = network.biases[i]
+    experiments['denoising']['variables']['Variable%s' % suffix] = denoising_network.biases[i]
 
 for i in range(11):
     suffix = '' if i == 0 else '_%d' % (2 * i)
-    experiments['classification']['variables']['Variable%s' % suffix] = network.weights[i + 21]
+    experiments['classification']['variables']['Variable%s' % suffix] = classification_network.weights[i]
     suffix = '_%d' % (2 * i + 1)
-    experiments['classification']['variables']['Variable%s' % suffix] = network.biases[i + 21]
+    experiments['classification']['variables']['Variable%s' % suffix] = classification_network.biases[i]
 
 experiments['denoising']['params'] = denoising_params
 experiments['denoising']['params']['noise'] = params['train_noise']
@@ -97,21 +80,24 @@ with tf.Session() as sess:
         experiments[i]['checkpoint'] = tf.train.get_checkpoint_state(experiments[i]['checkpoint_path'])
         experiments[i]['saver'].restore(sess, experiments[i]['checkpoint'].model_checkpoint_path)
 
-    val_set = loaders.load_imagenet_labeled_validation(batch_size=50, patch=224, normalize=True,
-                                                       noise=eval(params['test_noise']))
+    val_set = loaders.load_imagenet_labeled_validation(batch_size=50, patch=224, normalize=False, offset=[103, 116, 123],
+                                                       noise=eval(params['test_noise']), network=denoising_network)
 
     scores = []
     initial_epoch = val_set.epochs_completed
 
     while initial_epoch == val_set.epochs_completed:
         x, y_ = val_set.batch()
-        scores.append(score.eval(feed_dict={network.x: x, network.y_: y_, network.keep_prob: 1.0}))
+        scores.append(score.eval(feed_dict={classification_network.x: x, classification_network.y_: y_,
+                                            classification_network.keep_prob: 1.0}))
 
     case = '%s2%s' % (params['train_noise'], params['test_noise'])
 
     results = {
         case: str(np.round(np.mean(scores), 4))
     }
+
+    print(results)
 
     with open(os.path.join(results_path, '%s.json' % case), 'w') as fp:
         json.dump(results, fp)
