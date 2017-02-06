@@ -41,13 +41,13 @@ class SingleChannelNetwork(models.Network):
         self.biases = []
 
     def setup(self):
-        self.conv(5, 5, self.input_shape[2], 48, activation=tf.nn.tanh). \
+        self.conv(5, 5, 1, 48, activation=tf.nn.tanh). \
             conv(5, 5, 48, 48, activation=tf.nn.tanh). \
             conv(5, 5, 48, 48, activation=tf.nn.tanh). \
             conv(5, 5, 48, 48, activation=tf.nn.tanh). \
             conv(5, 5, 48, 48, activation=tf.nn.tanh). \
             conv(5, 5, 48, 48, activation=tf.nn.tanh). \
-            conv(5, 5, 48, self.output_shape[2], activation=None)
+            conv(5, 5, 48, 1, activation=None)
 
 
 class RGBNetwork:
