@@ -151,7 +151,7 @@ def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None
 
 
 def load_imagenet_labeled_validation(batch_size=50, shape=None, grayscale=False, patch=None, normalize=True,
-                                     offset=None, noise=None, noise_before_resize=True, network=None):
+                                     offset=None, noise=None, noise_before_resize=True, network=None, n=None):
     assert os.path.exists(_imagenet_path())
 
     if not os.path.exists(_imagenet_path('val_ground_truth.csv')):
@@ -160,7 +160,7 @@ def load_imagenet_labeled_validation(batch_size=50, shape=None, grayscale=False,
 
     val_ground_truth = pd.read_csv(_imagenet_path('val_ground_truth.csv'))
 
-    val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize)
+    val_images = _load_imagenet_images('val', shape, grayscale, normalize=normalize, n=n)
     val_targets = []
 
     for image in val_images:
