@@ -151,7 +151,7 @@ def load_imagenet_labeled(batch_size=50, shape=None, grayscale=False, patch=None
 
 
 def load_imagenet_labeled_validation(batch_size=50, shape=None, grayscale=False, patch=None, normalize=True,
-                                     offset=None, noise=None, noise_before_resize=True):
+                                     offset=None, noise=None, noise_before_resize=True, network=None):
     assert os.path.exists(_imagenet_path())
 
     if not os.path.exists(_imagenet_path('val_ground_truth.csv')):
@@ -169,7 +169,7 @@ def load_imagenet_labeled_validation(batch_size=50, shape=None, grayscale=False,
         val_targets.append(Label(label - 1, length=1000))
 
     val_set = LabeledDataSet(val_images, val_targets, patch=patch, batch_size=batch_size, noise=noise, offset=offset,
-                             noise_before_resize=noise_before_resize)
+                             noise_before_resize=noise_before_resize, network=network)
 
     return val_set
 
