@@ -41,7 +41,7 @@ class Network:
         self.output_shape = output_shape
         self.x = tf.placeholder(tf.float32, shape=[None] + input_shape)
         self.keep_prob = tf.placeholder(tf.float32)
-        self.denoising = DenoisingNetwork(input_shape, input_shape, x=self.x)
+        self.denoising = DenoisingNetwork(x=self.x)
         self.denoising_output = tf.add(tf.scalar_mul(255.0, self.denoising.output()), [-103.0, -116.0, -123.0])
         self.classification = ClassificationNetwork(input_shape, output_shape, x=self.denoising_output,
                                                     keep_prob=self.keep_prob)

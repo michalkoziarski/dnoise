@@ -50,9 +50,7 @@ if __name__ == '__main__':
 
 
     class SingleChannelNetwork(models.Network):
-        def __init__(self, input_shape, output_shape):
-            self.input_shape = input_shape
-            self.output_shape = output_shape
+        def __init__(self):
             self.x = None
             self.y_ = None
             self.weights = []
@@ -69,17 +67,15 @@ if __name__ == '__main__':
 
 
     class RGBNetwork:
-        def __init__(self, input_shape, output_shape, x=None):
-            self.input_shape = input_shape
-            self.output_shape = output_shape
-            self.networks = [SingleChannelNetwork(input_shape[:2] + [1], output_shape[:2] + [1]) for _ in range(3)]
+        def __init__(self, x=None):
+            self.networks = [SingleChannelNetwork() for _ in range(3)]
 
             if x is None:
-                self.x = tf.placeholder(tf.float32, shape=[None] + input_shape)
+                self.x = tf.placeholder(tf.float32)
             else:
                 self.x = x
 
-            self.y_ = tf.placeholder(tf.float32, shape=[None] + output_shape)
+            self.y_ = tf.placeholder(tf.float32)
             self.keep_prob = tf.placeholder(tf.float32)
             self.weights = []
             self.biases = []
@@ -100,7 +96,7 @@ if __name__ == '__main__':
         return 20 * np.log10(params['scale'][1]) - 10 * tf.log(tf.maximum(tf.reduce_mean(tf.pow(x - y, 2)), 1e-20)) / np.log(10)
 
 
-    network = RGBNetwork([params['sample'], params['sample'], 3], [params['sample'], params['sample'], 3])
+    network = RGBNetwork()
     loss = tf.reduce_mean(tf.pow(network.y_ - network.output(), 2))
     score = tf.reduce_mean(psnr(network.y_, network.output()))
     optimizer = tf.train.MomentumOptimizer(params['learning_rate'], params['momentum'])
