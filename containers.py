@@ -257,7 +257,7 @@ class LabeledDataSet(DataSet):
                     else:
                         denoisable = noisy.get().astype(np.float) / 255.0
                         denoised = self.network.output().eval(feed_dict={self.network.x: [denoisable]})[0]
-                        denoised = (denoised * 255).astype(np.int8)
+                        denoised = np.clip(denoised * 255, 0, 255).astype(np.uint8)
 
                     images.append(Image(image=denoised, normalize=image.normalize, grayscale=image.grayscale).patch(self.patch))
         else:
