@@ -260,6 +260,18 @@ class LabeledDataSet(DataSet):
                         denoised = np.clip(denoised * 255, 0, 255).astype(np.uint8)
 
                     images.append(Image(image=denoised, normalize=image.normalize, grayscale=image.grayscale).patch(self.patch))
+        elif self.network is not None:
+            images = []
+
+            for image in self.images[self.current_index:(self.current_index + size)]:
+                if image.normalize:
+                    denoised = self.network.output().eval(feed_dict={self.network.x: [image.get()]})[0]
+                else:
+                    denoisable = image.get().astype(np.float) / 255.0
+                    denoised = self.network.output().eval(feed_dict={self.network.x: [denoisable]})[0]
+                    denoised = np.clip(denoised * 255, 0, 255).astype(np.uint8)
+
+                images.append(Image(image=denoised, normalize=image.normalize, grayscale=image.grayscale).patch(self.patch))
         else:
             images = [image.patch(self.patch) for image in self.images[self.current_index:(self.current_index + size)]]
 
