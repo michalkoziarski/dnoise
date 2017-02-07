@@ -43,43 +43,44 @@ noises[noise] = noise
 
 for noise, noise_short in noises.iteritems():
     with tf.Session() as sess:
-        experiment_path = os.path.join(os.path.dirname(__file__), '..', 'results', params['experiment'])
-        trial_paths = [os.path.join(experiment_path, o) for o in os.listdir(experiment_path)
-                       if os.path.isdir(os.path.join(experiment_path, o))]
+        with tf.Graph().as_default():
+            experiment_path = os.path.join(os.path.dirname(__file__), '..', 'results', params['experiment'])
+            trial_paths = [os.path.join(experiment_path, o) for o in os.listdir(experiment_path)
+                           if os.path.isdir(os.path.join(experiment_path, o))]
 
-        trial_path = None
+            trial_path = None
 
-        for path in trial_paths:
-            with open(os.path.join(path, 'params.json'), 'r') as fp:
-                params = json.load(fp)
+            for path in trial_paths:
+                with open(os.path.join(path, 'params.json'), 'r') as fp:
+                    params = json.load(fp)
 
-                if params['noise'] == noise:
-                    trial_path = path
+                    if params['noise'] == noise:
+                        trial_path = path
 
-                    break
+                        break
 
-        assert trial_path is not None
+            assert trial_path is not None
 
-        print('Trying to load model...')
-        print('Path: %s' % trial_path)
+            print('Trying to load model...')
+            print('Path: %s' % trial_path)
 
-        checkpoint = tf.train.get_checkpoint_state(trial_path)
-        tf.train.Saver().restore(sess, checkpoint.model_checkpoint_path)
+            checkpoint = tf.train.get_checkpoint_state(trial_path)
+            tf.train.Saver().restore(sess, checkpoint.model_checkpoint_path)
 
-        result = []
+            result = []
 
-        for i in range(50):
-            image = Image(path=os.path.join(results_path, 'Clean_%d.jpg' % i))
-            noisy = Image(path=os.path.join(results_path, '%s_%d.jpg' % (noise_short, i)))
-            denoised = network.output().eval(feed_dict={network.x: [noisy.get()]})[0]
+            for i in range(50):
+                image = Image(path=os.path.join(results_path, 'Clean_%d.jpg' % i))
+                noisy = Image(path=os.path.join(results_path, '%s_%d.jpg' % (noise_short, i)))
+                denoised = network.output().eval(feed_dict={network.x: [noisy.get()]})[0]
 
-            result.append(psnr(image.get(), denoised).eval())
+                result.append(psnr(image.get(), denoised).eval())
 
-            Image(image=denoised).display(os.path.join(results_path, 'Denoised_%d_%s.jpg' % (i, noise_short)))
+                Image(image=denoised).display(os.path.join(results_path, 'Denoised_%d_%s.jpg' % (i, noise_short)))
 
-        results['C2D'][noise] = str(np.round(np.mean(result), 2))
+            results['C2D'][noise] = str(np.round(np.mean(result), 2))
 
-        print('Noise: %s, PSNR: %s' % (noise, np.mean(result)))
+            print('Noise: %s, PSNR: %s' % (noise, np.mean(result)))
 
 
 with open(os.path.join(results_path, 'C2D.json'), 'w') as fp:
