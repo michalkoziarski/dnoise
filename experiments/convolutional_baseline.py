@@ -14,12 +14,15 @@ results = {
     'C2D': {}
 }
 
+network = RGBNetwork()
+
 
 def psnr(x, y):
     return 20 * np.log10(params['scale'][1]) - 10 * tf.log(
         tf.maximum(tf.reduce_mean(tf.pow(x - y, 2)), 1e-20)) / np.log(10)
 
-results_path = os.path.join(os.path.dirname(__file__), '..', 'results', 'baseline')
+baseline_path = os.path.join(os.path.dirname(__file__), '..', 'results', 'baseline')
+results_path = os.path.join(os.path.dirname(__file__), '..', 'results', 'convolutional_baseline')
 
 if not os.path.exists(results_path):
     os.mkdir(results_path)
@@ -39,8 +42,6 @@ noise = 'RandomNoise()'
 noises[noise] = noise
 
 for noise, noise_short in noises.iteritems():
-    network = RGBNetwork()
-
     with tf.Session() as sess:
         experiment_path = os.path.join(os.path.dirname(__file__), '..', 'results', params['experiment'])
         trial_paths = [os.path.join(experiment_path, o) for o in os.listdir(experiment_path)
@@ -68,8 +69,8 @@ for noise, noise_short in noises.iteritems():
         result = []
 
         for i in range(50):
-            image = Image(path=os.path.join(results_path, 'Clean_%d.jpg' % i))
-            noisy = Image(path=os.path.join(results_path, '%s_%d.jpg' % (noise_short, i)))
+            image = Image(path=os.path.join(baseline_path, 'Clean_%d.jpg' % i))
+            noisy = Image(path=os.path.join(baseline_path, '%s_%d.jpg' % (noise_short, i)))
             denoised = network.output().eval(feed_dict={network.x: [noisy.get()]})[0]
 
             result.append(psnr(image.get(), denoised).eval())
