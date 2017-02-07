@@ -6,8 +6,6 @@ import tensorflow as tf
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-import models
-
 from noise import GaussianNoise, QuantizationNoise, SaltAndPepperNoise
 from containers import Image
 from imagenet_denoising import params, RGBNetwork
