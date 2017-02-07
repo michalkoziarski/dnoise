@@ -10,13 +10,6 @@ from containers import Image
 from imagenet_denoising import params, RGBNetwork
 
 
-results = {
-    'C2D': {}
-}
-
-network = RGBNetwork()
-
-
 def psnr(x, y):
     return 20 * np.log10(params['scale'][1]) - 10 * tf.log(
         tf.maximum(tf.reduce_mean(tf.pow(x - y, 2)), 1e-20)) / np.log(10)
@@ -41,7 +34,16 @@ for noise_type in ['Gaussian', 'Quantization', 'SaltAndPepper']:
 noise = 'RandomNoise()'
 noises[noise] = noise
 
+network = RGBNetwork()
+
 for noise, noise_short in noises.iteritems():
+    output_file = os.path.join(results_path, '%s.json' % noise)
+
+    if os.path.exists(output_file):
+        continue
+
+    results = {}
+
     with tf.Session() as sess:
         experiment_path = os.path.join(os.path.dirname(__file__), '..', 'results', params['experiment'])
         trial_paths = [os.path.join(experiment_path, o) for o in os.listdir(experiment_path)
@@ -77,10 +79,9 @@ for noise, noise_short in noises.iteritems():
 
             Image(image=denoised).display(os.path.join(results_path, 'Denoised_%d_%s.jpg' % (i, noise_short)))
 
-        results['C2D'][noise] = str(np.round(np.mean(result), 2))
+        results[noise] = str(np.round(np.mean(result), 2))
 
         print('Noise: %s, PSNR: %s' % (noise, np.mean(result)))
 
-
-with open(os.path.join(results_path, 'C2D.json'), 'w') as fp:
-    json.dump(results, fp)
+    with open(output_file, 'w') as fp:
+        json.dump(results, fp)
