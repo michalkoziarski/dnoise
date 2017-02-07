@@ -77,7 +77,7 @@ if not os.path.exists(results_path):
     os.mkdir(results_path)
 
 results = {}
-images = load_imagenet_unlabeled_validation(batch_size=1).images[:25]
+images = load_imagenet_unlabeled_validation(batch_size=1).images[:50]
 
 for noise_type in ['Gaussian', 'Quantization', 'SaltAndPepper']:
     for value in [0.05, 0.1, 0.2, 0.5]:
