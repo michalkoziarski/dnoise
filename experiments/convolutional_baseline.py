@@ -75,7 +75,7 @@ for noise, noise_short in noises.iteritems():
 
             result.append(psnr(image.get(), denoised).eval())
 
-            Image(image=denoised).display(os.path.join(results_path, '%s_denoised.jpg' % noise_short))
+            Image(image=denoised).display(os.path.join(results_path, 'Denoised_%d_%s.jpg' % (i, noise_short)))
 
         results['C2D'][noise] = str(np.round(np.mean(result), 2))
 
