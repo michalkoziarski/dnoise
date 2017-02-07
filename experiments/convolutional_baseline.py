@@ -19,9 +19,6 @@ def psnr(x, y):
     return 20 * np.log10(params['scale'][1]) - 10 * tf.log(
         tf.maximum(tf.reduce_mean(tf.pow(x - y, 2)), 1e-20)) / np.log(10)
 
-
-network = RGBNetwork()
-
 results_path = os.path.join(os.path.dirname(__file__), '..', 'results', 'baseline')
 
 if not os.path.exists(results_path):
@@ -44,6 +41,8 @@ noises[noise] = noise
 for noise, noise_short in noises.iteritems():
     with tf.Session() as sess:
         with tf.Graph().as_default():
+            network = RGBNetwork()
+
             experiment_path = os.path.join(os.path.dirname(__file__), '..', 'results', params['experiment'])
             trial_paths = [os.path.join(experiment_path, o) for o in os.listdir(experiment_path)
                            if os.path.isdir(os.path.join(experiment_path, o))]
