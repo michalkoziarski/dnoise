@@ -33,13 +33,13 @@ for noise_type in ['Gaussian', 'Quantization', 'SaltAndPepper']:
     for value in ['0.05', '0.10', '0.20', '0.50']:
         noise = '%sNoise(%s)' % (noise_type, value)
         noise_short = '%sNoise(%s)' % (noise_type, str(float(value)))
-        results[noise] = noise_short
+        noises[noise] = noise_short
 
     noise = 'RandomNoise(%sNoise)' % noise_type
-    results[noise] = noise
+    noises[noise] = noise
 
 noise = 'RandomNoise()'
-results[noise] = noise
+noises[noise] = noise
 
 for noise, noise_short in noises.iteritems():
     with tf.Session() as sess:
