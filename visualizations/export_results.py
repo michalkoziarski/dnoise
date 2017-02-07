@@ -14,7 +14,7 @@ for path in [x[0] for x in os.walk(os.path.join(root_path, 'ImageNet classificat
     case = '%s2%s' % ('C' if params['train_noise'] == 'None' else 'N', 'C' if params['test_noise'] == 'None' else 'N')
     acc = EventAccumulator(path)
     acc.Reload()
-    result = acc.Scalars('score/validation')[1].value
+    result = acc.Scalars('score/validation')[-1].value
 
     if case == 'C2C':
         results['C2C'] = result
