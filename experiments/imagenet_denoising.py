@@ -29,52 +29,9 @@ params = {
     'normalize': True,
     'offset': [0, 0, 0],
     'scale': [0.0, 1.0],
-    'noise': 'None'
+    'noise': 'None',
+    'sample': 64
 }
-
-
-class SingleChannelNetwork(models.Network):
-    def __init__(self):
-        self.x = None
-        self.y_ = None
-        self.weights = []
-        self.biases = []
-
-    def setup(self):
-        self.conv(5, 5, 1, 48, activation=tf.nn.tanh). \
-            conv(5, 5, 48, 48, activation=tf.nn.tanh). \
-            conv(5, 5, 48, 48, activation=tf.nn.tanh). \
-            conv(5, 5, 48, 48, activation=tf.nn.tanh). \
-            conv(5, 5, 48, 48, activation=tf.nn.tanh). \
-            conv(5, 5, 48, 48, activation=tf.nn.tanh). \
-            conv(5, 5, 48, 1, activation=None)
-
-
-class RGBNetwork:
-    def __init__(self, x=None):
-        self.networks = [SingleChannelNetwork() for _ in range(3)]
-
-        if x is None:
-            self.x = tf.placeholder(tf.float32)
-        else:
-            self.x = x
-
-        self.y_ = tf.placeholder(tf.float32)
-        self.keep_prob = tf.placeholder(tf.float32)
-        self.weights = []
-        self.biases = []
-
-        for i in range(3):
-            self.networks[i].x = tf.slice(self.x, [0, 0, 0, i], [-1, -1, -1, 1])
-            self.networks[i].y_ = tf.slice(self.y_, [0, 0, 0, i], [-1, -1, -1, 1])
-            self.networks[i].layers = [self.networks[i].x]
-            self.networks[i].setup()
-            self.weights += self.networks[i].weights
-            self.biases += self.networks[i].biases
-
-    def output(self):
-        return tf.clip_by_value(tf.concat(3, [network.output() for network in self.networks]), 0.0, 1.0)
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -92,6 +49,49 @@ if __name__ == '__main__':
                 params[k] = type(v)(args.get(k))
 
 
+    class SingleChannelNetwork(models.Network):
+        def __init__(self):
+            self.x = None
+            self.y_ = None
+            self.weights = []
+            self.biases = []
+
+        def setup(self):
+            self.conv(5, 5, 1, 48, activation=tf.nn.tanh).\
+                conv(5, 5, 48, 48, activation=tf.nn.tanh).\
+                conv(5, 5, 48, 48, activation=tf.nn.tanh).\
+                conv(5, 5, 48, 48, activation=tf.nn.tanh).\
+                conv(5, 5, 48, 48, activation=tf.nn.tanh).\
+                conv(5, 5, 48, 48, activation=tf.nn.tanh).\
+                conv(5, 5, 48, 1, activation=None)
+
+
+    class RGBNetwork:
+        def __init__(self, x=None):
+            self.networks = [SingleChannelNetwork() for _ in range(3)]
+
+            if x is None:
+                self.x = tf.placeholder(tf.float32)
+            else:
+                self.x = x
+
+            self.y_ = tf.placeholder(tf.float32)
+            self.keep_prob = tf.placeholder(tf.float32)
+            self.weights = []
+            self.biases = []
+
+            for i in range(3):
+                self.networks[i].x = tf.slice(self.x, [0, 0, 0, i], [-1, -1, -1, 1])
+                self.networks[i].y_ = tf.slice(self.y_, [0, 0, 0, i], [-1, -1, -1, 1])
+                self.networks[i].layers = [self.networks[i].x]
+                self.networks[i].setup()
+                self.weights += self.networks[i].weights
+                self.biases += self.networks[i].biases
+
+        def output(self):
+            return tf.clip_by_value(tf.concat(3, [network.output() for network in self.networks]), 0.0, 1.0)
+
+
     def psnr(x, y):
         return 20 * np.log10(params['scale'][1]) - 10 * tf.log(tf.maximum(tf.reduce_mean(tf.pow(x - y, 2)), 1e-20)) / np.log(10)
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     noise = eval(params['noise'])
 
-    train_set, val_set = loaders.load_imagenet_unlabeled(batch_size=params['batch_size'], patch=224,
+    train_set, val_set = loaders.load_imagenet_unlabeled(batch_size=params['batch_size'], sample=params['sample'],
                                                          normalize=params['normalize'], offset=params['offset'],
                                                          noise=noise)
 
